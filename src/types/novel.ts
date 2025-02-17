@@ -1,0 +1,21 @@
+export interface Novel {
+  id: string
+  title: string
+  coverImage: string
+  rating: number
+  viewCount: number
+  chapterCount: number
+  author: string
+  genres: string[]
+  description?: string
+  status?: 'ongoing' | 'completed' | 'hiatus'
+  lastUpdated?: string
+}
+
+export interface Announcement {
+  id: string
+  title: string
+  viewCount: number
+  date: string
+  content?: string
+} 
