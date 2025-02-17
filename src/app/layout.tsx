@@ -22,11 +22,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const bodyClasses = [
+    geistSans.variable,
+    geistMono.variable,
+    'antialiased'
+  ].join(' ');
+
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={bodyClasses}>
         {children}
       </body>
     </html>
