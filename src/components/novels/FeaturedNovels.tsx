@@ -1,3 +1,5 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { Novel } from '@/types/novel'
@@ -5,6 +7,39 @@ import { formatNumber, generateSlug } from '@/lib/utils'
 
 interface FeaturedNovelsProps {
   novels: Novel[]
+}
+
+function NavigationButtons() {
+  return (
+    <>
+      <button
+        className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-800/80 p-2 rounded-full shadow-md hover:bg-white dark:hover:bg-gray-800 transition-colors"
+        onClick={() => {
+          const container = document.querySelector('.overflow-x-auto')
+          if (container) {
+            container.scrollBy({ left: -300, behavior: 'smooth' })
+          }
+        }}
+      >
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <button
+        className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-800/80 p-2 rounded-full shadow-md hover:bg-white dark:hover:bg-gray-800 transition-colors"
+        onClick={() => {
+          const container = document.querySelector('.overflow-x-auto')
+          if (container) {
+            container.scrollBy({ left: 300, behavior: 'smooth' })
+          }
+        }}
+      >
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </>
+  )
 }
 
 export function FeaturedNovels({ novels }: FeaturedNovelsProps) {
@@ -40,34 +75,7 @@ export function FeaturedNovels({ novels }: FeaturedNovelsProps) {
           </Link>
         ))}
       </div>
-      
-      {/* Navigation buttons */}
-      <button
-        className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-800/80 p-2 rounded-full shadow-md hover:bg-white dark:hover:bg-gray-800 transition-colors"
-        onClick={() => {
-          const container = document.querySelector('.overflow-x-auto')
-          if (container) {
-            container.scrollBy({ left: -300, behavior: 'smooth' })
-          }
-        }}
-      >
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <button
-        className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-800/80 p-2 rounded-full shadow-md hover:bg-white dark:hover:bg-gray-800 transition-colors"
-        onClick={() => {
-          const container = document.querySelector('.overflow-x-auto')
-          if (container) {
-            container.scrollBy({ left: 300, behavior: 'smooth' })
-          }
-        }}
-      >
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
+      <NavigationButtons />
     </section>
   )
 } 
