@@ -1,7 +1,7 @@
 'use client'
 
 import { SessionProvider } from "next-auth/react";
-import Header from "@/components/layout/Header";
+import Header from "@/components/common/layout/Header";
 
 export default function LayoutContent({
   children,

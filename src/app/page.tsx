@@ -1,10 +1,10 @@
 import { Metadata } from 'next'
-import { HomeHero } from '@/components/home/HomeHero'
-import { FeaturedNovels } from '@/components/novels/FeaturedNovels'
-import { RecentNovelUpdates } from '@/components/novels/RecentNovelUpdates'
-import { AnnouncementsSidebar } from '@/components/announcements/AnnouncementsSidebar'
-import { PublishNovelCTA } from '@/components/novels/PublishNovelCTA'
-import { RecommendedNovels } from '@/components/novels/RecommendedNovels'
+import { HomeHero } from '@/components/features/home/HomeHero'
+import { FeaturedNovels } from '@/components/features/novels/FeaturedNovels'
+import { RecentNovelUpdates } from '@/components/features/novels/RecentNovelUpdates'
+import { AnnouncementsSidebar } from '@/components/features/announcements/AnnouncementsSidebar'
+import { PublishNovelCTA } from '@/components/features/novels/PublishNovelCTA'
+import { RecommendedNovels } from '@/components/features/novels/RecommendedNovels'
 
 export const metadata: Metadata = {
   title: 'Truyện Bản Quyền - Đọc truyện online',
