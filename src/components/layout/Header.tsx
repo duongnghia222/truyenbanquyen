@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useSession } from 'next-auth/react'
+import Image from 'next/image'
+import { useSession, signOut } from 'next-auth/react'
 import { useState, useEffect } from 'react'
 import { 
   UserIcon, 
@@ -200,17 +201,42 @@ export default function Header() {
             
             {session ? (
               <div className="relative group">
-                <Link 
-                  href="/profile" 
-                  className="p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 
-                    dark:hover:bg-gray-800 hover:text-blue-500 dark:hover:text-blue-400
-                    transition-all duration-200"
+                <button 
+                  className="flex items-center gap-2 p-1.5 rounded-full text-gray-700 dark:text-gray-300 
+                    hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
                 >
-                  <UserIcon className="w-6 h-6" />
-                </Link>
-                <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl
+                  {session.user?.image ? (
+                    <Image
+                      src={session.user.image}
+                      alt={session.user.name || 'Profile'}
+                      width={32}
+                      height={32}
+                      className="rounded-full"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                      <UserIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                  )}
+                </button>
+                <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl
                   shadow-xl border border-gray-100 dark:border-gray-700 py-2 opacity-0 invisible
                   group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                  <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      {session.user?.name || 'User'}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {session.user?.email}
+                    </div>
+                  </div>
+                  <Link 
+                    href="/profile"
+                    className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300
+                      hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                  >
+                    <span>Trang cá nhân</span>
+                  </Link>
                   <Link 
                     href="/profile/settings" 
                     className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300
@@ -219,6 +245,7 @@ export default function Header() {
                     <span>Cài đặt</span>
                   </Link>
                   <button 
+                    onClick={() => signOut()}
                     className="w-full flex items-center gap-2 px-4 py-2 text-red-500
                       hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
                   >

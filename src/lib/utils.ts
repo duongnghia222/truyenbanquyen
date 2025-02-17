@@ -16,15 +16,20 @@ export function truncateText(text: string, maxLength: number): string {
 }
 
 export function generateSlug(text: string | undefined | null): string {
-  if (!text) return ''
+  if (!text || typeof text !== 'string') return '';
   
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[đĐ]/g, 'd')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim()
+  try {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[đĐ]/g, 'd')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+  } catch (error) {
+    console.error('Error generating slug:', error);
+    return '';
+  }
 } 

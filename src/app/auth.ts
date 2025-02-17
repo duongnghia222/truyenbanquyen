@@ -2,7 +2,7 @@ import NextAuth from 'next-auth'
 import type { NextAuthConfig } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 
-const authConfig = {
+export const config = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -27,9 +27,26 @@ const authConfig = {
   pages: {
     signIn: '/auth/signin',
   },
+  callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user
+      const isAuthPage = nextUrl.pathname.startsWith('/auth')
+      
+      if (isAuthPage) {
+        if (isLoggedIn) return Response.redirect(new URL('/', nextUrl))
+        return true
+      }
+      
+      if (!isLoggedIn) {
+        return false
+      }
+      
+      return true
+    },
+  },
   session: { strategy: "jwt" },
-  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key',
+  secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true,
 } satisfies NextAuthConfig
 
-export const { handlers, auth, signIn, signOut } = NextAuth(authConfig)
-export const config = authConfig 
+export const { auth, signIn, signOut } = NextAuth(config) 

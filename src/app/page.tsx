@@ -53,13 +53,22 @@ async function getFeaturedNovels() {
       author: 'Tác giả 1',
       genres: ['Cultivation', 'Action']
     },
-    // Add more featured novels...
   ]
 }
 
 async function getRecentUpdates() {
   return [
-    // Recent updates data
+    {
+      id: '2',
+      title: 'Đấu Phá Thương Khung',
+      coverImage: '/images/novels/vo-luyen-dinh-phong.jpg',
+      rating: 8.2,
+      viewCount: 45000,
+      chapterCount: 1200,
+      author: 'Tác giả 2',
+      genres: ['Cultivation', 'Action'],
+      lastUpdated: new Date().toISOString()
+    },
   ]
 }
 
@@ -71,6 +80,5 @@ async function getAnnouncements() {
       viewCount: 204,
       date: new Date().toISOString(),
     },
-    // More announcements...
   ]
 }

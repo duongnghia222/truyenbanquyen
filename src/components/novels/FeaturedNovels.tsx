@@ -43,6 +43,10 @@ function NavigationButtons() {
 }
 
 export function FeaturedNovels({ novels }: FeaturedNovelsProps) {
+  if (!novels || novels.length === 0) {
+    return null;
+  }
+
   return (
     <section className="relative">
       <div className="flex overflow-x-auto gap-6 pb-4 snap-x">
