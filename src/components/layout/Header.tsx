@@ -62,6 +62,7 @@ export default function Header() {
   const [showGenres, setShowGenres] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isScrolled, setIsScrolled] = useState(false)
+  const [bookmarkCount, setBookmarkCount] = useState(0)
 
   // Handle scroll effect
   useEffect(() => {
@@ -71,6 +72,26 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  // Fetch bookmark count when session changes
+  useEffect(() => {
+    const fetchBookmarkCount = async () => {
+      if (session?.user) {
+        try {
+          const response = await fetch('/api/bookmarks/count')
+          const data = await response.json()
+          setBookmarkCount(data.count)
+        } catch (error) {
+          console.error('Failed to fetch bookmark count:', error)
+          setBookmarkCount(0)
+        }
+      } else {
+        setBookmarkCount(0)
+      }
+    }
+
+    fetchBookmarkCount()
+  }, [session])
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -185,9 +206,12 @@ export default function Header() {
                 transition-all duration-200 relative group"
             >
               <BookmarkIcon className="w-6 h-6" />
-              <span className="absolute -top-2 -right-1 w-5 h-5 bg-red-500 rounded-full text-white
-                text-xs flex items-center justify-center transform scale-0 group-hover:scale-100
-                transition-transform duration-200">5</span>
+              {bookmarkCount > 0 && (
+                <span className="absolute -top-2 -right-1 w-5 h-5 bg-red-500 rounded-full text-white
+                  text-xs flex items-center justify-center">
+                  {bookmarkCount}
+                </span>
+              )}
             </Link>
             
             <Link 
