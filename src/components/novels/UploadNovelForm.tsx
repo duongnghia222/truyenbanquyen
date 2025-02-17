@@ -103,8 +103,8 @@ export default function UploadNovelForm() {
         throw new Error(data.error || 'Không thể đăng tải truyện');
       }
 
-      // Redirect to the novel page or novels list
-      router.push('/novels');
+      // Redirect to home page
+      router.push('/');
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể đăng tải truyện');
@@ -126,6 +126,7 @@ export default function UploadNovelForm() {
             id="title"
             name="title"
             required
+            placeholder="VD: Võ Luyện Đỉnh Phong"
             value={formData.title}
             onChange={handleInputChange}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
@@ -142,6 +143,7 @@ export default function UploadNovelForm() {
             id="author"
             name="author"
             required
+            placeholder="VD: Mạc Mặc"
             value={formData.author}
             onChange={handleInputChange}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
@@ -157,6 +159,7 @@ export default function UploadNovelForm() {
             id="description"
             name="description"
             required
+            placeholder="Mô tả ngắn gọn về nội dung truyện..."
             value={formData.description}
             onChange={handleInputChange}
             rows={4}
