@@ -15,7 +15,9 @@ export function truncateText(text: string, maxLength: number): string {
   return text.slice(0, maxLength) + '...'
 }
 
-export function generateSlug(text: string): string {
+export function generateSlug(text: string | undefined | null): string {
+  if (!text) return ''
+  
   return text
     .toLowerCase()
     .normalize('NFD')
