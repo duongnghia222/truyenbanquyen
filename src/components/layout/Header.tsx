@@ -121,7 +121,7 @@ export default function Header() {
               </button>
               
               {showGenres && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[800px] bg-white dark:bg-gray-800 
+                <div className="absolute top-full left-0 mt-2 w-[800px] bg-white dark:bg-gray-800 
                   rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-6 grid grid-cols-3 gap-8
                   animate-fade-in-down origin-top">
                   {genres.map((column, columnIndex) => (
