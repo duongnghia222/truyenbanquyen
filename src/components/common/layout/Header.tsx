@@ -9,8 +9,11 @@ import {
   MagnifyingGlassIcon, 
   BookmarkIcon, 
   QuestionMarkCircleIcon,
-  ChevronDownIcon 
+  ChevronDownIcon,
+  SunIcon,
+  MoonIcon
 } from '@heroicons/react/24/outline'
+import { useTheme } from '@/components/providers/ThemeProvider'
 
 const genres = [
   [
@@ -63,6 +66,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isScrolled, setIsScrolled] = useState(false)
   const [bookmarkCount, setBookmarkCount] = useState(0)
+  const { theme, toggleTheme } = useTheme()
 
   // Handle scroll effect
   useEffect(() => {
@@ -96,7 +100,7 @@ export default function Header() {
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       isScrolled 
-        ? 'py-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-lg' 
+        ? 'py-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-lg border-b border-gray-200 dark:border-gray-800' 
         : 'py-4 bg-white dark:bg-gray-900'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -121,7 +125,7 @@ export default function Header() {
               href="/danh-sach" 
               className="relative group py-2"
             >
-              <span className="text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white
+              <span className="text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white
                 transition-colors duration-200">
                 Danh Sách
               </span>
@@ -132,7 +136,7 @@ export default function Header() {
             <div className="relative group">
               <button
                 onClick={() => setShowGenres(!showGenres)}
-                className="flex items-center gap-2 text-gray-700 dark:text-gray-300 group-hover:text-gray-900 
+                className="flex items-center gap-2 text-gray-700 dark:text-gray-200 group-hover:text-gray-900 
                   dark:group-hover:text-white transition-colors duration-200 py-2"
               >
                 <span>Thể Loại</span>
@@ -143,7 +147,7 @@ export default function Header() {
               
               {showGenres && (
                 <div className="absolute top-full left-0 mt-2 w-[800px] bg-white dark:bg-gray-800 
-                  rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-6 grid grid-cols-3 gap-8
+                  rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 grid grid-cols-3 gap-8
                   animate-fade-in-down origin-top">
                   {genres.map((column, columnIndex) => (
                     <div key={columnIndex} className="space-y-3">
@@ -178,8 +182,8 @@ export default function Header() {
                 placeholder="Nhập Tên Truyện..."
                 className="w-full px-5 py-2.5 rounded-full bg-gray-50 dark:bg-gray-800 
                   border-2 border-transparent focus:border-blue-500 dark:focus:border-blue-400
-                  focus:outline-none transition-all duration-200
-                  placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  focus:outline-none transition-all duration-200 text-gray-900 dark:text-white
+                  placeholder:text-gray-500 dark:placeholder:text-gray-400"
               />
               <button className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full
                 text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400 
@@ -188,8 +192,8 @@ export default function Header() {
               </button>
               {searchQuery && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl
-                  shadow-xl border border-gray-100 dark:border-gray-700 p-4 animate-fade-in-down">
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  shadow-xl border border-gray-200 dark:border-gray-700 p-4 animate-fade-in-down">
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
                     Đang tìm kiếm: {searchQuery}...
                   </div>
                 </div>
@@ -199,9 +203,24 @@ export default function Header() {
 
           {/* User Actions */}
           <div className="flex items-center gap-2">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="p-2.5 rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 
+                dark:hover:bg-gray-800 hover:text-blue-500 dark:hover:text-blue-400
+                transition-all duration-200"
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? (
+                <SunIcon className="w-6 h-6" />
+              ) : (
+                <MoonIcon className="w-6 h-6" />
+              )}
+            </button>
+
             <Link 
               href="/bookmark" 
-              className="p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 
+              className="p-2.5 rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 
                 dark:hover:bg-gray-800 hover:text-blue-500 dark:hover:text-blue-400
                 transition-all duration-200 relative group"
             >
@@ -216,7 +235,7 @@ export default function Header() {
             
             <Link 
               href="/help" 
-              className="p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 
+              className="p-2.5 rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 
                 dark:hover:bg-gray-800 hover:text-purple-500 dark:hover:text-purple-400
                 transition-all duration-200"
             >
@@ -226,7 +245,7 @@ export default function Header() {
             {session ? (
               <div className="relative group">
                 <button 
-                  className="flex items-center gap-2 p-1.5 rounded-full text-gray-700 dark:text-gray-300 
+                  className="flex items-center gap-2 p-1.5 rounded-full text-gray-700 dark:text-gray-200 
                     hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
                 >
                   {session.user?.image ? (
@@ -244,26 +263,26 @@ export default function Header() {
                   )}
                 </button>
                 <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl
-                  shadow-xl border border-gray-100 dark:border-gray-700 py-2 opacity-0 invisible
+                  shadow-xl border border-gray-200 dark:border-gray-700 py-2 opacity-0 invisible
                   group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                  <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                     <div className="font-medium text-gray-900 dark:text-white">
                       {session.user?.name || 'User'}
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                    <div className="text-sm text-gray-600 dark:text-gray-300">
                       {session.user?.email}
                     </div>
                   </div>
                   <Link 
                     href="/profile"
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300
+                    className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200
                       hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
                   >
                     <span>Trang cá nhân</span>
                   </Link>
                   <Link 
                     href="/profile/settings" 
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300
+                    className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200
                       hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
                   >
                     <span>Cài đặt</span>

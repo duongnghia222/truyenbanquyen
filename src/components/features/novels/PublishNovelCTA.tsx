@@ -5,7 +5,12 @@ export function PublishNovelCTA() {
     <section className="text-center py-8">
       <Link
         href="/novels/upload"
-        className="inline-flex items-center gap-2 px-6 py-3 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors shadow-lg hover:shadow-xl"
+        className="inline-flex items-center gap-2 px-8 py-4 text-lg font-medium text-white 
+          bg-gradient-to-r from-blue-600 to-purple-600 hover:from-purple-600 hover:to-blue-600
+          rounded-lg shadow-lg hover:shadow-xl shadow-blue-500/20 hover:shadow-purple-500/20
+          focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 
+          focus:ring-offset-2 dark:focus:ring-offset-gray-900 
+          transition-all duration-300"
       >
         <svg
           className="w-6 h-6"
@@ -22,7 +27,7 @@ export function PublishNovelCTA() {
         </svg>
         Đăng Truyện
       </Link>
-      <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+      <p className="mt-4 text-sm text-gray-900 dark:text-gray-200">
         Chia sẻ tác phẩm của bạn với cộng đồng đọc giả
       </p>
     </section>

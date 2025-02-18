@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import Link from 'next/link'
 import { PublishNovelCTA } from '@/components/features/novels/PublishNovelCTA'
 import { NovelCard } from '@/components/novels/NovelCard'
 import connectDB from '@/lib/mongodb'
@@ -49,10 +50,13 @@ export default async function HomePage() {
       
       <section className="mt-12">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Truyện Mới Cập Nhật</h2>
-          <a href="/novels" className="text-blue-600 hover:text-blue-700">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Truyện Mới Cập Nhật</h2>
+          <Link 
+            href="/novels" 
+            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+          >
             Xem tất cả
-          </a>
+          </Link>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -63,7 +67,7 @@ export default async function HomePage() {
 
         {novels.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">Chưa có truyện nào được đăng tải.</p>
+            <p className="text-gray-500 dark:text-gray-400">Chưa có truyện nào được đăng tải.</p>
           </div>
         )}
       </section>

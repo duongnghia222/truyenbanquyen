@@ -20,10 +20,10 @@ export async function POST(request: Request) {
     const body = await request.json();
     
     // Extract novel data
-    const { title, author, description, genres, status = 'ongoing', coverImage } = body;
+    const { title, author, description, genres, status = 'ongoing', coverImage, contentUrl } = body;
 
     // Validate required fields
-    if (!title || !author || !description || !genres || !coverImage) {
+    if (!title || !author || !description || !genres || !coverImage || !contentUrl) {
       return NextResponse.json(
         { error: 'Thiếu thông tin bắt buộc' },
         { status: 400 }
@@ -39,6 +39,7 @@ export async function POST(request: Request) {
         genres,
         status,
         coverImage,
+        contentUrl,
         rating: 0,
         views: 0,
         createdAt: new Date(),
