@@ -5,32 +5,39 @@ import connectDB from '@/lib/mongodb'
 import Novel from '@/models/Novel'
 
 interface NovelType {
-  _id: string;
-  title: string;
-  author: string;
-  description: string;
-  coverImage: string;
-  genres: string[];
-  status: string;
-  rating: number;
-  views: number;
+  _id: string
+  title: string
+  author: string
+  description: string
+  coverImage: string
+  genres: string[]
+  status: string
+  rating: number
+  views: number
+  createdAt: string
+  updatedAt: string
 }
 
 export const metadata: Metadata = {
-  title: 'Truyện Bản Quyền - Đọc truyện online',
-  description: 'Nền tảng đọc truyện bản quyền hàng đầu Việt Nam',
+  title: 'TruyenBanQuyen - Đọc Truyện Online',
+  description: 'Đọc truyện online, truyện mới, truyện full, truyện convert chất lượng cao.',
 }
 
 export const revalidate = 0
 
 async function getLatestNovels(): Promise<NovelType[]> {
-  await connectDB()
-  const novels = await Novel.find({})
-    .sort({ createdAt: -1 })
-    .limit(12)
-    .lean()
-  
-  return JSON.parse(JSON.stringify(novels))
+  try {
+    await connectDB()
+    const novels = await Novel.find({})
+      .sort({ createdAt: -1 })
+      .limit(12)
+      .lean()
+    
+    return JSON.parse(JSON.stringify(novels))
+  } catch (error) {
+    console.error('Failed to fetch novels:', error)
+    return []
+  }
 }
 
 export default async function HomePage() {
@@ -49,7 +56,7 @@ export default async function HomePage() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {novels.map((novel: NovelType) => (
+          {novels.map((novel) => (
             <NovelCard key={novel._id} novel={novel} />
           ))}
         </div>

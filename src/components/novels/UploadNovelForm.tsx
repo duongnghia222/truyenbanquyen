@@ -84,17 +84,35 @@ export default function UploadNovelForm() {
         throw new Error('Vui lòng chọn ít nhất một thể loại');
       }
 
-      const submitFormData = new FormData();
-      submitFormData.append('title', formData.title);
-      submitFormData.append('author', formData.author);
-      submitFormData.append('description', formData.description);
-      submitFormData.append('status', formData.status);
-      submitFormData.append('genres', JSON.stringify(formData.genres));
-      submitFormData.append('coverImage', coverImage);
+      // First, upload the image to S3
+      const imageFormData = new FormData();
+      imageFormData.append('file', coverImage);
 
+      const uploadResponse = await fetch('/api/upload/s3', {
+        method: 'POST',
+        body: imageFormData,
+      });
+
+      const uploadData = await uploadResponse.json();
+
+      if (!uploadResponse.ok) {
+        throw new Error(uploadData.error || 'Không thể tải lên ảnh bìa');
+      }
+
+      // Then submit the novel data with the S3 image URL
       const response = await fetch('/api/novels/upload', {
         method: 'POST',
-        body: submitFormData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          author: formData.author,
+          description: formData.description,
+          status: formData.status,
+          genres: formData.genres,
+          coverImage: uploadData.imageUrl
+        }),
       });
 
       const data = await response.json();
