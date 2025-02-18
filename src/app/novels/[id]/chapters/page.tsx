@@ -16,8 +16,8 @@ async function getNovelAndChapters(params: Promise<{ id: string }>) {
     const [novel, chapters] = await Promise.all([
       Novel.findById(id).lean(),
       Chapter.find({ novelId: id })
-        .sort({ number: 1 })
-        .select('number title views createdAt')
+        .sort({ chapterNumber: 1 })
+        .select('chapterNumber title views createdAt')
         .lean(),
     ]);
 
@@ -28,6 +28,7 @@ async function getNovelAndChapters(params: Promise<{ id: string }>) {
       chapters: JSON.parse(JSON.stringify(chapters)),
     };
   } catch (error) {
+    console.error('Error fetching chapters:', error);
     return null;
   }
 }
@@ -114,13 +115,13 @@ export default async function ChaptersPage({ params }: ChaptersPageProps) {
               {chapters.map((chapter) => (
                 <Link
                   key={chapter._id}
-                  href={`/novels/${novel._id}/chapters/${chapter.number}`}
+                  href={`/novels/${novel._id}/chapters/${chapter.chapterNumber}`}
                   className="block py-4 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-medium text-gray-900">
-                        Chương {chapter.number}: {chapter.title}
+                        Chương {chapter.chapterNumber}: {chapter.title}
                       </h3>
                       <p className="mt-1 text-sm text-gray-500">
                         {new Date(chapter.createdAt).toLocaleDateString('vi-VN')}

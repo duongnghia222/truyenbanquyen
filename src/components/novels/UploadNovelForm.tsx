@@ -141,21 +141,27 @@ export default function UploadNovelForm() {
         throw new Error(contentUploadData.error || 'Không thể tải lên nội dung truyện');
       }
 
+      console.log('Content upload response:', contentUploadData);
+
       // Then submit the novel data with both URLs
+      const novelData = {
+        title: formData.title,
+        author: formData.author,
+        description: formData.description,
+        status: formData.status,
+        genres: formData.genres,
+        coverImage: uploadData.imageUrl,
+        contentUrl: contentUploadData.fileUrl
+      };
+
+      console.log('Submitting novel data:', novelData);
+
       const response = await fetch('/api/novels/upload', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          title: formData.title,
-          author: formData.author,
-          description: formData.description,
-          status: formData.status,
-          genres: formData.genres,
-          coverImage: uploadData.imageUrl,
-          contentUrl: contentUploadData.fileUrl
-        }),
+        body: JSON.stringify(novelData),
       });
 
       const data = await response.json();

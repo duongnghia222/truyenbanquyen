@@ -5,6 +5,24 @@ import connectDB from '@/lib/mongodb';
 import Novel from '@/models/Novel';
 import Chapter from '@/models/Chapter';
 
+interface NovelType {
+  _id: string;
+  title: string;
+  author: string;
+  contentUrl: string;
+  views: number;
+}
+
+interface ChapterType {
+  _id: string;
+  novelId: string;
+  chapterNumber: number;
+  title: string;
+  content?: string;
+  views: number;
+  createdAt: Date;
+}
+
 interface ChapterPageProps {
   params: Promise<{ id: string; number: string }>;
 }
@@ -13,7 +31,14 @@ async function getNovelAndChapter(params: Promise<{ id: string; number: string }
   const { id, number } = await params;
   try {
     await connectDB();
-    const [novel, chapter, prevChapter, nextChapter] = await Promise.all([
+
+    // Increment view count
+    await Chapter.findOneAndUpdate(
+      { novelId: id, chapterNumber: Number(number) },
+      { $inc: { views: 1 } }
+    );
+
+    const [novelDoc, chapterDoc, prevChapterDoc, nextChapterDoc] = await Promise.all([
       Novel.findById(id).lean(),
       Chapter.findOne({ novelId: id, chapterNumber: Number(number) }).lean(),
       Chapter.findOne({ novelId: id, chapterNumber: { $lt: Number(number) } })
@@ -26,7 +51,44 @@ async function getNovelAndChapter(params: Promise<{ id: string; number: string }
         .lean(),
     ]);
 
-    if (!novel || !chapter) return null;
+    if (!novelDoc || !chapterDoc) {
+      console.error('Novel or chapter not found:', { id, number, novel: !!novelDoc, chapter: !!chapterDoc });
+      return null;
+    }
+
+    const novel = novelDoc as unknown as NovelType;
+    const chapter = chapterDoc as unknown as ChapterType;
+    const prevChapter = prevChapterDoc as unknown as ChapterType | null;
+    const nextChapter = nextChapterDoc as unknown as ChapterType | null;
+
+    // Fetch content from S3
+    const response = await fetch(novel.contentUrl);
+    if (!response.ok) {
+      console.error('Failed to fetch content from S3:', response.statusText);
+      return null;
+    }
+
+    const fullContent = await response.text();
+
+    // Split content into chapters using the same regex as upload
+    const chapterRegex = /^Chương\s+(\d+)(?:[\s:]+(.+?))?(?:\n|\r\n)([\s\S]*?)(?=(?:\n|\r\n)Chương\s+\d+|$)/gm;
+    let match;
+
+    while ((match = chapterRegex.exec(fullContent)) !== null) {
+      const [, chapterNum, , chapterContent] = match;
+      if (parseInt(chapterNum) === parseInt(number)) {
+        chapter.content = chapterContent.trim();
+        break;
+      }
+    }
+
+    // If no chapters found or requested chapter not found, use the entire content
+    if (!chapter.content) {
+      chapter.content = fullContent.trim();
+    }
+
+    // Also increment novel views
+    await Novel.findByIdAndUpdate(id, { $inc: { views: 1 } });
 
     return {
       novel: JSON.parse(JSON.stringify(novel)),
@@ -35,6 +97,7 @@ async function getNovelAndChapter(params: Promise<{ id: string; number: string }
       nextChapter: JSON.parse(JSON.stringify(nextChapter)),
     };
   } catch (error) {
+    console.error('Error fetching chapter:', error);
     return null;
   }
 }

@@ -42,6 +42,10 @@ const novelSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  chapterCount: {
+    type: Number,
+    default: 0,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -50,6 +54,14 @@ const novelSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
-export default mongoose.models.Novel || mongoose.model('Novel', novelSchema); 
+if (mongoose.models.Novel) {
+  delete mongoose.models.Novel;
+}
+
+export default mongoose.model('Novel', novelSchema); 

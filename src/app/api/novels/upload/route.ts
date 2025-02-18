@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Novel from '@/models/Novel';
+import process from 'process';
 
 export async function POST(request: Request) {
   try {
@@ -22,8 +23,19 @@ export async function POST(request: Request) {
     // Extract novel data
     const { title, author, description, genres, status = 'ongoing', coverImage, contentUrl } = body;
 
+    // Debug log
+    console.log('Received data:', { title, author, contentUrl });
+
     // Validate required fields
     if (!title || !author || !description || !genres || !coverImage || !contentUrl) {
+      console.log('Missing fields:', { 
+        hasTitle: !!title, 
+        hasAuthor: !!author, 
+        hasDescription: !!description, 
+        hasGenres: !!genres, 
+        hasCoverImage: !!coverImage, 
+        hasContentUrl: !!contentUrl 
+      });
       return NextResponse.json(
         { error: 'Thiếu thông tin bắt buộc' },
         { status: 400 }
@@ -31,6 +43,17 @@ export async function POST(request: Request) {
     }
 
     try {
+      // Debug log before creation
+      console.log('Creating novel with data:', {
+        title,
+        author,
+        description: description.substring(0, 50) + '...',
+        genres,
+        status,
+        coverImage,
+        contentUrl,
+      });
+
       // Create the novel in database
       const novel = await Novel.create({
         title,
@@ -45,6 +68,28 @@ export async function POST(request: Request) {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
+
+      // Debug log after creation
+      console.log('Created novel:', {
+        id: novel._id,
+        title: novel.title,
+        contentUrl: novel.contentUrl,
+      });
+
+      // Process the content into chapters
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const processResponse = await fetch(`${baseUrl}/api/novels/${novel._id}/process-content`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ contentUrl }),
+      });
+
+      if (!processResponse.ok) {
+        // If processing fails, we should still return success but with a warning
+        console.error('Failed to process content:', await processResponse.json());
+      }
 
       return NextResponse.json(
         {
