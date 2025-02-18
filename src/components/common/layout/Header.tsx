@@ -288,7 +288,10 @@ export default function Header() {
                     <span>Cài đặt</span>
                   </Link>
                   <button 
-                    onClick={() => signOut()}
+                    onClick={() => signOut({
+                      callbackUrl: '/signin',
+                      redirect: true
+                    })}
                     className="w-full flex items-center gap-2 px-4 py-2 text-red-500
                       hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
                   >
@@ -298,7 +301,7 @@ export default function Header() {
               </div>
             ) : (
               <Link
-                href="/auth/signin"
+                href="/signin"
                 className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-purple-600
                   text-white font-medium hover:from-purple-600 hover:to-blue-600
                   transition-all duration-300 shadow-lg shadow-blue-500/20 hover:shadow-purple-500/20"

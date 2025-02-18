@@ -2,16 +2,13 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Novel from '@/models/Novel';
 
-interface Params {
-  params: {
-    id: string;
-  };
-}
-
-export async function GET(request: Request, { params }: Params) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await connectDB();
-    const novel = await Novel.findById(params.id);
+    const novel = await Novel.findById((await params).id);
     
     if (!novel) {
       return NextResponse.json(
@@ -32,13 +29,16 @@ export async function GET(request: Request, { params }: Params) {
   }
 }
 
-export async function PATCH(request: Request, { params }: Params) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await connectDB();
     const data = await request.json();
     
     const novel = await Novel.findByIdAndUpdate(
-      params.id,
+      (await params).id,
       { ...data, updatedAt: new Date() },
       { new: true, runValidators: true }
     );
@@ -62,10 +62,13 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 }
 
-export async function DELETE(request: Request, { params }: Params) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await connectDB();
-    const novel = await Novel.findByIdAndDelete(params.id);
+    const novel = await Novel.findByIdAndDelete((await params).id);
     
     if (!novel) {
       return NextResponse.json(
