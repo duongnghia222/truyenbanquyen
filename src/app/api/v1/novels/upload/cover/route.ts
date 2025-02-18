@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION!,
@@ -23,17 +22,17 @@ export async function POST(request: Request) {
     }
 
     // Validate file type
-    if (file.type !== 'text/plain') {
+    if (!file.type.startsWith('image/')) {
       return NextResponse.json(
-        { error: 'Chỉ chấp nhận file .txt' },
+        { error: 'Chỉ chấp nhận file ảnh' },
         { status: 400 }
       );
     }
 
-    // Validate file size (10MB)
-    if (file.size > 10 * 1024 * 1024) {
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
       return NextResponse.json(
-        { error: 'Kích thước file phải nhỏ hơn 10MB' },
+        { error: 'Kích thước file phải nhỏ hơn 5MB' },
         { status: 400 }
       );
     }
@@ -43,14 +42,14 @@ export async function POST(request: Request) {
 
     // Generate a unique filename
     const timestamp = Date.now();
-    const uniqueFilename = `novels/${timestamp}-${file.name}`;
+    const uniqueFilename = `covers/${timestamp}-${file.name}`;
 
     // Upload to S3
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_S3_BUCKET_NAME!,
       Key: uniqueFilename,
       Body: buffer,
-      ContentType: 'text/plain',
+      ContentType: file.type,
     });
 
     await s3Client.send(command);

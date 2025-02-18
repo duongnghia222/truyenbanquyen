@@ -115,7 +115,7 @@ export default function UploadNovelForm() {
       const imageFormData = new FormData();
       imageFormData.append('file', coverImage);
 
-      const uploadResponse = await fetch('/api/upload/s3', {
+      const uploadResponse = await fetch('/api/v1/novels/upload/cover', {
         method: 'POST',
         body: imageFormData,
       });
@@ -130,7 +130,7 @@ export default function UploadNovelForm() {
       const contentFormData = new FormData();
       contentFormData.append('file', novelContent);
 
-      const contentUploadResponse = await fetch('/api/upload/novel', {
+      const contentUploadResponse = await fetch('/api/v1/novels/upload/content', {
         method: 'POST',
         body: contentFormData,
       });
@@ -150,13 +150,13 @@ export default function UploadNovelForm() {
         description: formData.description,
         status: formData.status,
         genres: formData.genres,
-        coverImage: uploadData.imageUrl,
+        coverImage: uploadData.fileUrl,
         contentUrl: contentUploadData.fileUrl
       };
 
       console.log('Submitting novel data:', novelData);
 
-      const response = await fetch('/api/novels/upload', {
+      const response = await fetch('/api/v1/novels/upload', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

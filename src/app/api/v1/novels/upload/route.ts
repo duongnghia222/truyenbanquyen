@@ -78,7 +78,7 @@ export async function POST(request: Request) {
 
       // Process the content into chapters
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-      const processResponse = await fetch(`${baseUrl}/api/novels/${novel._id}/process-content`, {
+      const processResponse = await fetch(`${baseUrl}/api/v1/novels/${novel._id}/process-content`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +114,6 @@ export async function POST(request: Request) {
   }
 }
 
-// Remove the bodyParser config since we're handling JSON
 export const config = {
   api: {
     bodyParser: true

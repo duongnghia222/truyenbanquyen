@@ -82,7 +82,7 @@ export default function Header() {
     const fetchBookmarkCount = async () => {
       if (session?.user) {
         try {
-          const response = await fetch('/api/bookmarks/count')
+          const response = await fetch('/api/v1/bookmarks/count')
           const data = await response.json()
           setBookmarkCount(data.count)
         } catch (error) {
