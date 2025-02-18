@@ -128,37 +128,37 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
   const { novel, chapter, prevChapter, nextChapter } = data;
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-100 dark:bg-gray-950">
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-6">
+        <div className="max-w-4xl mx-auto bg-white dark:bg-gray-900 rounded-lg shadow-sm dark:shadow-gray-800/20 p-6">
           {/* Breadcrumb */}
           <nav className="mb-8">
-            <ol className="flex items-center space-x-2 text-sm text-gray-600">
+            <ol className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
               <li>
-                <Link href="/" className="hover:text-blue-600">
+                <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-300">
                   Trang chủ
                 </Link>
               </li>
               <li>
-                <span className="mx-2">/</span>
+                <span className="mx-2 dark:text-gray-500">/</span>
               </li>
               <li>
-                <Link href={`/novels/${novel._id}`} className="hover:text-blue-600">
+                <Link href={`/novels/${novel._id}`} className="hover:text-blue-600 dark:hover:text-blue-300">
                   {novel.title}
                 </Link>
               </li>
               <li>
-                <span className="mx-2">/</span>
+                <span className="mx-2 dark:text-gray-500">/</span>
               </li>
               <li>
-                <Link href={`/novels/${novel._id}/chapters`} className="hover:text-blue-600">
+                <Link href={`/novels/${novel._id}/chapters`} className="hover:text-blue-600 dark:hover:text-blue-300">
                   Danh sách chương
                 </Link>
               </li>
               <li>
-                <span className="mx-2">/</span>
+                <span className="mx-2 dark:text-gray-500">/</span>
               </li>
-              <li className="text-gray-900 font-medium">
+              <li className="text-gray-900 dark:text-gray-200 font-medium">
                 Chương {chapter.chapterNumber}
               </li>
             </ol>
@@ -166,10 +166,10 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
 
           {/* Chapter Info */}
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">
               Chương {chapter.chapterNumber}: {chapter.title}
             </h1>
-            <p className="mt-2 text-gray-600">
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
               {novel.title} - {novel.author}
             </p>
           </div>
@@ -179,19 +179,19 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
             {prevChapter ? (
               <Link
                 href={`/novels/${novel._id}/chapters/${prevChapter.chapterNumber}`}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 ← Chương trước
               </Link>
             ) : (
-              <div className="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed">
+              <div className="px-4 py-2 text-sm font-medium text-gray-400 dark:text-gray-600 bg-gray-100 dark:bg-gray-800 rounded-lg cursor-not-allowed">
                 ← Chương trước
               </div>
             )}
             
             <Link
               href={`/novels/${novel._id}/chapters`}
-              className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+              className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 transition-colors"
             >
               Mục lục
             </Link>
@@ -199,42 +199,48 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
             {nextChapter ? (
               <Link
                 href={`/novels/${novel._id}/chapters/${nextChapter.chapterNumber}`}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 Chương sau →
               </Link>
             ) : (
-              <div className="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed">
+              <div className="px-4 py-2 text-sm font-medium text-gray-400 dark:text-gray-600 bg-gray-100 dark:bg-gray-800 rounded-lg cursor-not-allowed">
                 Chương sau →
               </div>
             )}
           </div>
 
           {/* Chapter Content */}
-          <div className="prose prose-lg max-w-none">
-            <div className="whitespace-pre-line leading-relaxed text-gray-800">
-              {chapter.content}
+          <article className="prose prose-lg max-w-none mx-auto">
+            <div className="whitespace-pre-line text-[19px] leading-[1.8] tracking-wide font-normal text-gray-900 dark:text-gray-100 antialiased">
+              {chapter.content?.split('\n').map((paragraph: string, index: number) => (
+                paragraph.trim() && (
+                  <p key={index} className="mb-7 max-w-[70ch] mx-auto">
+                    {paragraph}
+                  </p>
+                )
+              ))}
             </div>
-          </div>
+          </article>
 
           {/* Bottom Navigation */}
           <div className="flex items-center justify-between mt-8">
             {prevChapter ? (
               <Link
                 href={`/novels/${novel._id}/chapters/${prevChapter.chapterNumber}`}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 ← Chương trước
               </Link>
             ) : (
-              <div className="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed">
+              <div className="px-4 py-2 text-sm font-medium text-gray-400 dark:text-gray-600 bg-gray-100 dark:bg-gray-800 rounded-lg cursor-not-allowed">
                 ← Chương trước
               </div>
             )}
             
             <Link
               href={`/novels/${novel._id}/chapters`}
-              className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+              className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 transition-colors"
             >
               Mục lục
             </Link>
@@ -242,12 +248,12 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
             {nextChapter ? (
               <Link
                 href={`/novels/${novel._id}/chapters/${nextChapter.chapterNumber}`}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 Chương sau →
               </Link>
             ) : (
-              <div className="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed">
+              <div className="px-4 py-2 text-sm font-medium text-gray-400 dark:text-gray-600 bg-gray-100 dark:bg-gray-800 rounded-lg cursor-not-allowed">
                 Chương sau →
               </div>
             )}

@@ -9,6 +9,14 @@ interface ChaptersPageProps {
   params: Promise<{ id: string }>;
 }
 
+interface ChapterType {
+  _id: string;
+  chapterNumber: number;
+  title: string;
+  views: number;
+  createdAt: string;
+}
+
 async function getNovelAndChapters(params: Promise<{ id: string }>) {
   const { id } = await params;
   try {
@@ -112,7 +120,7 @@ export default async function ChaptersPage({ params }: ChaptersPageProps) {
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
-              {chapters.map((chapter) => (
+              {chapters.map((chapter: ChapterType) => (
                 <Link
                   key={chapter._id}
                   href={`/novels/${novel._id}/chapters/${chapter.chapterNumber}`}
