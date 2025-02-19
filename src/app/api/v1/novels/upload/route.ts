@@ -73,19 +73,43 @@ export async function POST(request: Request) {
       });
 
       if (!processResponse.ok) {
-        // If processing fails, we should still return success but with a warning
-        const errorText = await processResponse.text();
+        const errorData = await processResponse.json().catch(() => null);
+        const errorMessage = errorData?.error || processResponse.statusText;
+        
+        if (processResponse.status === 504) {
+          return NextResponse.json(
+            { 
+              message: 'Truyện đã được tải lên, nhưng xử lý nội dung bị timeout. Vui lòng thử lại sau.',
+              novel,
+              error: errorMessage
+            },
+            { status: 202 }  // Accepted but processing incomplete
+          );
+        }
+
         console.error('Failed to process content:', {
           status: processResponse.status,
           statusText: processResponse.statusText,
-          error: errorText
+          error: errorMessage
         });
+
+        return NextResponse.json(
+          { 
+            message: 'Truyện đã được tải lên, nhưng xử lý nội dung thất bại.',
+            novel,
+            error: errorMessage
+          },
+          { status: 202 }
+        );
       }
+
+      const processResult = await processResponse.json();
 
       return NextResponse.json(
         {
-          message: 'Đăng tải truyện thành công',
-          novel
+          message: 'Đăng tải và xử lý truyện thành công',
+          novel,
+          processResult
         },
         { status: 201 }
       );
