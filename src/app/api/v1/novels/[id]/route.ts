@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import Novel from '@/models/Novel';
 
 type RouteParams = {
-  params: Promise<{ id: string }> | { id: string }
+  params: Promise<{ id: string }>
 };
 
 const handleError = (error: unknown, operation: string) => {
