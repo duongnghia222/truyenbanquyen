@@ -20,12 +20,15 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     // Set a timeout for the fetch request
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // Increased to 120 seconds
 
     try {
       // Fetch the content
       const response = await fetch(contentUrl, {
-        signal: controller.signal
+        signal: controller.signal,
+        headers: {
+          'Accept': 'text/plain,text/html,application/xhtml+xml,application/xml;q=0.9',
+        }
       });
 
       clearTimeout(timeoutId);
@@ -36,21 +39,27 @@ export async function POST(request: Request, { params }: RouteParams) {
 
       const content = await response.text();
 
-      // Simple chapter splitting logic (you can enhance this based on your needs)
-      const chapters = content
+      // Process content in chunks to avoid memory issues
+      const chapters = [];
+      const rawChapters = content
         .split(/Chapter \d+/i)
-        .filter(text => text.trim().length > 0)
-        .map((text, index) => ({
+        .filter(text => text.trim().length > 0);
+
+      // Process chapters in batches of 10
+      for (let i = 0; i < rawChapters.length; i += 10) {
+        const batch = rawChapters.slice(i, i + 10).map((text, index) => ({
           novelId: id,
-          title: `Chapter ${index + 1}`,
+          title: `Chapter ${i + index + 1}`,
           content: text.trim(),
-          chapterNumber: index + 1,
+          chapterNumber: i + index + 1,
           createdAt: new Date(),
           updatedAt: new Date()
         }));
 
-      // Save chapters to database
-      await Chapter.insertMany(chapters);
+        // Save batch to database
+        await Chapter.insertMany(batch);
+        chapters.push(...batch);
+      }
 
       // Update novel with chapter count
       await Novel.findByIdAndUpdate(id, {
