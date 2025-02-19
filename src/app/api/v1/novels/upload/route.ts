@@ -1,23 +1,9 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
 import Novel from '@/models/Novel';
 import process from 'process';
 
 export async function POST(request: Request) {
   try {
-    // Try to connect to MongoDB first
-    try {
-      await connectDB();
-    } catch (error) {
-      console.error('MongoDB connection error:', error);
-      return NextResponse.json(
-        { 
-          error: 'Không thể kết nối đến cơ sở dữ liệu. Vui lòng thử lại sau hoặc liên hệ admin.' 
-        },
-        { status: 500 }
-      );
-    }
-
     const body = await request.json();
     
     // Extract novel data
@@ -88,7 +74,12 @@ export async function POST(request: Request) {
 
       if (!processResponse.ok) {
         // If processing fails, we should still return success but with a warning
-        console.error('Failed to process content:', await processResponse.json());
+        const errorText = await processResponse.text();
+        console.error('Failed to process content:', {
+          status: processResponse.status,
+          statusText: processResponse.statusText,
+          error: errorText
+        });
       }
 
       return NextResponse.json(

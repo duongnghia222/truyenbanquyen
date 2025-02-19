@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import LayoutContent from "./LayoutContent";
+import { initDatabase } from "@/lib/db";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,6 +18,9 @@ export const metadata: Metadata = {
   title: "TruyenBanQuyen - Đọc Truyện Online",
   description: "Đọc truyện online, truyện hay, truyện chữ.",
 };
+
+// Initialize database connection
+initDatabase().catch(console.error);
 
 export default function RootLayout({
   children,

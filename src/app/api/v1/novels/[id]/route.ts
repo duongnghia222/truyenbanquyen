@@ -1,93 +1,66 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
 import Novel from '@/models/Novel';
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    await connectDB();
-    const novel = await Novel.findById((await params).id);
-    
-    if (!novel) {
-      return NextResponse.json(
-        { error: 'Novel not found' },
-        { status: 404 }
-      );
-    }
+type RouteParams = {
+  params: Promise<{ id: string }> | { id: string }
+};
 
+const handleError = (error: unknown, operation: string) => {
+  if (error instanceof Error) {
+    console.error(`Failed to ${operation} novel:`, error.message);
+  }
+  return NextResponse.json(
+    { error: `Failed to ${operation} novel` },
+    { status: 500 }
+  );
+};
+
+const handleNotFound = () => {
+  return NextResponse.json(
+    { error: 'Novel not found' },
+    { status: 404 }
+  );
+};
+
+export async function GET(request: Request, { params }: RouteParams) {
+  const { id } = await params;
+  try {
+    const novel = await Novel.findById(id);
+    if (!novel) return handleNotFound();
     return NextResponse.json(novel);
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error('Failed to fetch novel:', error.message);
-    }
-    return NextResponse.json(
-      { error: 'Failed to fetch novel' },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleError(error, 'fetch');
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: Request, { params }: RouteParams) {
+  const { id } = await params;
   try {
-    await connectDB();
     const data = await request.json();
-    
     const novel = await Novel.findByIdAndUpdate(
-      (await params).id,
+      id,
       { ...data, updatedAt: new Date() },
       { new: true, runValidators: true }
     );
-
-    if (!novel) {
-      return NextResponse.json(
-        { error: 'Novel not found' },
-        { status: 404 }
-      );
-    }
-
+    
+    if (!novel) return handleNotFound();
     return NextResponse.json(novel);
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error('Failed to update novel:', error.message);
-    }
-    return NextResponse.json(
-      { error: 'Failed to update novel' },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleError(error, 'update');
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: Request, { params }: RouteParams) {
+  const { id } = await params;
   try {
-    await connectDB();
-    const novel = await Novel.findByIdAndDelete((await params).id);
+    const novel = await Novel.findByIdAndDelete(id);
+    if (!novel) return handleNotFound();
     
-    if (!novel) {
-      return NextResponse.json(
-        { error: 'Novel not found' },
-        { status: 404 }
-      );
-    }
-
     return NextResponse.json(
       { message: 'Novel deleted successfully' },
       { status: 200 }
     );
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error('Failed to delete novel:', error.message);
-    }
-    return NextResponse.json(
-      { error: 'Failed to delete novel' },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleError(error, 'delete');
   }
 } 

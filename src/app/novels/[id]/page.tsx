@@ -3,7 +3,22 @@ import { notFound } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 
-async function getNovel(id: string) {
+interface Novel {
+  _id: string;
+  title: string;
+  author: string;
+  description: string;
+  coverImage: string;
+  genres: string[];
+  status: 'ongoing' | 'completed' | 'hiatus';
+  views: number;
+  rating: number;
+  chapterCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+async function getNovel(id: string): Promise<Novel> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const res = await fetch(`${baseUrl}/api/v1/novels/${id}`, {
     cache: 'no-store' // Disable cache to always get fresh data
@@ -17,8 +32,13 @@ async function getNovel(id: string) {
   return res.json();
 }
 
-export default async function NovelDetailPage({ params }: { params: { id: string } }) {
-  const novel = await getNovel(params.id);
+export default async function NovelDetailPage({ 
+  params 
+}: { 
+  params: Promise<{ id: string }> | { id: string }
+}) {
+  const { id } = await params;
+  const novel = await getNovel(id);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -80,6 +100,11 @@ export default async function NovelDetailPage({ params }: { params: { id: string
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600">{novel.chapterCount} chương</span>
                 </div>
+                {novel.rating > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600">{novel.rating.toFixed(1)} / 5 ⭐</span>
+                  </div>
+                )}
               </div>
 
               {/* Genres */}
@@ -100,15 +125,6 @@ export default async function NovelDetailPage({ params }: { params: { id: string
                 <p className="mt-2 whitespace-pre-line text-gray-600">{novel.description}</p>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Chapters Section - Placeholder for now */}
-        <div className="mt-8 rounded-lg bg-white p-6 shadow-lg">
-          <h2 className="text-2xl font-bold text-gray-900">Danh sách chương</h2>
-          <div className="mt-4">
-            {/* We'll implement the chapters list in the next iteration */}
-            <p className="text-gray-600">Danh sách chương sẽ được hiển thị ở đây...</p>
           </div>
         </div>
       </div>

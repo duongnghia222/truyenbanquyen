@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { PublishNovelCTA } from '@/components/features/novels/PublishNovelCTA'
-import { NovelCard } from '@/components/novels/NovelCard'
+import { NovelCard } from '@/components/features/novels/NovelCard'
 import connectDB from '@/lib/mongodb'
 import Novel from '@/models/Novel'
 
@@ -12,7 +12,7 @@ interface NovelType {
   description: string
   coverImage: string
   genres: string[]
-  status: string
+  status: 'ongoing' | 'completed' | 'hiatus'
   rating: number
   views: number
   createdAt: string
