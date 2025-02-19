@@ -20,9 +20,14 @@ export async function GET() {
     return NextResponse.json({ count: bookmarkCount });
   } catch (error) {
     console.error('Failed to fetch bookmark count:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch bookmark count' },
-      { status: 500 }
+    return new NextResponse(
+      JSON.stringify({ error: 'Failed to fetch bookmark count' }),
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
     );
   }
 } 
