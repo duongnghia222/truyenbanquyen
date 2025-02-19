@@ -35,7 +35,7 @@ async function getNovel(id: string): Promise<Novel> {
 export default async function NovelDetailPage({ 
   params 
 }: { 
-  params: Promise<{ id: string }> | { id: string }
+  params: Promise<{ id: string }>
 }) {
   const { id } = await params;
   const novel = await getNovel(id);
