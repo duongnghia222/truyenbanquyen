@@ -15,7 +15,7 @@ const chapterSchema = new Schema({
     required: true,
     trim: true,
   },
-  content: {
+  contentUrl: {
     type: String,
     required: true,
   },
@@ -36,4 +36,9 @@ const chapterSchema = new Schema({
 // Compound index to ensure chapter numbers are unique per novel
 chapterSchema.index({ novelId: 1, chapterNumber: 1 }, { unique: true });
 
-export default mongoose.models.Chapter || mongoose.model('Chapter', chapterSchema); 
+// Delete existing model to prevent OverwriteModelError
+if (mongoose.models.Chapter) {
+  delete mongoose.models.Chapter;
+}
+
+export default mongoose.model('Chapter', chapterSchema); 

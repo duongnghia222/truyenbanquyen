@@ -1,7 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['duongnghia222.s3.ap-southeast-2.amazonaws.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'duongnghia222.s3.ap-southeast-2.amazonaws.com',
+      },
+    ],
   },
 }
 

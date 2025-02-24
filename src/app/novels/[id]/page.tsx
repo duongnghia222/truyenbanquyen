@@ -39,6 +39,7 @@ export default async function NovelDetailPage({
 }) {
   const { id } = await params;
   const novel = await getNovel(id);
+  console.log(novel);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -123,6 +124,16 @@ export default async function NovelDetailPage({
               <div className="mt-6">
                 <h2 className="text-xl font-semibold text-gray-900">Giới thiệu truyện</h2>
                 <p className="mt-2 whitespace-pre-line text-gray-600">{novel.description}</p>
+              </div>
+
+              {/* Read Button */}
+              <div className="mt-8">
+                <Link
+                  href={`/novels/${novel._id}/chapters`}
+                  className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Đọc Truyện
+                </Link>
               </div>
             </div>
           </div>
