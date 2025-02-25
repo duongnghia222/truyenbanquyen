@@ -35,14 +35,23 @@ export default async function UploadChapterPage({
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        {/* Back Button */}
-        <Link 
-          href={`/novels/${id}/chapters`}
-          className="mb-6 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-gray-600 shadow-sm hover:bg-gray-50"
-        >
-          <ChevronLeft size={20} />
-          <span>Back to Chapters</span>
-        </Link>
+        {/* Navigation */}
+        <div className="mb-6 flex items-center justify-between">
+          <Link 
+            href={`/novels/${id}/chapters`}
+            className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-gray-600 shadow-sm hover:bg-gray-50"
+          >
+            <ChevronLeft size={20} />
+            <span>Quay lại danh sách chương</span>
+          </Link>
+          
+          <Link 
+            href={`/novels/${id}`}
+            className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-gray-600 shadow-sm hover:bg-gray-50"
+          >
+            Xem trang truyện
+          </Link>
+        </div>
 
         {/* Upload Form */}
         <div className="rounded-lg bg-white p-6 shadow-xl">
@@ -51,11 +60,21 @@ export default async function UploadChapterPage({
               Đăng tải chương mới
             </h1>
             <p className="mt-2 text-gray-600">
-              Đang đăng tải chương mới cho truyện: {novel.title}
+              Đang đăng tải chương mới cho truyện: <span className="font-semibold">{novel.title}</span>
             </p>
-            <p className="text-sm text-gray-500">
-              Tác giả: {novel.author} | Số chương hiện tại: {novel.chapterCount}
-            </p>
+            <div className="mt-1 text-sm text-gray-500 flex gap-4">
+              <span>Tác giả: {novel.author}</span>
+              <span>Số chương hiện tại: {novel.chapterCount}</span>
+            </div>
+          </div>
+
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg text-sm text-blue-700">
+            <p className="font-medium mb-2">Hướng dẫn đăng tải chương:</p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li>Mỗi chương cần được tải lên riêng với file .txt</li>
+              <li>Đảm bảo đánh số chương chính xác và liên tục</li>
+              <li>Kích thước file không vượt quá 1MB</li>
+            </ul>
           </div>
 
           <UploadChapterForm novelId={novel._id} />

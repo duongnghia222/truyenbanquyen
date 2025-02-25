@@ -25,8 +25,6 @@ export default function UploadNovelForm() {
   });
 
   const [coverImage, setCoverImage] = useState<File | null>(null);
-  const [novelContent, setNovelContent] = useState<File | null>(null);
-  const [contentFileName, setContentFileName] = useState<string>('');
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -72,27 +70,6 @@ export default function UploadNovelForm() {
     reader.readAsDataURL(file);
   };
 
-  const handleNovelContentChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (file.type !== 'text/plain') {
-      setError('Vui lòng tải lên file định dạng .txt');
-      return;
-    }
-
-    // Validate file size (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setError('Kích thước file phải nhỏ hơn 10MB');
-      return;
-    }
-
-    setNovelContent(file);
-    setContentFileName(file.name);
-    setError(null);
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -101,10 +78,6 @@ export default function UploadNovelForm() {
     try {
       if (!coverImage) {
         throw new Error('Vui lòng chọn ảnh bìa');
-      }
-
-      if (!novelContent) {
-        throw new Error('Vui lòng tải lên nội dung truyện');
       }
 
       if (formData.genres.length === 0) {
@@ -126,36 +99,17 @@ export default function UploadNovelForm() {
         throw new Error(uploadData.error || 'Không thể tải lên ảnh bìa');
       }
 
-      // Upload the novel content
-      const contentFormData = new FormData();
-      contentFormData.append('file', novelContent);
-
-      const contentUploadResponse = await fetch('/api/v1/novels/upload/content', {
-        method: 'POST',
-        body: contentFormData,
-      });
-
-      const contentUploadData = await contentUploadResponse.json();
-
-      if (!contentUploadResponse.ok) {
-        throw new Error(contentUploadData.error || 'Không thể tải lên nội dung truyện');
-      }
-
-      console.log('Content upload response:', contentUploadData);
-
-      // Then submit the novel data with both URLs
+      // Then submit the novel data with cover image URL only
       const novelData = {
         title: formData.title,
         author: formData.author,
         description: formData.description,
         status: formData.status,
         genres: formData.genres,
-        coverImage: uploadData.fileUrl,
-        contentUrl: contentUploadData.fileUrl
+        coverImage: uploadData.fileUrl
       };
 
-      console.log('Submitting novel data:', novelData);
-
+      // Submit novel data
       const response = await fetch('/api/v1/novels/upload', {
         method: 'POST',
         headers: {
@@ -170,9 +124,8 @@ export default function UploadNovelForm() {
         throw new Error(data.error || 'Không thể đăng tải truyện');
       }
 
-      // Redirect to home page
-      router.push('/');
-      router.refresh();
+      // Redirect to novel chapters page for uploading chapters
+      router.push(`/novels/${data._id}/upload`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể đăng tải truyện');
     } finally {
@@ -330,40 +283,6 @@ export default function UploadNovelForm() {
                   />
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Novel Content Upload */}
-          <div>
-            <label className="block text-base font-semibold text-gray-800 dark:text-gray-100 mb-3">
-              Nội Dung Truyện <span className="text-red-500">*</span>
-            </label>
-            <div className="flex flex-col space-y-3">
-              <div className="relative">
-                <input
-                  type="file"
-                  accept=".txt"
-                  onChange={handleNovelContentChange}
-                  className="block w-full text-sm text-gray-700 dark:text-gray-300
-                    file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0
-                    file:text-sm file:font-medium 
-                    file:bg-blue-50 dark:file:bg-blue-900/30
-                    file:text-blue-700 dark:file:text-blue-300
-                    hover:file:bg-blue-100 dark:hover:file:bg-blue-900/40
-                    file:transition-all file:duration-200"
-                />
-              </div>
-              {contentFileName && (
-                <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{contentFileName}</span>
-                </div>
-              )}
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Chỉ chấp nhận file .txt. Tối đa 10MB.
-              </p>
             </div>
           </div>
 

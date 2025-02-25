@@ -19,10 +19,6 @@ const novelSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  contentUrl: {
-    type: String,
-    required: true,
-  },
   genres: [{
     type: String,
     required: true,

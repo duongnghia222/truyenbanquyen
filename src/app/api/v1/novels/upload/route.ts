@@ -1,26 +1,24 @@
 import { NextResponse } from 'next/server';
 import Novel from '@/models/Novel';
-import process from 'process';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     
     // Extract novel data
-    const { title, author, description, genres, status = 'ongoing', coverImage, contentUrl } = body;
+    const { title, author, description, genres, status = 'ongoing', coverImage } = body;
 
     // Debug log
-    console.log('Received data:', { title, author, contentUrl });
+    console.log('Received data:', { title, author });
 
     // Validate required fields
-    if (!title || !author || !description || !genres || !coverImage || !contentUrl) {
+    if (!title || !author || !description || !genres || !coverImage) {
       console.log('Missing fields:', { 
         hasTitle: !!title, 
         hasAuthor: !!author, 
         hasDescription: !!description, 
         hasGenres: !!genres, 
-        hasCoverImage: !!coverImage, 
-        hasContentUrl: !!contentUrl 
+        hasCoverImage: !!coverImage
       });
       return NextResponse.json(
         { error: 'Thiếu thông tin bắt buộc' },
@@ -36,8 +34,7 @@ export async function POST(request: Request) {
         description: description.substring(0, 50) + '...',
         genres,
         status,
-        coverImage,
-        contentUrl,
+        coverImage
       });
 
       // Create the novel in database
@@ -48,9 +45,9 @@ export async function POST(request: Request) {
         genres,
         status,
         coverImage,
-        contentUrl,
         rating: 0,
         views: 0,
+        chapterCount: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -58,72 +55,25 @@ export async function POST(request: Request) {
       // Debug log after creation
       console.log('Created novel:', {
         id: novel._id,
-        title: novel.title,
-        contentUrl: novel.contentUrl,
+        title: novel.title
       });
 
-      // Process the content into chapters
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-      const processResponse = await fetch(`${baseUrl}/api/v1/novels/${novel._id}/process-content`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ contentUrl }),
-      });
-
-      if (!processResponse.ok) {
-        const errorData = await processResponse.json().catch(() => null);
-        const errorMessage = errorData?.error || processResponse.statusText;
-        
-        if (processResponse.status === 504) {
-          return NextResponse.json(
-            { 
-              message: 'Truyện đã được tải lên, nhưng xử lý nội dung bị timeout. Vui lòng thử lại sau.',
-              novel,
-              error: errorMessage
-            },
-            { status: 202 }  // Accepted but processing incomplete
-          );
-        }
-
-        console.error('Failed to process content:', {
-          status: processResponse.status,
-          statusText: processResponse.statusText,
-          error: errorMessage
-        });
-
+      // Return the created novel
+      return NextResponse.json(novel, { status: 201 });
+    } catch (error: any) {
+      console.error('Error creating novel:', error);
+      if (error.name === 'ValidationError') {
         return NextResponse.json(
-          { 
-            message: 'Truyện đã được tải lên, nhưng xử lý nội dung thất bại.',
-            novel,
-            error: errorMessage
-          },
-          { status: 202 }
+          { error: 'Dữ liệu không hợp lệ', details: error.message },
+          { status: 400 }
         );
       }
-
-      const processResult = await processResponse.json();
-
-      return NextResponse.json(
-        {
-          message: 'Đăng tải và xử lý truyện thành công',
-          novel,
-          processResult
-        },
-        { status: 201 }
-      );
-    } catch (error) {
-      console.error('Database error:', error);
-      return NextResponse.json(
-        { error: 'Không thể lưu thông tin truyện. Vui lòng thử lại.' },
-        { status: 500 }
-      );
+      throw error;
     }
   } catch (error) {
-    console.error('Unexpected error:', error);
+    console.error('Error in novel upload:', error);
     return NextResponse.json(
-      { error: 'Đã xảy ra lỗi. Vui lòng thử lại sau.' },
+      { error: 'Không thể đăng tải truyện. Vui lòng thử lại.' },
       { status: 500 }
     );
   }
