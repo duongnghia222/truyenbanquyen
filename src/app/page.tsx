@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { PublishNovelCTA } from '@/components/features/novels/PublishNovelCTA'
 import { NovelCard } from '@/components/features/novels/NovelCard'
+import { SlideShowBanner } from '@/components/features/banner/SlideShowBanner'
 import connectDB from '@/lib/mongodb'
 import Novel from '@/models/Novel'
 
@@ -46,7 +47,14 @@ export default async function HomePage() {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <PublishNovelCTA />
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="w-full lg:w-2/3">
+          <SlideShowBanner />
+        </div>
+        <div className="w-full lg:w-1/3">
+          <PublishNovelCTA />
+        </div>
+      </div>
       
       <section className="mt-12">
         <div className="flex items-center justify-between mb-6">
