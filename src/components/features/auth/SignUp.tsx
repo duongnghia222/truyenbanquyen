@@ -3,14 +3,18 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import Link from 'next/link'
 import { FcGoogle } from 'react-icons/fc'
 
-export default function SignIn() {
+export default function SignUp() {
   const router = useRouter()
   const [credentials, setCredentials] = useState({
+    name: '',
     username: '',
-    password: ''
+    email: '',
+    password: '',
+    confirmPassword: ''
   })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -20,16 +24,40 @@ export default function SignIn() {
     setIsLoading(true)
     setError('')
     
+    // Validate passwords match
+    if (credentials.password !== credentials.confirmPassword) {
+      setError('Mật khẩu không khớp, vui lòng kiểm tra lại')
+      setIsLoading(false)
+      return
+    }
+    
     try {
-      const res = await signIn('credentials', {
-        username: credentials.username,
-        password: credentials.password,
-        redirect: false,
+      // Register user via API
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: credentials.name,
+          username: credentials.username,
+          email: credentials.email,
+          password: credentials.password
+        })
       })
 
-      if (res?.error) {
-        setError('Tên đăng nhập hoặc mật khẩu không chính xác')
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.message || 'Đăng ký không thành công, vui lòng thử lại')
       } else {
+        // Sign in the newly created user
+        await signIn('credentials', {
+          username: credentials.username,
+          password: credentials.password,
+          redirect: false,
+        })
+        
         router.push('/')
         router.refresh()
       }
@@ -50,25 +78,22 @@ export default function SignIn() {
       
       <div className="w-full max-w-md space-y-8 relative">
         <div className="flex flex-col items-center">
-          <Link 
-            href="/" 
-            className="group relative mb-4"
-          >
-            <span className="text-2xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent
-              transition-all duration-300 group-hover:from-purple-600 group-hover:to-blue-600"
-            >
-              TruyenBanQuyen
-            </span>
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600
-              transition-all duration-300 group-hover:w-full"></span>
-          </Link>
+          <div className="w-20 h-20 relative mb-4">
+            <Image
+              src="/images/logo.png"
+              alt="Logo"
+              width={80}
+              height={80}
+              className="animate-float"
+            />
+          </div>
           <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Đăng nhập vào tài khoản
+            Đăng ký tài khoản mới
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
             Hoặc{' '}
-            <Link href="/auth/signup" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
-              đăng ký tài khoản mới
+            <Link href="/auth/signin" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
+              đăng nhập nếu đã có tài khoản
             </Link>
           </p>
         </div>
@@ -84,7 +109,7 @@ export default function SignIn() {
               transform hover:scale-[1.02] active:scale-[0.98]"
           >
             <FcGoogle className="w-5 h-5" />
-            <span>Đăng nhập với Google</span>
+            <span>Đăng ký với Google</span>
           </button>
 
           <div className="flex items-center">
@@ -92,9 +117,29 @@ export default function SignIn() {
             <div className="px-3 text-xs text-gray-500 dark:text-gray-400">hoặc</div>
             <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
           </div>
-          
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Họ tên
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  required
+                  className="block w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 
+                    text-gray-900 dark:text-white bg-white dark:bg-gray-700 
+                    placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 
+                    focus:border-transparent transition-all duration-200 ease-in-out
+                    hover:border-blue-300 dark:hover:border-blue-500"
+                  placeholder="Nhập họ tên của bạn"
+                  value={credentials.name}
+                  onChange={(e) => setCredentials(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+              
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Tên đăng nhập
@@ -116,6 +161,26 @@ export default function SignIn() {
               </div>
               
               <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  className="block w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 
+                    text-gray-900 dark:text-white bg-white dark:bg-gray-700 
+                    placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 
+                    focus:border-transparent transition-all duration-200 ease-in-out
+                    hover:border-blue-300 dark:hover:border-blue-500"
+                  placeholder="Nhập email của bạn"
+                  value={credentials.email}
+                  onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
+                />
+              </div>
+              
+              <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Mật khẩu
                 </label>
@@ -132,6 +197,26 @@ export default function SignIn() {
                   placeholder="Nhập mật khẩu của bạn"
                   value={credentials.password}
                   onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Xác nhận mật khẩu
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  className="block w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 
+                    text-gray-900 dark:text-white bg-white dark:bg-gray-700 
+                    placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 
+                    focus:border-transparent transition-all duration-200 ease-in-out
+                    hover:border-blue-300 dark:hover:border-blue-500"
+                  placeholder="Nhập lại mật khẩu của bạn"
+                  value={credentials.confirmPassword}
+                  onChange={(e) => setCredentials(prev => ({ ...prev, confirmPassword: e.target.value }))}
                 />
               </div>
             </div>
@@ -159,20 +244,10 @@ export default function SignIn() {
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 ) : null}
-                {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
               </button>
             </div>
           </form>
-
-          <div className="text-center">
-            <Link 
-              href="/auth/forgot-password"
-              className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 
-                dark:hover:text-blue-300 transition-colors"
-            >
-              Quên mật khẩu?
-            </Link>
-          </div>
         </div>
       </div>
     </div>
