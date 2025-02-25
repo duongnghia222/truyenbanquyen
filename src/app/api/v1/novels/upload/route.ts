@@ -60,9 +60,18 @@ export async function POST(request: Request) {
 
       // Return the created novel
       return NextResponse.json(novel, { status: 201 });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating novel:', error);
-      if (error.name === 'ValidationError') {
+      
+      // Check if error is a ValidationError-like object
+      if (
+        error && 
+        typeof error === 'object' && 
+        'name' in error && 
+        error.name === 'ValidationError' &&
+        'message' in error &&
+        typeof error.message === 'string'
+      ) {
         return NextResponse.json(
           { error: 'Dữ liệu không hợp lệ', details: error.message },
           { status: 400 }

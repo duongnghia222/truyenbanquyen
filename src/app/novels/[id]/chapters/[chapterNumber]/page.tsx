@@ -47,16 +47,6 @@ async function getNovelInfo(novelId: string): Promise<NovelInfo> {
   return res.json();
 }
 
-async function checkChapterExists(novelId: string, chapterNumber: number): Promise<boolean> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const res = await fetch(
-    `${baseUrl}/api/v1/novels/${novelId}/chapters/${chapterNumber}`,
-    { method: 'HEAD', cache: 'no-store' }
-  );
-  
-  return res.ok;
-}
-
 async function getChapterContent(contentUrl: string): Promise<string> {
   const res = await fetch(contentUrl);
   

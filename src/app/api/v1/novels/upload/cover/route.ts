@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getS3Client, uploadToS3 } from '@/lib/s3';
+import { uploadToS3 } from '@/lib/s3';
 
 export async function POST(request: Request) {
   try {
