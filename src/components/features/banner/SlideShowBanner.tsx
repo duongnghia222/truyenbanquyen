@@ -74,16 +74,13 @@ export function SlideShowBanner() {
             <div className="relative w-full h-full">
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent z-10" />
               <div className="w-full h-full relative">
-                {/* Fallback for demo - in production, use real images */}
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600" />
-                {/* Image would be here in production */}
-                {/* <Image
+                <Image
                   src={slide.imageUrl}
                   alt={slide.title}
                   fill
                   className="object-cover"
                   priority={index === 0}
-                /> */}
+                />
               </div>
               <div className="absolute bottom-0 left-0 p-6 z-20 text-white">
                 <h3 className="text-2xl font-bold mb-2">{slide.title}</h3>
