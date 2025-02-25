@@ -18,21 +18,21 @@ const DEMO_SLIDES: BannerSlide[] = [
     imageUrl: '/images/banners/banner1.jpg',
     title: 'Truyện Mới Nhất',
     description: 'Khám phá những tác phẩm mới nhất trên nền tảng',
-    link: '/novels/featured'
+    link: '/novel-list'
   },
   {
     id: 2,
     imageUrl: '/images/banners/banner2.jpg',
     title: 'Đọc Truyện Hot',
     description: 'Những tác phẩm được yêu thích nhất',
-    link: '/novels/trending'
+    link: '/novel-list'
   },
   {
     id: 3,
     imageUrl: '/images/banners/banner3.jpg',
     title: 'Truyện Đặc Sắc',
     description: 'Tuyển chọn những tác phẩm chất lượng cao',
-    link: '/novels/recommended'
+    link: '/novel-list'
   }
 ]
 
