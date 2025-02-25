@@ -6,6 +6,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'duongnghia222.s3.ap-southeast-2.amazonaws.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
     ],
   },
 }

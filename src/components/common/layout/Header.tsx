@@ -11,7 +11,11 @@ import {
   QuestionMarkCircleIcon,
   ChevronDownIcon,
   SunIcon,
-  MoonIcon
+  MoonIcon,
+  Cog6ToothIcon,
+  BookOpenIcon,  
+  ArrowRightOnRectangleIcon,
+  BellIcon
 } from '@heroicons/react/24/outline'
 import { useTheme } from '@/components/providers/ThemeProvider'
 
@@ -235,41 +239,117 @@ export default function Header() {
                     </div>
                   )}
                 </button>
-                <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl
-                  shadow-xl border border-gray-200 dark:border-gray-700 py-2 opacity-0 invisible
+                
+                <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl
+                  shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden opacity-0 invisible
                   group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                    <div className="font-medium text-gray-900 dark:text-white">
-                      {session.user?.name || 'User'}
+                  
+                  {/* Profile header with gradient background */}
+                  <div className="relative">
+                    <div className="h-20 bg-gradient-to-r from-blue-600 to-purple-600"></div>
+                    <div className="absolute left-0 -bottom-12 w-full px-4 flex">
+                      <div className="relative">
+                        {session.user?.image ? (
+                          <Image
+                            src={session.user.image}
+                            alt={session.user.name || 'Profile'}
+                            width={60}
+                            height={60}
+                            className="rounded-full border-4 border-white dark:border-gray-800"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center
+                            border-4 border-white dark:border-gray-800">
+                            <UserIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">
+                  </div>
+                  
+                  {/* User info */}
+                  <div className="pt-14 pb-3 px-4">
+                    <div className="font-bold text-lg text-gray-900 dark:text-white">
+                      {session.user?.name || 'Người dùng'}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
                       {session.user?.email}
                     </div>
                   </div>
-                  <Link 
-                    href="/profile"
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200
-                      hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
-                  >
-                    <span>Trang cá nhân</span>
-                  </Link>
-                  <Link 
-                    href="/profile/settings" 
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200
-                      hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
-                  >
-                    <span>Cài đặt</span>
-                  </Link>
-                  <button 
-                    onClick={() => signOut({
-                      callbackUrl: '/signin',
-                      redirect: true
-                    })}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-red-500
-                      hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
-                  >
-                    <span>Đăng xuất</span>
-                  </button>
+                  
+                  {/* User stats */}
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/70 grid grid-cols-3 gap-1 text-center">
+                    <div className="px-2 py-1.5">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">0</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Đang đọc</div>
+                    </div>
+                    <div className="px-2 py-1.5">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">0</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Đã đọc</div>
+                    </div>
+                    <div className="px-2 py-1.5">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">0</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Yêu thích</div>
+                    </div>
+                  </div>
+                  
+                  {/* Quick actions */}
+                  <div className="py-2">
+                    <Link 
+                      href="/profile"
+                      className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-200
+                        hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                    >
+                      <UserIcon className="w-5 h-5" />
+                      <span>Trang cá nhân</span>
+                    </Link>
+                    <Link 
+                      href="/bookmark" 
+                      className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-200
+                        hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                    >
+                      <BookmarkIcon className="w-5 h-5" />
+                      <span>Truyện đánh dấu</span>
+                    </Link>
+                    <Link 
+                      href="/reading-history" 
+                      className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-200
+                        hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                    >
+                      <BookOpenIcon className="w-5 h-5" />
+                      <span>Lịch sử đọc</span>
+                    </Link>
+                    <Link 
+                      href="/notifications" 
+                      className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-200
+                        hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                    >
+                      <BellIcon className="w-5 h-5" />
+                      <span>Thông báo</span>
+                    </Link>
+                    <Link 
+                      href="/profile/settings" 
+                      className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-200
+                        hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                    >
+                      <Cog6ToothIcon className="w-5 h-5" />
+                      <span>Cài đặt tài khoản</span>
+                    </Link>
+                  </div>
+                  
+                  <div className="border-t border-gray-200 dark:border-gray-700">
+                    <button 
+                      onClick={() => signOut({
+                        callbackUrl: '/signin',
+                        redirect: true
+                      })}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-red-500
+                        hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                    >
+                      <ArrowRightOnRectangleIcon className="w-5 h-5" />
+                      <span>Đăng xuất</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
