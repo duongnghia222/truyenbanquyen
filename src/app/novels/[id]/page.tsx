@@ -57,7 +57,7 @@ export default async function NovelDetailPage({
           <nav className="flex items-center text-sm text-gray-500 dark:text-gray-400">
             <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400">Trang chủ</Link>
             <span className="mx-2">/</span>
-            <Link href="/danh-sach" className="hover:text-blue-600 dark:hover:text-blue-400">Danh sách</Link>
+            <Link href="/novel-list" className="hover:text-blue-600 dark:hover:text-blue-400">Danh sách</Link>
             <span className="mx-2">/</span>
             <span className="text-gray-900 dark:text-white font-medium">{novel.title}</span>
           </nav>

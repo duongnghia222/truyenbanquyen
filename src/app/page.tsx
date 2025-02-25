@@ -60,7 +60,7 @@ export default async function HomePage() {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Truyện Mới Cập Nhật</h2>
           <Link 
-            href="/novels" 
+            href="/novel-list" 
             className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
           >
             Xem tất cả

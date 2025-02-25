@@ -157,7 +157,7 @@ export default function ReadingHistoryPage() {
             Hãy bắt đầu đọc truyện để ghi lại tiến độ của bạn
           </p>
           <Link 
-            href="/danh-sach" 
+            href="/novel-list" 
             className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-purple-600
               text-white font-medium hover:from-purple-600 hover:to-blue-600
               transition-all duration-300 shadow-lg shadow-blue-500/20 hover:shadow-purple-500/20"

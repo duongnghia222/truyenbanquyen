@@ -13,7 +13,7 @@ const mockBookmarks = [
     id: 1,
     title: 'Thiên Đạo Đồ Thư Quán',
     author: 'Hoành Tảo Thiên Nhai',
-    cover: 'https://duongnghia222.s3.ap-southeast-2.amazonaws.com/covers/thien-dao-do-thu-quan.jpg',
+    cover: 'https://duongnghia222.s3.ap-southeast-2.amazonaws.com/covers/banner1.jpg',
     slug: 'thien-dao-do-thu-quan',
     rating: 4.5,
     lastChapter: 56,
@@ -26,7 +26,7 @@ const mockBookmarks = [
     id: 2,
     title: 'Thần Cấp Thăng Cấp Hệ Thống',
     author: 'Tiểu Lý Phi Đao',
-    cover: 'https://duongnghia222.s3.ap-southeast-2.amazonaws.com/covers/than-cap-thang-cap-he-thong.jpg',
+    cover: 'https://duongnghia222.s3.ap-southeast-2.amazonaws.com/covers/banner2.jpg',
     slug: 'than-cap-thang-cap-he-thong',
     rating: 4.2,
     lastChapter: 123,
@@ -39,7 +39,7 @@ const mockBookmarks = [
     id: 3,
     title: 'Đấu Phá Thương Khung',
     author: 'Thiên Tàm Thổ Đậu',
-    cover: 'https://duongnghia222.s3.ap-southeast-2.amazonaws.com/covers/dau-pha-thuong-khung.jpg',
+    cover: 'https://duongnghia222.s3.ap-southeast-2.amazonaws.com/covers/banner3.jpg',
     slug: 'dau-pha-thuong-khung',
     rating: 4.8,
     lastChapter: 234,
@@ -144,7 +144,7 @@ export default function BookmarkPage() {
             Hãy tìm kiếm và đánh dấu truyện bạn muốn đọc sau
           </p>
           <Link 
-            href="/danh-sach" 
+            href="/novel-list" 
             className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-purple-600
               text-white font-medium hover:from-purple-600 hover:to-blue-600
               transition-all duration-300 shadow-lg shadow-blue-500/20 hover:shadow-purple-500/20"

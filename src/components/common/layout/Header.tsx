@@ -156,7 +156,7 @@ export default function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8 ml-12">
             <Link 
-              href="/danh-sach" 
+              href="/novel-list" 
               className="relative group py-2"
             >
               <span className="text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white
@@ -491,7 +491,7 @@ export default function Header() {
           <div className="pt-16 px-6 pb-8 h-full overflow-y-auto">
             <nav className="flex flex-col gap-4">
               <Link 
-                href="/danh-sach" 
+                href="/novel-list" 
                 className="text-lg font-medium text-gray-900 dark:text-white py-3 border-b border-gray-100 dark:border-gray-800
                   flex items-center justify-between"
                 onClick={closeMobileMenu}
