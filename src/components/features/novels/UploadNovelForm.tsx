@@ -135,7 +135,7 @@ export default function UploadNovelForm() {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="p-8 space-y-8">
           {/* Title Input */}
           <div>
@@ -151,7 +151,7 @@ export default function UploadNovelForm() {
               value={formData.title}
               onChange={handleInputChange}
               className="mt-2 block w-full rounded-lg border border-gray-200 dark:border-gray-700 
-                bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white
+                !bg-white !dark:bg-gray-900 !text-gray-900 !dark:text-white
                 px-4 py-3 shadow-sm
                 focus:border-blue-500 dark:focus:border-blue-400 
                 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20
@@ -173,7 +173,7 @@ export default function UploadNovelForm() {
               value={formData.author}
               onChange={handleInputChange}
               className="mt-2 block w-full rounded-lg border border-gray-200 dark:border-gray-700 
-                bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white
+                !bg-white !dark:bg-gray-900 !text-gray-900 !dark:text-white
                 px-4 py-3 shadow-sm
                 focus:border-blue-500 dark:focus:border-blue-400 
                 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20
@@ -195,7 +195,7 @@ export default function UploadNovelForm() {
               onChange={handleInputChange}
               rows={4}
               className="mt-2 block w-full rounded-lg border border-gray-200 dark:border-gray-700 
-                bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white
+                !bg-white !dark:bg-gray-900 !text-gray-900 !dark:text-white
                 px-4 py-3 shadow-sm
                 focus:border-blue-500 dark:focus:border-blue-400 
                 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20
@@ -214,7 +214,7 @@ export default function UploadNovelForm() {
               value={formData.status}
               onChange={handleInputChange}
               className="mt-2 block w-full rounded-lg border border-gray-200 dark:border-gray-700 
-                bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white
+                !bg-white !dark:bg-gray-900 !text-gray-900 !dark:text-white
                 px-4 py-3 shadow-sm
                 focus:border-blue-500 dark:focus:border-blue-400 
                 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20"

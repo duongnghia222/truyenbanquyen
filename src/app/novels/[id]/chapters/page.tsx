@@ -48,16 +48,15 @@ export default async function ChaptersPage({
   const { page: pageStr } = await searchParams;
   const page = pageStr ? parseInt(pageStr) : 1;
   const { chapters, pagination } = await getNovelChapters(id, page);
-  console.log(chapters, pagination);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         {/* Navigation */}
         <div className="mb-6 flex items-center justify-between">
           <Link 
             href={`/novels/${id}`}
-            className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-gray-600 shadow-sm hover:bg-gray-50"
+            className="inline-flex items-center gap-2 rounded-lg bg-white dark:bg-gray-800 px-4 py-2 text-gray-600 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             <ChevronLeft size={20} />
             <span>Back to Novel</span>
@@ -65,31 +64,31 @@ export default async function ChaptersPage({
 
           <Link
             href={`/novels/${id}/upload`}
-            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
           >
             Đăng tải chương mới
           </Link>
         </div>
 
         {/* Chapter List */}
-        <div className="overflow-hidden rounded-lg bg-white shadow">
-          <ul className="divide-y divide-gray-200">
+        <div className="rounded-lg bg-white dark:bg-gray-800 shadow-md overflow-hidden">
+          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {chapters.map((chapter) => (
               <li key={chapter._id}>
                 <Link
                   href={`/novels/${id}/chapters/${chapter.chapterNumber}`}
-                  className="block p-6 hover:bg-gray-50"
+                  className="block p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                         {chapter.title}
                       </h3>
-                      <p className="mt-1 text-sm text-gray-500">
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         {new Date(chapter.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
                       {chapter.views.toLocaleString()} views
                     </div>
                   </div>
@@ -100,29 +99,27 @@ export default async function ChaptersPage({
         </div>
 
         {/* Pagination */}
-        {pagination.totalPages > 1 && (
-          <div className="mt-6 flex justify-center gap-2">
-            {pagination.hasPrevPage && (
-              <Link
-                href={`/novels/${id}/chapters?page=${page - 1}`}
-                className="rounded-lg bg-white px-4 py-2 text-gray-600 shadow-sm hover:bg-gray-50"
-              >
-                Previous
-              </Link>
-            )}
-            <span className="rounded-lg bg-white px-4 py-2 text-gray-600 shadow-sm">
-              Page {pagination.currentPage} of {pagination.totalPages}
-            </span>
-            {pagination.hasNextPage && (
-              <Link
-                href={`/novels/${id}/chapters?page=${page + 1}`}
-                className="rounded-lg bg-white px-4 py-2 text-gray-600 shadow-sm hover:bg-gray-50"
-              >
-                Next
-              </Link>
-            )}
-          </div>
-        )}
+        <div className="mt-6 flex justify-center gap-2">
+          {pagination.hasPrevPage && (
+            <Link
+              href={`/novels/${id}/chapters?page=${page - 1}`}
+              className="rounded-lg bg-white dark:bg-gray-800 px-4 py-2 text-gray-600 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              Previous
+            </Link>
+          )}
+          <span className="rounded-lg bg-white dark:bg-gray-800 px-4 py-2 text-gray-600 dark:text-gray-300 shadow-sm">
+            Page {pagination.currentPage} of {pagination.totalPages}
+          </span>
+          {pagination.hasNextPage && (
+            <Link
+              href={`/novels/${id}/chapters?page=${page + 1}`}
+              className="rounded-lg bg-white dark:bg-gray-800 px-4 py-2 text-gray-600 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              Next
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );

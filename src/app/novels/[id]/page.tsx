@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 
 interface Novel {
@@ -40,103 +39,107 @@ export default async function NovelDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params;
+  
   const novel = await getNovel(id);
-  console.log(novel);
+  
+  // Format date
+  const formattedDate = new Date(novel.createdAt).toLocaleDateString('vi-VN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section with Cover Image */}
-      <div className="relative h-[40vh] w-full">
-        <div className="absolute inset-0">
-          <Image
-            src={novel.coverImage}
-            alt={novel.title}
-            fill
-            className="object-cover brightness-50"
-            priority
-            quality={60}
-            placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQrJyEwSkNOPzU+PTkzO0BIXE5OQjpAMz9RWVNGS1NfVWlYZVpkUVNf/2wBDARVFx4aHx4lHRglQz43Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj7/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-          />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      <div className="container mx-auto px-4">
+        {/* Breadcrumb */}
+        <div className="mb-8">
+          <nav className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+            <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400">Trang chủ</Link>
+            <span className="mx-2">/</span>
+            <Link href="/danh-sach" className="hover:text-blue-600 dark:hover:text-blue-400">Danh sách</Link>
+            <span className="mx-2">/</span>
+            <span className="text-gray-900 dark:text-white font-medium">{novel.title}</span>
+          </nav>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
-        
-        {/* Back Button */}
-        <Link 
-          href="/"
-          className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-white backdrop-blur-sm hover:bg-white/20"
-        >
-          <ChevronLeft size={20} />
-          <span>Back</span>
-        </Link>
-      </div>
 
-      {/* Novel Info Section */}
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="relative -mt-32 rounded-lg bg-white p-6 shadow-xl sm:p-8">
-          <div className="flex flex-col gap-6 sm:flex-row">
-            {/* Cover Image */}
-            <div className="relative aspect-[2/3] w-full max-w-[240px] shrink-0 overflow-hidden rounded-lg shadow-lg">
-              <Image
-                src={novel.coverImage}
-                alt={novel.title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 240px, 240px"
-                quality={75}
-                loading="lazy"
-              />
+        {/* Novel detail */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+          <div className="md:flex">
+            {/* Cover image */}
+            <div className="md:w-1/3 lg:w-1/4 p-6 flex justify-center">
+              <div className="relative w-64 h-96 overflow-hidden rounded-lg shadow-lg">
+                <Image
+                  src={novel.coverImage}
+                  alt={novel.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 300px"
+                  priority
+                />
+              </div>
             </div>
 
-            {/* Novel Details */}
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900">{novel.title}</h1>
-              <p className="mt-2 text-lg text-gray-600">by {novel.author}</p>
+            {/* Novel info */}
+            <div className="md:w-2/3 lg:w-3/4 p-6">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{novel.title}</h1>
               
-              {/* Stats */}
-              <div className="mt-4 flex flex-wrap gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
-                    {novel.status === 'completed' ? 'Hoàn Thành' : 
-                     novel.status === 'ongoing' ? 'Đang Ra' : 'Tạm Dừng'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-600">{novel.views.toLocaleString()} lượt xem</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-600">{novel.chapterCount} chương</span>
-                </div>
-                {novel.rating > 0 && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600">{novel.rating.toFixed(1)} / 5 ⭐</span>
-                  </div>
-                )}
+              <div className="mb-4 flex items-center text-gray-600 dark:text-gray-300">
+                <span className="font-medium">Tác giả:</span>
+                <span className="ml-2">{novel.author}</span>
               </div>
-
-              {/* Genres */}
-              <div className="mt-4 flex flex-wrap gap-2">
-                {novel.genres.map((genre: string) => (
-                  <span
-                    key={genre}
-                    className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600"
-                  >
+              
+              <div className="mb-6 flex flex-wrap gap-2">
+                {novel.genres.map((genre, index) => (
+                  <span key={index} className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm">
                     {genre}
                   </span>
                 ))}
               </div>
-
-              {/* Description */}
-              <div className="mt-6">
-                <h2 className="text-xl font-semibold text-gray-900">Giới thiệu truyện</h2>
-                <p className="mt-2 whitespace-pre-line text-gray-600">{novel.description}</p>
+              
+              <div className="mb-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Trạng thái</div>
+                  <div className="text-gray-900 dark:text-white font-medium">
+                    {novel.status === 'ongoing' && 'Đang Ra'}
+                    {novel.status === 'completed' && 'Hoàn Thành'}
+                    {novel.status === 'hiatus' && 'Tạm Dừng'}
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Số chương</div>
+                  <div className="text-gray-900 dark:text-white font-medium">{novel.chapterCount}</div>
+                </div>
+                
+                <div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Lượt đọc</div>
+                  <div className="text-gray-900 dark:text-white font-medium">{novel.views.toLocaleString()}</div>
+                </div>
+                
+                <div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Đánh giá</div>
+                  <div className="text-gray-900 dark:text-white font-medium">{novel.rating.toFixed(1)}/5</div>
+                </div>
+                
+                <div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Đăng lúc</div>
+                  <div className="text-gray-900 dark:text-white font-medium">{formattedDate}</div>
+                </div>
               </div>
-
+              
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Giới thiệu</h2>
+                <div className="prose prose-gray dark:prose-invert prose-sm">
+                  <p className="text-gray-700 dark:text-gray-300">{novel.description}</p>
+                </div>
+              </div>
+              
               {/* Read Button */}
               <div className="mt-8">
                 <Link
                   href={`/novels/${novel._id}/chapters`}
-                  className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
                 >
                   Đọc Truyện
                 </Link>
