@@ -15,7 +15,9 @@ import {
   Cog6ToothIcon,
   BookOpenIcon,  
   ArrowRightOnRectangleIcon,
-  BellIcon
+  BellIcon,
+  Bars3Icon,
+  XMarkIcon
 } from '@heroicons/react/24/outline'
 import { useTheme } from '@/components/providers/ThemeProvider'
 
@@ -69,6 +71,8 @@ export default function Header() {
   const [showGenres, setShowGenres] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isScrolled, setIsScrolled] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
 
   // Handle scroll effect
@@ -79,6 +83,38 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      const handleClickOutside = (e: MouseEvent) => {
+        const target = e.target as HTMLElement
+        if (!target.closest('#mobile-menu-content') && !target.closest('#menu-toggle')) {
+          setMobileMenuOpen(false)
+        }
+      }
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [mobileMenuOpen])
+
+  // Prevent scrolling when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'auto'
+    }
+    return () => {
+      document.body.style.overflow = 'auto'
+    }
+  }, [mobileMenuOpen])
+
+  // Close the mobile menu and reset genre dropdown when menu is closed
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false)
+    setShowGenres(false)
+  }
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -91,9 +127,9 @@ export default function Header() {
           {/* Logo */}
           <Link 
             href="/" 
-            className="group relative"
+            className="group relative z-10"
           >
-            <span className="text-2xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent
+            <span className="text-xl sm:text-2xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent
               transition-all duration-300 group-hover:from-purple-600 group-hover:to-blue-600"
             >
               TruyenBanQuyen
@@ -102,7 +138,22 @@ export default function Header() {
               transition-all duration-300 group-hover:w-full"></span>
           </Link>
 
-          {/* Navigation */}
+          {/* Mobile menu button */}
+          <button 
+            id="menu-toggle"
+            className="md:hidden p-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 
+              dark:hover:bg-gray-800 rounded-lg transition-colors z-10"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle mobile menu"
+          >
+            {mobileMenuOpen ? (
+              <XMarkIcon className="w-6 h-6" />
+            ) : (
+              <Bars3Icon className="w-6 h-6" />
+            )}
+          </button>
+
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8 ml-12">
             <Link 
               href="/danh-sach" 
@@ -155,8 +206,8 @@ export default function Header() {
             </div>
           </nav>
 
-          {/* Search Bar */}
-          <div className="flex-1 max-w-xl mx-8">
+          {/* Desktop Search Bar */}
+          <div className="hidden md:block flex-1 max-w-xl mx-8">
             <div className="relative group">
               <input
                 type="text"
@@ -184,8 +235,18 @@ export default function Header() {
             </div>
           </div>
 
-          {/* User Actions */}
-          <div className="flex items-center gap-2">
+          {/* Mobile Search Toggle + Theme Toggle + User Actions */}
+          <div className="flex items-center gap-1 sm:gap-2 z-10">
+            {/* Mobile Search Button */}
+            <button
+              className="md:hidden p-2.5 rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 
+                dark:hover:bg-gray-800 transition-colors duration-200"
+              onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+              aria-label="Toggle search"
+            >
+              <MagnifyingGlassIcon className="w-6 h-6" />
+            </button>
+            
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
@@ -195,9 +256,9 @@ export default function Header() {
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {theme === 'dark' ? (
-                <SunIcon className="w-6 h-6" />
+                <SunIcon className="w-5 h-5 sm:w-6 sm:h-6" />
               ) : (
-                <MoonIcon className="w-6 h-6" />
+                <MoonIcon className="w-5 h-5 sm:w-6 sm:h-6" />
               )}
             </button>
 
@@ -207,12 +268,12 @@ export default function Header() {
                 dark:hover:bg-gray-800 hover:text-blue-500 dark:hover:text-blue-400
                 transition-all duration-200 relative group"
             >
-              <BookmarkIcon className="w-6 h-6" />
+              <BookmarkIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             </Link>
             
             <Link 
               href="/help" 
-              className="p-2.5 rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 
+              className="hidden sm:block p-2.5 rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 
                 dark:hover:bg-gray-800 hover:text-purple-500 dark:hover:text-purple-400
                 transition-all duration-200"
             >
@@ -355,13 +416,145 @@ export default function Header() {
             ) : (
               <Link
                 href="/signin"
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-purple-600
-                  text-white font-medium hover:from-purple-600 hover:to-blue-600
+                className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-purple-600
+                  text-white text-sm sm:text-base font-medium hover:from-purple-600 hover:to-blue-600
                   transition-all duration-300 shadow-lg shadow-blue-500/20 hover:shadow-purple-500/20"
               >
                 Đăng Nhập
               </Link>
             )}
+          </div>
+        </div>
+
+        {/* Mobile Search Bar (shows when toggled) */}
+        {mobileSearchOpen && (
+          <div className="md:hidden pt-4 pb-2 animate-fade-in">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Nhập Tên Truyện..."
+                className="w-full px-5 py-2.5 rounded-full bg-gray-50 dark:bg-gray-800 
+                  border-2 border-transparent focus:border-blue-500 dark:focus:border-blue-400
+                  focus:outline-none transition-all duration-200 text-gray-900 dark:text-white
+                  placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                autoFocus
+              />
+              <button className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full
+                text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400 
+                transition-colors duration-200">
+                <MagnifyingGlassIcon className="w-5 h-5" />
+              </button>
+            </div>
+            {searchQuery && (
+              <div className="mt-2 bg-white dark:bg-gray-800 rounded-xl
+                shadow-xl border border-gray-200 dark:border-gray-700 p-4 animate-fade-in-down">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                  Đang tìm kiếm: {searchQuery}...
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Mobile Menu */}
+      <div className={`fixed inset-0 z-40 ${mobileMenuOpen ? 'visible' : 'invisible'}`}>
+        {/* Overlay - clicking this will close the menu */}
+        <div 
+          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
+            mobileMenuOpen ? 'opacity-100' : 'opacity-0'
+          }`}
+          onClick={closeMobileMenu}
+          aria-hidden="true"
+        ></div>
+        
+        {/* Menu Content */}
+        <div 
+          id="mobile-menu-content"
+          className={`absolute top-0 left-0 bottom-0 w-[80%] max-w-sm bg-white dark:bg-gray-900 
+            shadow-xl transform transition-transform duration-300 ease-in-out
+            ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        >
+          {/* Close button */}
+          <button
+            className="absolute top-4 right-4 p-2 rounded-full bg-gray-100 dark:bg-gray-800
+              text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700
+              transition-colors duration-200 z-50"
+            onClick={closeMobileMenu}
+            aria-label="Close menu"
+          >
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+          
+          <div className="pt-16 px-6 pb-8 h-full overflow-y-auto">
+            <nav className="flex flex-col gap-4">
+              <Link 
+                href="/danh-sach" 
+                className="text-lg font-medium text-gray-900 dark:text-white py-3 border-b border-gray-100 dark:border-gray-800
+                  flex items-center justify-between"
+                onClick={closeMobileMenu}
+              >
+                <span>Danh Sách</span>
+              </Link>
+              
+              <div className="py-3 border-b border-gray-100 dark:border-gray-800">
+                <div 
+                  className="text-lg font-medium text-gray-900 dark:text-white 
+                    flex items-center justify-between cursor-pointer"
+                  onClick={() => setShowGenres(!showGenres)}
+                >
+                  <span>Thể Loại</span>
+                  <ChevronDownIcon className={`w-5 h-5 transition-transform duration-200 ${
+                    showGenres ? 'rotate-180' : ''
+                  }`} />
+                </div>
+                
+                {showGenres && (
+                  <div className="mt-4 grid grid-cols-2 gap-y-3 gap-x-2">
+                    {genres.flat().map((genre) => (
+                      <Link
+                        key={genre.slug}
+                        href={`/the-loai/${genre.slug}`}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300
+                          hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
+                        onClick={closeMobileMenu}
+                      >
+                        {genre.icon && (
+                          <span className="text-lg">{genre.icon}</span>
+                        )}
+                        <span>{genre.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              <Link 
+                href="/help" 
+                className="text-lg font-medium text-gray-900 dark:text-white py-3 border-b border-gray-100 dark:border-gray-800
+                  flex items-center gap-3"
+                onClick={closeMobileMenu}
+              >
+                <QuestionMarkCircleIcon className="w-6 h-6" />
+                <span>Trợ Giúp</span>
+              </Link>
+
+              {!session && (
+                <div className="mt-6">
+                  <Link
+                    href="/signin"
+                    className="w-full flex justify-center py-3 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600
+                      text-white font-medium hover:from-purple-600 hover:to-blue-600
+                      transition-all duration-300 shadow-lg"
+                    onClick={closeMobileMenu}
+                  >
+                    Đăng Nhập
+                  </Link>
+                </div>
+              )}
+            </nav>
           </div>
         </div>
       </div>
