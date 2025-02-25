@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import Chapter from '@/models/Chapter';
 import Novel from '@/models/Novel';
 import mongoose from 'mongoose';
+import { initDatabase } from '@/lib/db';
 
 type RouteParams = {
   params: Promise<{ id: string; chapterNumber: string }>
@@ -9,6 +10,9 @@ type RouteParams = {
 
 export async function GET(request: Request, { params }: RouteParams) {
   try {
+    // Ensure database connection is established
+    await initDatabase();
+    
     const { id, chapterNumber } = await params;
     
     // Validate novel ID

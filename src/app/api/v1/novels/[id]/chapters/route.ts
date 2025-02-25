@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import Chapter from '@/models/Chapter';
+import Novel from '@/models/Novel';
+import { initDatabase } from '@/lib/db';
 
 type RouteParams = {
   params: Promise<{ id: string }>
@@ -7,6 +9,9 @@ type RouteParams = {
 
 export async function GET(request: Request, { params }: RouteParams) {
   try {
+    // Ensure database connection is established
+    await initDatabase();
+    
     const { id } = await params;
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -44,6 +49,36 @@ export async function GET(request: Request, { params }: RouteParams) {
     console.error('Failed to fetch chapters:', error);
     return NextResponse.json(
       { error: 'Failed to fetch chapters' },
+      { status: 500 }
+    );
+  }
+}
+
+// If there's a POST method
+export async function POST(request: Request, { params }: RouteParams) {
+  try {
+    // Ensure database connection is established
+    await initDatabase();
+    
+    const { id } = await params;
+    const body = await request.json();
+    
+    // Simple implementation - adjust according to your actual needs
+    const chapter = await Chapter.create({
+      ...body,
+      novelId: id,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    
+    // Update the novel's chapter count
+    await Novel.findByIdAndUpdate(id, { $inc: { chapterCount: 1 } });
+    
+    return NextResponse.json(chapter, { status: 201 });
+  } catch (error) {
+    console.error('Failed to create chapter:', error);
+    return NextResponse.json(
+      { error: 'Failed to create chapter' },
       { status: 500 }
     );
   }

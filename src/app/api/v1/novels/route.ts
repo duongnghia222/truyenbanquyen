@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import Novel from '@/models/Novel';
 import { FilterQuery } from 'mongoose';
+import { initDatabase } from '@/lib/db';
 
 export async function GET(request: Request) {
   try {
+    // Ensure database connection is established
+    await initDatabase();
+    
     // Get URL parameters
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -74,6 +78,9 @@ export async function GET(request: Request) {
 // Add POST method to create a new novel
 export async function POST(request: Request) {
   try {
+    // Ensure database connection is established
+    await initDatabase();
+    
     const body = await request.json();
     
     // Create new novel

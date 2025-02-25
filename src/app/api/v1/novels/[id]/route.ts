@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Novel from '@/models/Novel';
+import { initDatabase } from '@/lib/db';
 
 type RouteParams = {
   params: Promise<{ id: string }>
@@ -25,6 +26,9 @@ const handleNotFound = () => {
 export async function GET(request: Request, { params }: RouteParams) {
   const { id } = await params;
   try {
+    // Ensure database connection is established
+    await initDatabase();
+    
     const novel = await Novel.findById(id);
     if (!novel) return handleNotFound();
     return NextResponse.json(novel);
@@ -36,6 +40,9 @@ export async function GET(request: Request, { params }: RouteParams) {
 export async function PATCH(request: Request, { params }: RouteParams) {
   const { id } = await params;
   try {
+    // Ensure database connection is established
+    await initDatabase();
+    
     const data = await request.json();
     const novel = await Novel.findByIdAndUpdate(
       id,
@@ -53,6 +60,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 export async function DELETE(request: Request, { params }: RouteParams) {
   const { id } = await params;
   try {
+    // Ensure database connection is established
+    await initDatabase();
+    
     const novel = await Novel.findByIdAndDelete(id);
     if (!novel) return handleNotFound();
     
