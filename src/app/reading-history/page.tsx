@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { BookOpenIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
 
 // Mock data for reading history
@@ -59,21 +59,21 @@ const mockHistory = [
 ]
 
 export default function ReadingHistoryPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const [history, setHistory] = useState(mockHistory)
   const [activeTab, setActiveTab] = useState('all') // 'all', 'reading', 'completed', 'on_hold'
+  
+  const tabs = useMemo(() => [
+    { id: 'all', name: 'Tất cả', count: history.length },
+    { id: 'reading', name: 'Đang đọc', count: history.filter(h => h.status === 'reading').length },
+    { id: 'completed', name: 'Đã hoàn thành', count: history.filter(h => h.status === 'completed').length },
+    { id: 'on_hold', name: 'Tạm dừng', count: history.filter(h => h.status === 'on_hold').length }
+  ], [history]);
   
   // Filter history based on active tab
   const filteredHistory = activeTab === 'all' 
     ? history 
     : history.filter(item => item.status === activeTab)
-  
-  const tabs = [
-    { id: 'all', name: 'Tất cả', count: history.length },
-    { id: 'reading', name: 'Đang đọc', count: history.filter(h => h.status === 'reading').length },
-    { id: 'completed', name: 'Đã hoàn thành', count: history.filter(h => h.status === 'completed').length },
-    { id: 'on_hold', name: 'Tạm dừng', count: history.filter(h => h.status === 'on_hold').length }
-  ]
   
   // Update status
   const updateStatus = (id: number, newStatus: string) => {
@@ -89,7 +89,7 @@ export default function ReadingHistoryPage() {
     if (tabParam && tabs.some(tab => tab.id === tabParam)) {
       setActiveTab(tabParam)
     }
-  }, [])
+  }, [tabs])
   
   if (status === 'loading') {
     return (

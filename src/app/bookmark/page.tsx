@@ -51,7 +51,7 @@ const mockBookmarks = [
 ]
 
 export default function BookmarkPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const [bookmarks, setBookmarks] = useState(mockBookmarks)
   const [filterType, setFilterType] = useState('all') // 'all', 'favorite'
   

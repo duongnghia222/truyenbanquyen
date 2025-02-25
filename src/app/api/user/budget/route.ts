@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 
 // Get user budget details
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     

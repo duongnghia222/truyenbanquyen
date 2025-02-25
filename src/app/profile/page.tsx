@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react'
 import { 
   UserIcon, 
   BookOpenIcon,
-  BookmarkIcon,
   HeartIcon, 
   EnvelopeIcon,
   CalendarDaysIcon

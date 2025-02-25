@@ -46,7 +46,7 @@ const mockNotifications = [
 ]
 
 export default function NotificationsPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const [notifications, setNotifications] = useState(mockNotifications)
   
   // Mark notification as read
