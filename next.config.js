@@ -12,6 +12,8 @@ const nextConfig = {
       },
     ],
   },
+  // External packages that should be bundled with native Node.js require
+  serverExternalPackages: ['mongoose'],
 }
 
 module.exports = nextConfig 

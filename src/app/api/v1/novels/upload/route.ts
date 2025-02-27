@@ -1,9 +1,22 @@
 import { NextResponse } from 'next/server';
 import Novel from '@/models/Novel';
 
+// Set the maximum duration for this API route (60 seconds)
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    // Parse JSON with error handling
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return NextResponse.json(
+        { error: 'Invalid JSON format in request body' },
+        { status: 400 }
+      );
+    }
     
     // Extract novel data
     const { title, author, description, genres, status = 'ongoing', coverImage } = body;
@@ -37,8 +50,8 @@ export async function POST(request: Request) {
         coverImage
       });
 
-      // Create the novel in database
-      const novel = await Novel.create({
+      // Create the novel in database with timeout
+      const novelData = {
         title,
         author,
         description,
@@ -50,7 +63,15 @@ export async function POST(request: Request) {
         chapterCount: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
-      });
+      };
+      
+      // Set a reasonable timeout for the database operation (20 seconds)
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database operation timed out')), 20000)
+      );
+      
+      const dbPromise = Novel.create(novelData);
+      const novel = await Promise.race([dbPromise, timeoutPromise]);
 
       // Debug log after creation
       console.log('Created novel:', {
@@ -62,6 +83,14 @@ export async function POST(request: Request) {
       return NextResponse.json(novel, { status: 201 });
     } catch (error: unknown) {
       console.error('Error creating novel:', error);
+      
+      // More detailed error handling
+      if (error instanceof Error && error.message === 'Database operation timed out') {
+        return NextResponse.json(
+          { error: 'Quá thời gian xử lý. Vui lòng thử lại sau.' },
+          { status: 504 }
+        );
+      }
       
       // Check if error is a ValidationError-like object
       if (
@@ -77,12 +106,18 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
-      throw error;
+      
+      // Generic error with safe details
+      return NextResponse.json(
+        { error: 'Không thể tạo truyện mới', details: error instanceof Error ? error.message : 'Unknown error' },
+        { status: 500 }
+      );
     }
   } catch (error) {
     console.error('Error in novel upload:', error);
+    // Ensure we return valid JSON even for unexpected errors
     return NextResponse.json(
-      { error: 'Không thể đăng tải truyện. Vui lòng thử lại.' },
+      { error: 'Không thể đăng tải truyện. Vui lòng thử lại.', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
@@ -90,6 +125,8 @@ export async function POST(request: Request) {
 
 export const config = {
   api: {
-    bodyParser: true
+    bodyParser: true,
+    // Increase timeout settings
+    externalResolver: true,
   }
 }; 

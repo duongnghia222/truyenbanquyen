@@ -88,45 +88,74 @@ export default function UploadNovelForm() {
       const imageFormData = new FormData();
       imageFormData.append('file', coverImage);
 
-      const uploadResponse = await fetch('/api/v1/novels/upload/cover', {
-        method: 'POST',
-        body: imageFormData,
-      });
+      try {
+        // Create a controller to allow timeout
+        const controller = new AbortController();
+        const uploadTimeout = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+        
+        const uploadResponse = await fetch('/api/v1/novels/upload/cover', {
+          method: 'POST',
+          body: imageFormData,
+          signal: controller.signal
+        });
+        
+        clearTimeout(uploadTimeout);
+        
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json().catch(() => ({
+            error: 'Không thể xử lý phản hồi từ máy chủ'
+          }));
+          throw new Error(errorData.error || `Lỗi tải lên ảnh bìa: ${uploadResponse.status}`);
+        }
+        
+        const uploadData = await uploadResponse.json();
 
-      const uploadData = await uploadResponse.json();
+        // Then submit the novel data with cover image URL only
+        const novelData = {
+          title: formData.title,
+          author: formData.author,
+          description: formData.description,
+          status: formData.status,
+          genres: formData.genres,
+          coverImage: uploadData.fileUrl
+        };
 
-      if (!uploadResponse.ok) {
-        throw new Error(uploadData.error || 'Không thể tải lên ảnh bìa');
+        // Set a timeout for the novel creation request
+        const novelController = new AbortController();
+        const novelTimeout = setTimeout(() => novelController.abort(), 60000); // 60 second timeout
+        
+        // Submit novel data
+        const response = await fetch('/api/v1/novels/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(novelData),
+          signal: novelController.signal
+        });
+        
+        clearTimeout(novelTimeout);
+        
+        // Handle non-ok responses
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({
+            error: 'Không thể xử lý phản hồi từ máy chủ'
+          }));
+          throw new Error(errorData.error || `Lỗi đăng tải truyện: ${response.status}`);
+        }
+        
+        const data = await response.json();
+
+        // Redirect to novel chapters page for uploading chapters
+        router.push(`/novels/${data._id}/upload`);
+      } catch (fetchError) {
+        if (fetchError instanceof DOMException && fetchError.name === 'AbortError') {
+          throw new Error('Yêu cầu quá thời gian, vui lòng thử lại sau');
+        }
+        throw fetchError;
       }
-
-      // Then submit the novel data with cover image URL only
-      const novelData = {
-        title: formData.title,
-        author: formData.author,
-        description: formData.description,
-        status: formData.status,
-        genres: formData.genres,
-        coverImage: uploadData.fileUrl
-      };
-
-      // Submit novel data
-      const response = await fetch('/api/v1/novels/upload', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(novelData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Không thể đăng tải truyện');
-      }
-
-      // Redirect to novel chapters page for uploading chapters
-      router.push(`/novels/${data._id}/upload`);
     } catch (err) {
+      console.error('Upload error:', err);
       setError(err instanceof Error ? err.message : 'Không thể đăng tải truyện');
     } finally {
       setIsSubmitting(false);

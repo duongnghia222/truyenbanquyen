@@ -55,7 +55,7 @@ export function getS3Client(config: Partial<S3Config> = {}): S3Client {
         maxAttempts: 3, // Max retry attempts
         requestHandler: {
           // HTTP/2 connection pooling is enabled by default
-          connectionTimeout: 5000, // 5 second connection timeout
+          connectionTimeout: 10000, // 10 second connection timeout (increased from 5s)
         },
       });
       
@@ -67,6 +67,36 @@ export function getS3Client(config: Partial<S3Config> = {}): S3Client {
   }
   
   return s3ClientInstance;
+}
+
+// Sleep utility for retry with exponential backoff
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Retry utility function
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  retries = 3,
+  delay = 1000,
+  backoffFactor = 2
+): Promise<T> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      console.log(`Attempt ${attempt + 1} failed, retrying...`);
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      if (attempt < retries - 1) {
+        // Wait with exponential backoff before retrying
+        const backoffDelay = delay * Math.pow(backoffFactor, attempt);
+        await sleep(backoffDelay);
+      }
+    }
+  }
+  
+  throw lastError || new Error('Operation failed after retries');
 }
 
 // Upload file to S3
@@ -87,11 +117,17 @@ export async function uploadToS3(
       ContentType: contentType,
     });
     
-    // Upload file
-    await s3.send(command);
+    // Upload file with retries
+    await withRetry(
+      () => s3.send(command),
+      3,  // 3 retries
+      1000, // Start with 1 second delay
+      2  // Exponential backoff factor
+    );
     
     // Generate the URL
     const fileUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+    console.log(`✅ File uploaded successfully to: ${fileUrl}`);
     return fileUrl;
   } catch (error) {
     console.error('S3 upload error:', error);
