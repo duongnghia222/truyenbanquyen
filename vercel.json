@@ -1,0 +1,14 @@
+{
+  "functions": {
+    "app/api/v1/**/*.js": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/keep-alive",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+} 

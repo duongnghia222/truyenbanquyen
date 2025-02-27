@@ -29,15 +29,15 @@ async function connectDB(): Promise<typeof mongoose> {
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: true,
+      bufferCommands: false, // Don't buffer commands when no connection is available
       // Connection pool configuration
-      maxPoolSize: 10, // Maximum number of connections in pool
-      minPoolSize: 5,  // Minimum number of connections in pool
-      connectTimeoutMS: 10000, // Connection timeout in ms (10 seconds)
+      maxPoolSize: 5, // Reduced from 10 for serverless environment
+      minPoolSize: 1, // Reduced from 5 for serverless environment 
+      connectTimeoutMS: 30000, // Increased connection timeout (30 seconds)
       socketTimeoutMS: 45000, // Socket timeout in ms (45 seconds)
       // Performance improvements
       autoIndex: process.env.NODE_ENV !== 'production', // Don't build indexes in production
-      serverSelectionTimeoutMS: 5000, // Server selection timeout
+      serverSelectionTimeoutMS: 30000, // Increased server selection timeout
       heartbeatFrequencyMS: 10000, // Heartbeat frequency
       // Additional options for stability
       family: 4, // Use IPv4, skip trying IPv6

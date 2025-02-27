@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 import Novel from '@/models/Novel';
+import { initDatabase } from '@/lib/db';
+import { Types } from 'mongoose';
 
 // Set the maximum duration for this API route (60 seconds)
 export const maxDuration = 60;
 
 // Define the Novel document type for proper typing
 interface NovelDocument {
-  _id: string;
+  _id: Types.ObjectId | string;
   title: string;
   author: string;
   description: string;
@@ -56,6 +58,9 @@ export async function POST(request: Request) {
     }
 
     try {
+      // Ensure database connection is established before proceeding
+      await initDatabase();
+      
       // Debug log before creation
       console.log('Creating novel with data:', {
         title,
@@ -81,9 +86,9 @@ export async function POST(request: Request) {
         updatedAt: new Date(),
       };
       
-      // Set a reasonable timeout for the database operation (20 seconds)
+      // Set a reasonable timeout for the database operation (30 seconds)
       const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Database operation timed out')), 20000)
+        setTimeout(() => reject(new Error('Database operation timed out')), 30000)
       );
       
       const dbPromise = Novel.create(novelData);
