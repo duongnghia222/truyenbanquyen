@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { NovelCard } from '@/components/features/novels/NovelCard'
-import connectDB from '@/lib/mongodb'
+import { ensureDatabaseConnection } from '@/lib/db'
 import Novel from '@/models/Novel'
 
 interface NovelType {
@@ -27,7 +27,7 @@ export const revalidate = 0
 
 async function getNovels(): Promise<NovelType[]> {
   try {
-    await connectDB()
+    await ensureDatabaseConnection()
     const novels = await Novel.find({})
       .sort({ createdAt: -1 })
       .lean()

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import Chapter from '@/models/Chapter';
 import Novel from '@/models/Novel';
-import { initDatabase } from '@/lib/db';
+import { ensureDatabaseConnection } from '@/lib/db';
 
 type RouteParams = {
   params: Promise<{ id: string }>
@@ -10,7 +10,7 @@ type RouteParams = {
 export async function GET(request: Request, { params }: RouteParams) {
   try {
     // Ensure database connection is established
-    await initDatabase();
+    await ensureDatabaseConnection();
     
     const { id } = await params;
     const { searchParams } = new URL(request.url);
@@ -58,7 +58,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 export async function POST(request: Request, { params }: RouteParams) {
   try {
     // Ensure database connection is established
-    await initDatabase();
+    await ensureDatabaseConnection();
     
     const { id } = await params;
     const body = await request.json();

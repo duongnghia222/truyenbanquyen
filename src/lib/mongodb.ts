@@ -42,9 +42,30 @@ async function connectDB(): Promise<typeof mongoose> {
       // Additional options for stability
       family: 4, // Use IPv4, skip trying IPv6
       retryWrites: true,
+      // Add these options for better error handling
+      waitQueueTimeoutMS: 30000, // How long to wait for a connection from the pool
+      maxIdleTimeMS: 60000, // How long a connection can remain idle before being removed
+      serverApi: {
+        version: '1',
+        strict: true,
+        deprecationErrors: true,
+      }
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts);
+    // Include retry logic for the initial connection
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        cached.promise = mongoose.connect(MONGODB_URI, opts);
+        break;
+      } catch (err) {
+        retries--;
+        console.error(`MongoDB connection error. Retries left: ${retries}`, err);
+        if (retries === 0) throw err;
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
   }
 
   try {

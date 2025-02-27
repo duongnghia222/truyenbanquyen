@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { PublishNovelCTA } from '@/components/features/novels/PublishNovelCTA'
 import { NovelCard } from '@/components/features/novels/NovelCard'
 import { SlideShowBanner } from '@/components/features/banner/SlideShowBanner'
-import connectDB from '@/lib/mongodb'
+import { ensureDatabaseConnection } from '@/lib/db'
 import Novel from '@/models/Novel'
 
 interface NovelType {
@@ -29,7 +29,7 @@ export const revalidate = 0
 
 async function getLatestNovels(): Promise<NovelType[]> {
   try {
-    await connectDB()
+    await ensureDatabaseConnection()
     const novels = await Novel.find({})
       .sort({ createdAt: -1 })
       .limit(12)

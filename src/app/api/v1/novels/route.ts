@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import Novel from '@/models/Novel';
 import { FilterQuery } from 'mongoose';
-import { initDatabase } from '@/lib/db';
+import { ensureDatabaseConnection } from '@/lib/db';
 
 export async function GET(request: Request) {
   try {
     // Ensure database connection is established
-    await initDatabase();
+    await ensureDatabaseConnection();
     
     // Get URL parameters
     const { searchParams } = new URL(request.url);
@@ -79,7 +79,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     // Ensure database connection is established
-    await initDatabase();
+    await ensureDatabaseConnection();
     
     const body = await request.json();
     

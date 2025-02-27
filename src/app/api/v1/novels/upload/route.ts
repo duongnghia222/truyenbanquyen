@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import Novel from '@/models/Novel';
-import { initDatabase } from '@/lib/db';
+import { ensureDatabaseConnection } from '@/lib/db';
 import { Types } from 'mongoose';
 
 // Set the maximum duration for this API route (60 seconds)
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
 
     try {
       // Ensure database connection is established before proceeding
-      await initDatabase();
+      await ensureDatabaseConnection();
       
       // Debug log before creation
       console.log('Creating novel with data:', {
