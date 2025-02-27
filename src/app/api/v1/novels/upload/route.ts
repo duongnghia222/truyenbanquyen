@@ -4,6 +4,22 @@ import Novel from '@/models/Novel';
 // Set the maximum duration for this API route (60 seconds)
 export const maxDuration = 60;
 
+// Define the Novel document type for proper typing
+interface NovelDocument {
+  _id: string;
+  title: string;
+  author: string;
+  description: string;
+  genres: string[];
+  status: string;
+  coverImage: string;
+  rating: number;
+  views: number;
+  chapterCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export async function POST(request: Request) {
   try {
     // Parse JSON with error handling
@@ -66,12 +82,13 @@ export async function POST(request: Request) {
       };
       
       // Set a reasonable timeout for the database operation (20 seconds)
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise<never>((_, reject) => 
         setTimeout(() => reject(new Error('Database operation timed out')), 20000)
       );
       
       const dbPromise = Novel.create(novelData);
-      const novel = await Promise.race([dbPromise, timeoutPromise]);
+      // Add proper type annotation to avoid 'unknown' type
+      const novel = await Promise.race([dbPromise, timeoutPromise]) as NovelDocument;
 
       // Debug log after creation
       console.log('Created novel:', {
