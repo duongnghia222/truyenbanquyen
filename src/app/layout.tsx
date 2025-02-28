@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import LayoutContent from "./LayoutContent";
 import { initDatabase } from "@/lib/db";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,6 +36,9 @@ export default function RootLayout({
 
   return (
     <html lang="vi">
+      {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+        <GoogleAnalytics GA_MEASUREMENT_ID={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+      )}
       <body className={bodyClasses}>
         <LayoutContent>
           {children}
