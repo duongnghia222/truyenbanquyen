@@ -18,6 +18,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "TruyenBanQuyen - Đọc Truyện Online",
   description: "Đọc truyện online, truyện hay, truyện chữ.",
+  icons: {
+    icon: [
+      { url: '/Favicon.png', sizes: 'any' }
+    ],
+    apple: [
+      { url: '/Favicon.png' }
+    ]
+  },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
   },

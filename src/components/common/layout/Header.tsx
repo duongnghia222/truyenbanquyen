@@ -127,15 +127,16 @@ export default function Header() {
           {/* Logo */}
           <Link 
             href="/" 
-            className="group relative z-10"
+            className="group relative z-10 flex items-center"
           >
-            <span className="text-xl sm:text-2xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent
-              transition-all duration-300 group-hover:from-purple-600 group-hover:to-blue-600"
-            >
-              TruyenBanQuyen
-            </span>
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600
-              transition-all duration-300 group-hover:w-full"></span>
+            <Image
+              src="/images/Logo_web.png"
+              alt="TruyenBanQuyen Logo"
+              width={180}
+              height={40}
+              className="transition-transform duration-300 group-hover:scale-105"
+              priority
+            />
           </Link>
 
           {/* Mobile menu button */}
