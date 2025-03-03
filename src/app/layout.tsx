@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "TruyenBanQuyen - Đọc Truyện Online",
   description: "Đọc truyện online, truyện hay, truyện chữ.",
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+  },
 };
 
 // Initialize database connection
