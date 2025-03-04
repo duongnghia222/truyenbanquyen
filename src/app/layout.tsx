@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import '../server-init';
 import { Geist, Geist_Mono } from "next/font/google";
 import LayoutContent from "./LayoutContent";
-import GoogleAnalyticsWrapper from "@/components/GoogleAnalyticsWrapper";
+import GoogleAnalyticsWrapper from "@/components/analytics/GoogleAnalyticsWrapper";
 import "./globals.css";
 
 const geistSans = Geist({

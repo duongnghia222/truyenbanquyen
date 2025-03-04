@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { PublishNovelCTA } from '@/components/features/novels/PublishNovelCTA'
 import { NovelCard } from '@/components/features/novels/NovelCard'
-import { SlideShowBanner } from '@/components/features/banner/SlideShowBanner'
+import { SlideShowBanner } from '@/components/common/banner/SlideShowBanner'
 import { ensureDatabaseConnection } from '@/lib/db'
 import Novel from '@/models/Novel'
 

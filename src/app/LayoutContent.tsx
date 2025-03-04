@@ -1,7 +1,8 @@
 'use client'
 
 import { SessionProvider } from "next-auth/react";
-import Header from "@/components/common/layout/Header";
+import { Footer } from "@/components/layout/footer";
+import Header from "@/components/layout/header/Header";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 
 export default function LayoutContent({
@@ -16,6 +17,7 @@ export default function LayoutContent({
         <main className="pt-24">
           {children}
         </main>
+        <Footer />
       </ThemeProvider>
     </SessionProvider>
   );
