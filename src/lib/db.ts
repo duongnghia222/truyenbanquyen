@@ -73,17 +73,22 @@ export async function ensureDatabaseConnection() {
   // Check connection state
   const connectionState = mongoose.connection.readyState;
   
+  console.log(`Database connection state: ${connectionState}`);
+  
   switch (connectionState) {
     case 1: // Connected
+      console.log('Database already connected');
       return true;
       
     case 2: // Connecting
       try {
+        console.log('Database connection in progress, waiting...');
         // Wait for connection to complete with a reasonable timeout
         const connectionPromise = new Promise<boolean>((resolve, reject) => {
           // Set timeout for waiting
           const timeout = setTimeout(() => {
             cleanup();
+            console.error('Database connection timeout exceeded');
             reject(new Error('Connection timeout exceeded'));
           }, 5000);
           
@@ -97,11 +102,13 @@ export async function ensureDatabaseConnection() {
           // Event handlers
           function onConnected() {
             cleanup();
+            console.log('Database connected successfully');
             resolve(true);
           }
           
           function onError(err: Error) {
             cleanup();
+            console.error('Database connection error:', err);
             reject(err);
           }
           
@@ -113,21 +120,25 @@ export async function ensureDatabaseConnection() {
         await connectionPromise;
         return true;
       } catch (error) {
-        console.error('Connection wait failed:', error);
+        console.error('Database connection wait failed:', error);
         // Reset flags
         isConnecting = false;
         // Try to initialize fresh connection
+        console.log('Attempting to initialize a fresh database connection');
         await initDatabase();
         return true;
       }
       
     case 3: // Disconnecting
       // Brief wait then attempt reconnection
+      console.log('Database is disconnecting, waiting before reconnection attempt');
       await new Promise(resolve => setTimeout(resolve, 300));
+      console.log('Attempting to reconnect to database');
       await initDatabase();
       return true;
       
     default: // Not connected (0) or invalid state
+      console.log('Database not connected, initializing connection');
       await initDatabase();
       return true;
   }

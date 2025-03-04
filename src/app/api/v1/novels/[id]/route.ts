@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Novel from '@/models/Novel';
 import { ensureDatabaseConnection } from '@/lib/db';
+import mongoose from 'mongoose';
 
 type RouteParams = {
   params: Promise<{ id: string }>
@@ -26,13 +27,31 @@ const handleNotFound = () => {
 export async function GET(request: Request, { params }: RouteParams) {
   const { id } = await params;
   try {
+    console.log(`API: Fetching novel with ID: ${id}`);
+    
     // Ensure database connection is established
     await ensureDatabaseConnection();
     
+    // Validate the ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.error(`API: Invalid novel ID format: ${id}`);
+      return NextResponse.json(
+        { error: 'Invalid novel ID format' },
+        { status: 400 }
+      );
+    }
+    
     const novel = await Novel.findById(id);
-    if (!novel) return handleNotFound();
+    
+    if (!novel) {
+      console.error(`API: Novel with ID ${id} not found`);
+      return handleNotFound();
+    }
+    
+    console.log(`API: Successfully fetched novel: ${novel.title}`);
     return NextResponse.json(novel);
   } catch (error) {
+    console.error(`API: Error fetching novel with ID ${id}:`, error);
     return handleError(error, 'fetch');
   }
 }
