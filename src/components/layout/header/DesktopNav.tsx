@@ -2,11 +2,15 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { ChevronDownIcon } from '@heroicons/react/24/outline'
-import { genres } from './headerData'
+import { genres } from '@/components/layout/header/headerData'
 
 export function DesktopNav() {
   const [showGenres, setShowGenres] = useState(false)
+  const pathname = usePathname()
+  
+  const isActive = (path: string) => pathname === path
   
   return (
     <nav className="hidden md:flex items-center gap-8 ml-12">
@@ -14,12 +18,14 @@ export function DesktopNav() {
         href="/novel-list" 
         className="relative group py-2"
       >
-        <span className="text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white
-          transition-colors duration-200">
+        <span className={`${isActive('/novel-list') 
+          ? 'text-blue-600 dark:text-blue-400' 
+          : 'text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white'} 
+          transition-colors duration-200`}>
           Danh Sách
         </span>
-        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600
-          transition-all duration-300 group-hover:w-full"></span>
+        <span className={`absolute bottom-0.5 left-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600
+          transition-all duration-300 ${isActive('/novel-list') ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
       </Link>
       
       <div className="relative group">
