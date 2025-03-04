@@ -2,12 +2,16 @@
 
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { FcGoogle } from 'react-icons/fc'
 
-export default function SignIn() {
+// Export as a named component for the new page structure
+export function SignIn() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('callbackUrl') || '/'
+  
   const [credentials, setCredentials] = useState({
     username: '',
     password: ''
@@ -25,12 +29,13 @@ export default function SignIn() {
         username: credentials.username,
         password: credentials.password,
         redirect: false,
+        callbackUrl
       })
 
       if (res?.error) {
         setError('Tên đăng nhập hoặc mật khẩu không chính xác')
       } else {
-        router.push('/')
+        router.push(callbackUrl)
         router.refresh()
       }
     } catch {
@@ -41,7 +46,7 @@ export default function SignIn() {
   }
 
   const handleGoogleSignIn = () => {
-    signIn('google', { callbackUrl: '/' })
+    signIn('google', { callbackUrl })
   }
 
   return (
@@ -177,4 +182,7 @@ export default function SignIn() {
       </div>
     </div>
   )
-} 
+}
+
+// Also export as default for backward compatibility
+export default SignIn; 

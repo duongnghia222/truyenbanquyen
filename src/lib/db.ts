@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import connectDB from './mongodb';
-import { cleanupS3Client } from './s3';
 
 let hasShownConnectionMessage = false;
 let isShuttingDown = false;
@@ -8,6 +7,16 @@ let isConnecting = false;
 let connectionAttemptTimestamp = 0;
 // Reduced cooldown for EC2 environments
 const CONNECTION_COOLDOWN_MS = 500;
+
+// Helper function to check if a request is for a static asset
+export function isStaticAsset(path: string): boolean {
+  const staticExtensions = [
+    '.ico', '.png', '.jpg', '.jpeg', '.gif', '.svg', 
+    '.css', '.js', '.woff', '.woff2', '.ttf', '.eot'
+  ];
+  
+  return staticExtensions.some(ext => path.endsWith(ext));
+}
 
 export async function initDatabase() {
   try {
@@ -58,28 +67,6 @@ export async function initDatabase() {
     throw error;
   }
 }
-
-// Handle graceful shutdowns for multiple termination signals
-const shutdownGracefully = async (signal: string) => {
-  if (isShuttingDown) return; // Prevent multiple shutdown attempts
-  
-  isShuttingDown = true;
-  console.log(`${signal} received. Closing connections...`);
-  
-  try {
-    // Clean up MongoDB connections
-    await mongoose.connection.close();
-    console.log('MongoDB connection closed gracefully');
-    
-    // Clean up S3 resources
-    cleanupS3Client();
-    
-    process.exit(0);
-  } catch (err) {
-    console.error('Error during graceful shutdown:', err);
-    process.exit(1);
-  }
-};
 
 // Optimized for EC2 environments with better state handling
 export async function ensureDatabaseConnection() {
@@ -145,8 +132,3 @@ export async function ensureDatabaseConnection() {
       return true;
   }
 }
-
-// Handle various termination signals for graceful shutdown
-process.on('SIGTERM', () => shutdownGracefully('SIGTERM'));
-process.on('SIGINT', () => shutdownGracefully('SIGINT'));
-process.on('SIGHUP', () => shutdownGracefully('SIGHUP'));

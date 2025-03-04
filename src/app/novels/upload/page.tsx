@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 export default async function UploadNovelPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session) {
-    redirect('/signin?callbackUrl=/novels/upload');
+  if (!session?.user) {
+    redirect('/auth/signin?callbackUrl=/novels/upload');
   }
 
   return (

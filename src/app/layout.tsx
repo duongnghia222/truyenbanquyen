@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+// Import server initialization - this will only run in Node.js environments
+import '../server-init';
 import { Geist, Geist_Mono } from "next/font/google";
 import LayoutContent from "./LayoutContent";
-import { initDatabase } from "@/lib/db";
 import GoogleAnalyticsWrapper from "@/components/GoogleAnalyticsWrapper";
 import "./globals.css";
 
@@ -24,15 +25,15 @@ export const metadata: Metadata = {
     ],
     apple: [
       { url: '/Favicon.png' }
+    ],
+    shortcut: [
+      { url: '/Favicon.png' }
     ]
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
   },
 };
-
-// Initialize database connection
-initDatabase().catch(console.error);
 
 export default function RootLayout({
   children,

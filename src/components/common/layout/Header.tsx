@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSession, signOut } from 'next-auth/react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { 
   UserIcon, 
   MagnifyingGlassIcon, 
@@ -12,10 +12,6 @@ import {
   ChevronDownIcon,
   SunIcon,
   MoonIcon,
-  Cog6ToothIcon,
-  BookOpenIcon,  
-  ArrowRightOnRectangleIcon,
-  BellIcon,
   Bars3Icon,
   XMarkIcon
 } from '@heroicons/react/24/outline'
@@ -67,13 +63,17 @@ const genres = [
 ]
 
 export default function Header() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const [showGenres, setShowGenres] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
+  
+  const userMenuButtonRef = useRef<HTMLButtonElement>(null)
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
   // Handle scroll effect
   useEffect(() => {
@@ -86,21 +86,21 @@ export default function Header() {
 
   // Close mobile menu when clicking outside
   useEffect(() => {
-    if (mobileMenuOpen) {
+    if (showMobileMenu) {
       const handleClickOutside = (e: MouseEvent) => {
         const target = e.target as HTMLElement
         if (!target.closest('#mobile-menu-content') && !target.closest('#menu-toggle')) {
-          setMobileMenuOpen(false)
+          setShowMobileMenu(false)
         }
       }
       document.addEventListener('click', handleClickOutside)
       return () => document.removeEventListener('click', handleClickOutside)
     }
-  }, [mobileMenuOpen])
+  }, [showMobileMenu])
 
   // Prevent scrolling when mobile menu is open
   useEffect(() => {
-    if (mobileMenuOpen) {
+    if (showMobileMenu) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = 'auto'
@@ -108,11 +108,30 @@ export default function Header() {
     return () => {
       document.body.style.overflow = 'auto'
     }
-  }, [mobileMenuOpen])
+  }, [showMobileMenu])
+
+  // Handle clicks outside the user menu
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        userMenuRef.current && 
+        userMenuButtonRef.current && 
+        !userMenuRef.current.contains(e.target as Node) && 
+        !userMenuButtonRef.current.contains(e.target as Node)
+      ) {
+        setShowUserMenu(false)
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   // Close the mobile menu and reset genre dropdown when menu is closed
   const closeMobileMenu = () => {
-    setMobileMenuOpen(false)
+    setShowMobileMenu(false)
     setShowGenres(false)
   }
 
@@ -144,10 +163,10 @@ export default function Header() {
             id="menu-toggle"
             className="md:hidden p-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 
               dark:hover:bg-gray-800 rounded-lg transition-colors z-10"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
             aria-label="Toggle mobile menu"
           >
-            {mobileMenuOpen ? (
+            {showMobileMenu ? (
               <XMarkIcon className="w-6 h-6" />
             ) : (
               <Bars3Icon className="w-6 h-6" />
@@ -281,149 +300,41 @@ export default function Header() {
               <QuestionMarkCircleIcon className="w-6 h-6" />
             </Link>
             
-            {session ? (
-              <div className="relative group">
-                <button 
-                  className="flex items-center gap-2 p-1.5 rounded-full text-gray-700 dark:text-gray-200 
-                    hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+            {/* User account */}
+            <div className="relative">
+              {status === 'authenticated' ? (
+                <button
+                  ref={userMenuButtonRef}
+                  className="group flex items-center gap-2"
+                  onClick={() => setShowUserMenu(!showUserMenu)}
                 >
-                  {session.user?.image ? (
-                    <Image
-                      src={session.user.image}
-                      alt={session.user.name || 'Profile'}
-                      width={32}
-                      height={32}
-                      className="rounded-full"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                      <UserIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                  )}
-                </button>
-                
-                <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl
-                  shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden opacity-0 invisible
-                  group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  
-                  {/* Profile header with gradient background */}
-                  <div className="relative">
-                    <div className="h-20 bg-gradient-to-r from-blue-600 to-purple-600"></div>
-                    <div className="absolute left-0 -bottom-12 w-full px-4 flex">
-                      <div className="relative">
-                        {session.user?.image ? (
-                          <Image
-                            src={session.user.image}
-                            alt={session.user.name || 'Profile'}
-                            width={60}
-                            height={60}
-                            className="rounded-full border-4 border-white dark:border-gray-800"
-                          />
-                        ) : (
-                          <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center
-                            border-4 border-white dark:border-gray-800">
-                            <UserIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-                          </div>
-                        )}
+                  <div className="flex-shrink-0 h-9 w-9 rounded-full overflow-hidden border-2 border-transparent group-hover:border-blue-500 transition-all duration-200">
+                    {session?.user?.image ? (
+                      <Image 
+                        src={session.user.image}
+                        alt="Avatar"
+                        width={36}
+                        height={36}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                        <UserIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                       </div>
-                    </div>
+                    )}
                   </div>
-                  
-                  {/* User info */}
-                  <div className="pt-14 pb-3 px-4">
-                    <div className="font-bold text-lg text-gray-900 dark:text-white">
-                      {session.user?.name || 'Người dùng'}
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      {session.user?.email}
-                    </div>
-                  </div>
-                  
-                  {/* User stats */}
-                  <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/70 grid grid-cols-3 gap-1 text-center">
-                    <div className="px-2 py-1.5">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">0</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Đang đọc</div>
-                    </div>
-                    <div className="px-2 py-1.5">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">0</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Đã đọc</div>
-                    </div>
-                    <div className="px-2 py-1.5">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">0</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Yêu thích</div>
-                    </div>
-                  </div>
-                  
-                  {/* Quick actions */}
-                  <div className="py-2">
-                    <Link 
-                      href="/profile"
-                      className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-200
-                        hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
-                    >
-                      <UserIcon className="w-5 h-5" />
-                      <span>Trang cá nhân</span>
-                    </Link>
-                    <Link 
-                      href="/bookmark" 
-                      className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-200
-                        hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
-                    >
-                      <BookmarkIcon className="w-5 h-5" />
-                      <span>Truyện đánh dấu</span>
-                    </Link>
-                    <Link 
-                      href="/reading-history" 
-                      className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-200
-                        hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
-                    >
-                      <BookOpenIcon className="w-5 h-5" />
-                      <span>Lịch sử đọc</span>
-                    </Link>
-                    <Link 
-                      href="/notifications" 
-                      className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-200
-                        hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
-                    >
-                      <BellIcon className="w-5 h-5" />
-                      <span>Thông báo</span>
-                    </Link>
-                    <Link 
-                      href="/profile/settings" 
-                      className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-200
-                        hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
-                    >
-                      <Cog6ToothIcon className="w-5 h-5" />
-                      <span>Cài đặt tài khoản</span>
-                    </Link>
-                  </div>
-                  
-                  <div className="border-t border-gray-200 dark:border-gray-700">
-                    <button 
-                      onClick={() => signOut({
-                        callbackUrl: '/signin',
-                        redirect: true
-                      })}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-red-500
-                        hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
-                    >
-                      <ArrowRightOnRectangleIcon className="w-5 h-5" />
-                      <span>Đăng xuất</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <Link
-                href="/signin"
-                className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-purple-600
-                  text-white text-sm sm:text-base font-medium hover:from-purple-600 hover:to-blue-600
-                  transition-all duration-300 shadow-lg shadow-blue-500/20 hover:shadow-purple-500/20"
-              >
-                Đăng Nhập
-              </Link>
-            )}
+                  <ChevronDownIcon className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
+                </button>
+              ) : (
+                <Link 
+                  href="/auth/signin"
+                  className="flex items-center gap-2 font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                >
+                  <UserIcon className="h-5 w-5" />
+                  <span>Đăng nhập</span>
+                </Link>
+              )}
+            </div>
           </div>
         </div>
 
@@ -461,11 +372,11 @@ export default function Header() {
       </div>
 
       {/* Mobile Menu */}
-      <div className={`fixed inset-0 z-40 ${mobileMenuOpen ? 'visible' : 'invisible'}`}>
+      <div className={`fixed inset-0 z-40 ${showMobileMenu ? 'visible' : 'invisible'}`}>
         {/* Overlay - clicking this will close the menu */}
         <div 
           className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
-            mobileMenuOpen ? 'opacity-100' : 'opacity-0'
+            showMobileMenu ? 'opacity-100' : 'opacity-0'
           }`}
           onClick={closeMobileMenu}
           aria-hidden="true"
@@ -476,7 +387,7 @@ export default function Header() {
           id="mobile-menu-content"
           className={`absolute top-0 left-0 bottom-0 w-[80%] max-w-sm bg-white dark:bg-gray-900 
             shadow-xl transform transition-transform duration-300 ease-in-out
-            ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+            ${showMobileMenu ? 'translate-x-0' : '-translate-x-full'}`}
         >
           {/* Close button */}
           <button
@@ -559,6 +470,92 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {/* User account dropdown menu */}
+      {showUserMenu && status === 'authenticated' && (
+        <div 
+          ref={userMenuRef}
+          className="absolute top-16 right-4 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        >
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden">
+                {session?.user?.image ? (
+                  <Image 
+                    src={session.user.image}
+                    alt="Avatar"
+                    width={40}
+                    height={40}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                    <UserIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                  </div>
+                )}
+              </div>
+              <div>
+                <div className="font-medium text-gray-900 dark:text-white">
+                  {session?.user?.name || session?.user?.username || 'User'}
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {session?.user?.email || ''}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="py-1">
+            <Link 
+              href="/profile"
+              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+              onClick={() => setShowUserMenu(false)}
+            >
+              Trang cá nhân
+            </Link>
+            <Link 
+              href="/bookmark"
+              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+              onClick={() => setShowUserMenu(false)}
+            >
+              Truyện đánh dấu
+            </Link>
+            <Link 
+              href="/reading-history"
+              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+              onClick={() => setShowUserMenu(false)}
+            >
+              Lịch sử đọc
+            </Link>
+            <Link 
+              href="/notifications"
+              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+              onClick={() => setShowUserMenu(false)}
+            >
+              Thông báo
+            </Link>
+            <Link 
+              href="/profile/settings"
+              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+              onClick={() => setShowUserMenu(false)}
+            >
+              Cài đặt tài khoản
+            </Link>
+          </div>
+          
+          <div className="border-t border-gray-200 dark:border-gray-700 py-1">
+            <button
+              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+              onClick={() => {
+                signOut({ callbackUrl: '/auth/signin' });
+                setShowUserMenu(false);
+              }}
+            >
+              Đăng xuất
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   )
 } 

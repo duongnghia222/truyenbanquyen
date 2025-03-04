@@ -105,13 +105,11 @@ export default function ReadingHistoryPage() {
         <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
           Bạn cần đăng nhập để xem trang này
         </h1>
-        <Link 
-          href="/signin" 
-          className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-purple-600
-            text-white font-medium hover:from-purple-600 hover:to-blue-600
-            transition-all duration-300 shadow-lg shadow-blue-500/20 hover:shadow-purple-500/20"
+        <Link
+          href="/auth/signin?callbackUrl=/reading-history"
+          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
         >
-          Đăng Nhập
+          Đăng nhập
         </Link>
       </div>
     )

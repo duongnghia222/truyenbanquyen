@@ -1,5 +1,6 @@
-import SignIn from '@/components/features/auth/SignIn'
+import { redirect } from 'next/navigation';
 
+// Redirect old signin route to new auth/signin route
 export default function SignInPage() {
-  return <SignIn />
+  redirect('/auth/signin');
 } 
