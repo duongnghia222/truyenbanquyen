@@ -1,5 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ensureDatabaseConnection, isStaticAsset } from './db';
+import { isStaticAsset } from './edge-utils';
+
+// Import database functions dynamically to avoid Edge Runtime errors
+let ensureDatabaseConnection: () => Promise<boolean>;
+
+// Only import database functions in a Node.js environment
+if (typeof window === 'undefined') {
+  // This code will only run on the server, not in Edge Runtime
+  import('./db').then((db) => {
+    ensureDatabaseConnection = db.ensureDatabaseConnection;
+  }).catch(err => {
+    console.error('Failed to import database utilities:', err);
+  });
+}
 
 /**
  * A wrapper for API route handlers that ensures database connection
@@ -19,9 +32,14 @@ export async function withDatabase<T>(
   // Check if URL is for an API route that requires database
   const isApiRoute = url.pathname.startsWith('/api/');
   
-  if (isApiRoute) {
-    // Ensure database connection for API routes
-    await ensureDatabaseConnection();
+  if (isApiRoute && ensureDatabaseConnection) {
+    try {
+      // Ensure database connection for API routes
+      await ensureDatabaseConnection();
+    } catch (error) {
+      console.error('Database connection error:', error);
+      // Continue with the handler even if database connection fails
+    }
   }
   
   return handler();

@@ -1,17 +1,6 @@
 import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
-import { isStaticAsset } from './lib/db';
-
-// Helper function that doesn't use Node.js process APIs
-const isStaticPath = (path: string): boolean => {
-  // Static asset check by file extension
-  if (isStaticAsset(path)) return true;
-  
-  // Check for Next.js static paths
-  return path.startsWith('/_next/') || 
-         path.startsWith('/public/') || 
-         path === '/favicon.ico';
-};
+import { isStaticPath } from './lib/edge-utils';
 
 // Handle auth redirects and static asset optimization
 export default withAuth(
@@ -94,5 +83,7 @@ export const config = {
     '/reading-history/:path*',
     '/notifications/:path*',
     '/novels/upload/:path*'
-  ]
+  ],
+  // Specify that this middleware should run in Node.js runtime, not Edge
+  runtime: 'nodejs'
 } 

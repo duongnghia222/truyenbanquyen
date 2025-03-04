@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import connectDB from './mongodb';
 
 let hasShownConnectionMessage = false;
-let isShuttingDown = false;
+const isShuttingDown = false;
 let isConnecting = false;
 let connectionAttemptTimestamp = 0;
 // Reduced cooldown for EC2 environments
