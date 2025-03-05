@@ -10,6 +10,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'source.unsplash.com',
+      },
     ],
   },
   // External packages that should be bundled with native Node.js require
@@ -30,6 +34,11 @@ const nextConfig = {
       };
     }
     return config;
+  },
+  // Configure Turbopack to resolve the warning
+  experimental: {
+    // This indicates we're configuring for Turbopack
+    turbo: {},
   },
 }
 

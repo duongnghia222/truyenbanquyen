@@ -21,6 +21,7 @@ export * from './tabs/FilterTabs'
 
 // Layout
 export * from './layout/GridLayout'
+export * from './layout/SectionHeader'
 
 // Buttons
 export * from './buttons/Button'
@@ -32,4 +33,10 @@ export * from './badges/StatusBadge'
 export * from './dropdowns/StatusDropdown'
 
 // Avatars
-export * from './avatars/Avatar' 
+export * from './avatars/Avatar'
+
+// Carousel
+export * from './carousel/FeaturedCarousel'
+
+// Banner
+export * from './banner/SlideShowBanner' 
