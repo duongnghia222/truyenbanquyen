@@ -9,7 +9,7 @@ export function Logo() {
     >
       <Image
         src="/images/Logo_web.png"
-        alt="TruyenBanQuyen Logo"
+        alt="TruyenLight Logo"
         width={180}
         height={40}
         className="transition-transform duration-300 group-hover:scale-105"

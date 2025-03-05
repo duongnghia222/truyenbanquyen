@@ -14,7 +14,7 @@ import {
 
 const footerLinks = [
   {
-    title: 'Truyện Bản Quyền',
+    title: 'Truyện Light',
     links: [
       { name: 'Giới thiệu', href: '/gioi-thieu', icon: <InformationCircleIcon className="w-4 h-4" /> },
       { name: 'Điều khoản sử dụng', href: '/dieu-khoan', icon: <DocumentTextIcon className="w-4 h-4" /> },
@@ -46,7 +46,7 @@ export default function Footer() {
             >
               <Image
                 src="/images/Logo_web.png"
-                alt="TruyenBanQuyen Logo"
+                alt="TruyenLight Logo"
                 width={180}
                 height={40}
                 className="transition-transform duration-300 group-hover:scale-105"
@@ -80,7 +80,7 @@ export default function Footer() {
         <div className="mt-8 pt-6 border-t border-gray-300 dark:border-gray-700">
           <div className="flex flex-col sm:flex-row justify-between items-center">
             <p className="text-sm">
-              © {new Date().getFullYear()} Truyện Bản Quyền. Tất cả các quyền được bảo lưu.
+              © {new Date().getFullYear()} Truyện Light. Tất cả các quyền được bảo lưu.
             </p>
             <div className="mt-4 sm:mt-0 flex space-x-4">
               <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-sm hover:underline">

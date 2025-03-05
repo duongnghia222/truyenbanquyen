@@ -19,7 +19,7 @@ const mockNotifications = [
   {
     id: 2,
     type: 'system',
-    title: 'Chào mừng đến với TruyenBanQuyen',
+    title: 'Chào mừng đến với TruyenLight',
     message: 'Cảm ơn bạn đã đăng ký tài khoản. Khám phá và đọc ngay hàng ngàn truyện hay.',
     link: null,
     createdAt: '2024-02-26T15:12:23.511Z',

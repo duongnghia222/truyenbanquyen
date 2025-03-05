@@ -28,7 +28,7 @@ interface NovelType {
 }
 
 export const metadata: Metadata = {
-  title: 'TruyenBanQuyen - Đọc Truyện Online',
+  title: 'TruyenLight - Đọc Truyện Online',
   description: 'Đọc truyện online, truyện mới, truyện full, truyện convert chất lượng cao.',
 }
 

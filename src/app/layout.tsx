@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TruyenBanQuyen - Đọc Truyện Online",
+  title: "TruyenLight - Đọc Truyện Online",
   description: "Đọc truyện online, truyện hay, truyện chữ.",
   icons: {
     icon: [

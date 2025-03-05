@@ -5,8 +5,8 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth/config';
 
 export const metadata: Metadata = {
-  title: 'Đăng Truyện - TruyenBanQuyen',
-  description: 'Đăng tải truyện của bạn lên TruyenBanQuyen',
+  title: 'Đăng Truyện - TruyenLight',
+  description: 'Đăng tải truyện của bạn lên TruyenLight',
 };
 
 export default async function UploadNovelPage() {

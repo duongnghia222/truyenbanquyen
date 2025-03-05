@@ -19,7 +19,7 @@ interface NovelType {
 }
 
 export const metadata: Metadata = {
-  title: 'Danh Sách Truyện - TruyenBanQuyen',
+  title: 'Danh Sách Truyện - TruyenLight',
   description: 'Khám phá danh sách truyện đa dạng với nhiều thể loại khác nhau.',
 }
 

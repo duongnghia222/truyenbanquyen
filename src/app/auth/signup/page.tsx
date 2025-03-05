@@ -5,8 +5,8 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth/config';
 
 export const metadata: Metadata = {
-  title: 'Đăng Ký - TruyenBanQuyen',
-  description: 'Tạo tài khoản mới để trải nghiệm đầy đủ các tính năng của TruyenBanQuyen',
+  title: 'Đăng Ký - TruyenLight',
+  description: 'Tạo tài khoản mới để trải nghiệm đầy đủ các tính năng của TruyenLight',
 };
 
 export default async function SignUpPage() {

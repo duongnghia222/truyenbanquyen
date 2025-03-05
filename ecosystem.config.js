@@ -1,10 +1,10 @@
 module.exports = {
   apps: [
     {
-      name: 'truyenbanquyen',
+      name: 'truyenlight',
       script: 'npm',
       args: 'start',
-      cwd: '/home/ubuntu/nghia/truyenbanquyen',
+      cwd: '/home/ubuntu/nghia/truyenlight',
       env: {
         NODE_ENV: 'production',
       },

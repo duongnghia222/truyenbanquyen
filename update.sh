@@ -17,6 +17,6 @@ npm run build
 
 # Restart the application using PM2
 echo "Restarting the application..."
-pm2 reload truyenbanquyen --update-env || pm2 start ecosystem.config.js --update-env
+pm2 reload truyenlight --update-env || pm2 start ecosystem.config.js --update-env
 
 echo "Update completed at $(date)" 
