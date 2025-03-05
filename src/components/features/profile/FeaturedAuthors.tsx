@@ -1,12 +1,13 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
+import { FaUserCircle } from 'react-icons/fa'
+import Image from 'next/image'
 
 interface Author {
   id: string
   name: string
-  avatar: string
+  avatar?: string
   description: string
   novels: number
   followers: number
@@ -16,33 +17,29 @@ interface Author {
 const FEATURED_AUTHORS: Author[] = [
   {
     id: '1',
-    name: 'Nguyễn Nhật Ánh',
-    avatar: 'https://source.unsplash.com/random/150x150?face-1',
-    description: 'Tác giả của nhiều tác phẩm nổi tiếng như "Tôi Thấy Hoa Vàng Trên Cỏ Xanh".',
+    name: 'Thiên Tàm Thổ Đậu',
+    description: 'Tác giả của nhiều tiểu thuyết nổi tiếng như "Đấu La Đại Lục".',
     novels: 24,
     followers: 15480
   },
   {
     id: '2',
-    name: 'Trang Hạ',
-    avatar: 'https://source.unsplash.com/random/150x150?face-2',
-    description: 'Nhà văn nữ với phong cách viết sắc sảo và đầy cảm xúc.',
+    name: 'Mặc Hương Đồng Khứu',
+    description: 'Nhà văn nữ với phong cách viết tiểu thuyết tiên hiệp sắc sảo và đầy cảm xúc.',
     novels: 18,
     followers: 12750
   },
   {
     id: '3',
-    name: 'Anh Khang',
-    avatar: 'https://source.unsplash.com/random/150x150?face-3',
-    description: 'Tác giả chuyên viết về đề tài tình yêu với văn phong lãng mạn.',
+    name: 'Nhĩ Căn',
+    description: 'Tác giả chuyên viết về đề tài tu tiên với tiểu thuyết "Ngã Dục Phong Thiên".',
     novels: 15,
     followers: 9820
   },
   {
     id: '4',
-    name: 'Gào',
-    avatar: 'https://source.unsplash.com/random/150x150?face-4',
-    description: 'Tác giả trẻ với nhiều tác phẩm được giới trẻ yêu thích.',
+    name: 'Mạc Mặc',
+    description: 'Tác giả trẻ với nhiều tiểu thuyết võ hiệp được giới trẻ yêu thích như "Trạch Thiên Ký".',
     novels: 12,
     followers: 8450
   }
@@ -73,14 +70,18 @@ export function FeaturedAuthors({ limit = 4 }: FeaturedAuthorsProps) {
             transition-all duration-300 hover:shadow-lg
             hover:border-blue-200 dark:hover:border-blue-700"
         >
-          <div className="relative w-24 h-24 mb-4">
-            <Image
-              src={author.avatar}
-              alt={author.name}
-              fill
-              sizes="(max-width: 768px) 96px, 96px"
-              className="object-cover rounded-full transition-transform duration-300 group-hover:scale-105"
-            />
+          <div className="relative w-24 h-24 mb-4 flex items-center justify-center">
+            {author.avatar ? (
+              <Image
+                src={author.avatar}
+                alt={author.name}
+                fill
+                sizes="(max-width: 768px) 96px, 96px"
+                className="object-cover rounded-full transition-transform duration-300 group-hover:scale-105"
+              />
+            ) : (
+              <FaUserCircle className="w-full h-full text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:scale-105" />
+            )}
             <div className="absolute inset-0 rounded-full border-2 border-blue-200 dark:border-blue-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
           

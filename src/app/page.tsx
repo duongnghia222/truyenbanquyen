@@ -69,25 +69,25 @@ async function getTrendingNovels(): Promise<NovelType[]> {
 const FEATURED_NOVELS = [
   {
     id: '1',
-    title: 'Đắc Nhân Tâm',
-    description: 'Cuốn sách nổi tiếng nhất, bán chạy nhất và có tầm ảnh hưởng nhất mọi thời đại. Đắc Nhân Tâm là cuốn sách đầu tiên viết về các mối quan hệ của con người và đã trở thành một hiện tượng trong nền văn hoá đại chúng.',
-    image: 'https://source.unsplash.com/random/1200x600?book-1',
+    title: 'Sword Art Online',
+    description: 'Kirito bị mắc kẹt trong trò chơi thực tế ảo nơi cái chết trong game đồng nghĩa với cái chết ngoài đời thực. Anh phải chiến đấu để giải phóng mình và những người chơi khác khỏi thế giới ảo nguy hiểm này.',
+    image: 'https://duongnghia222.s3.ap-southeast-2.amazonaws.com/sample_slidershow/Sword+Art+Online.jpg',
     link: '/novels/1',
     badge: 'Đặc sắc'
   },
   {
     id: '2',
-    title: 'Nhà Giả Kim',
-    description: 'Tiểu thuyết "Nhà giả kim" của Paulo Coelho như một câu chuyện cổ tích giản dị, nhưng lại đầy ý nghĩa. Đây là câu chuyện của Santiago, một cậu bé chăn cừu người Tây Ban Nha.',
-    image: 'https://source.unsplash.com/random/1200x600?book-2',
+    title: 'Re:Zero − Starting Life in Another World',
+    description: 'Subaru Natsuki bất ngờ được triệu hồi đến một thế giới khác và phát hiện mình có khả năng "Trở Về Từ Cái Chết". Mỗi khi chết, cậu quay trở lại một điểm cố định trong quá khứ với toàn bộ ký ức nguyên vẹn.',
+    image: 'https://duongnghia222.s3.ap-southeast-2.amazonaws.com/sample_slidershow/ReZero+%E2%88%92+Starting+Life+in+Another+World.jpg',
     link: '/novels/2',
-    badge: 'Bán chạy'
+    badge: 'Hot'
   },
   {
     id: '3',
-    title: 'Rừng Na Uy',
-    description: 'Câu chuyện tình yêu và nỗi cô đơn của Toru Watanabe, một sinh viên sống ở Tokyo. Cậu phải lòng Naoko, bạn gái của người bạn thân đã tự tử.',
-    image: 'https://source.unsplash.com/random/1200x600?book-3',
+    title: 'Overlord',
+    description: 'Khi trò chơi YGGDRASIL sắp đóng cửa, Momonga quyết định ở lại đến phút cuối cùng. Tuy nhiên, sau thời điểm đóng cửa, anh phát hiện mình vẫn còn trong game và đã biến thành nhân vật của mình - một phù thủy xương mạnh mẽ.',
+    image: 'https://duongnghia222.s3.ap-southeast-2.amazonaws.com/sample_slidershow/Overlord.jpg',
     link: '/novels/3',
     badge: 'Đề cử'
   }
