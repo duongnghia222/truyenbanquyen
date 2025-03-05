@@ -21,13 +21,13 @@ export const metadata: Metadata = {
   description: "Đọc truyện online, truyện hay, truyện chữ.",
   icons: {
     icon: [
-      { url: '/Favicon.png', sizes: 'any' }
+      { url: '/favicon.png', sizes: 'any' }
     ],
     apple: [
-      { url: '/Favicon.png' }
+      { url: '/favicon.png' }
     ],
     shortcut: [
-      { url: '/Favicon.png' }
+      { url: '/favicon.png' }
     ]
   },
   verification: {
