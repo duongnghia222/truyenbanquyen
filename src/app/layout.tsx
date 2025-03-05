@@ -21,6 +21,7 @@ export const metadata: Metadata = {
   description: "Đọc truyện online, truyện hay, truyện chữ.",
   icons: {
     icon: [
+      { url: '/favicon.ico', sizes: '32x32' },
       { url: '/favicon.png', sizes: 'any' }
     ],
     apple: [
