@@ -8,6 +8,7 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
+      cwd: '/home/ubuntu/nghia/truyenbanquyen',
       env: {
         NODE_ENV: 'production',
       },
