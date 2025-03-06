@@ -25,7 +25,7 @@ interface ChapterResponse {
 async function getNovelChapters(id: string, page = 1): Promise<ChapterResponse> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const res = await fetch(
-    `${baseUrl}/api/v1/novels/${id}/chapters?page=${page}`,
+    `${baseUrl}/api/novels/${id}/chapters?page=${page}`,
     { cache: 'no-store' }
   );
   

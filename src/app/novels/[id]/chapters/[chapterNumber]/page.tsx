@@ -20,8 +20,13 @@ interface NovelInfo {
 async function getChapter(novelId: string, chapterNumber: string): Promise<Chapter> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const res = await fetch(
-    `${baseUrl}/api/v1/novels/${novelId}/chapters/${chapterNumber}`,
-    { cache: 'no-store' }
+    `${baseUrl}/api/novels/${novelId}/chapters/${chapterNumber}`,
+    {
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
   );
   
   if (!res.ok) {
@@ -35,8 +40,13 @@ async function getChapter(novelId: string, chapterNumber: string): Promise<Chapt
 async function getNovelInfo(novelId: string): Promise<NovelInfo> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const res = await fetch(
-    `${baseUrl}/api/v1/novels/${novelId}`,
-    { cache: 'no-store' }
+    `${baseUrl}/api/novels/${novelId}`,
+    {
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
   );
   
   if (!res.ok) {

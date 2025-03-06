@@ -71,7 +71,7 @@ export default function UploadChapterForm({ novelId }: UploadChapterFormProps) {
       const contentFormData = new FormData();
       contentFormData.append('file', contentFile);
 
-      const uploadResponse = await fetch(`/api/v1/novels/${novelId}/chapters/upload/content`, {
+      const uploadResponse = await fetch(`/api/novels/${novelId}/chapters/upload/content`, {
         method: 'POST',
         body: contentFormData,
       });
@@ -83,7 +83,7 @@ export default function UploadChapterForm({ novelId }: UploadChapterFormProps) {
       }
 
       // Then create the chapter with the content URL
-      const response = await fetch(`/api/v1/novels/${novelId}/chapters/upload`, {
+      const response = await fetch(`/api/novels/${novelId}/chapters/upload`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

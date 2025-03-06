@@ -12,7 +12,7 @@ interface Novel {
 
 async function getNovel(id: string): Promise<Novel> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/v1/novels/${id}`, {
+  const res = await fetch(`${baseUrl}/api/novels/${id}`, {
     cache: 'no-store'
   });
   

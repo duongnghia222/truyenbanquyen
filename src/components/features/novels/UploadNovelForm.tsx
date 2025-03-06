@@ -93,7 +93,7 @@ export default function UploadNovelForm() {
         const controller = new AbortController();
         const uploadTimeout = setTimeout(() => controller.abort(), 60000); // 60 second timeout
         
-        const uploadResponse = await fetch('/api/v1/novels/upload/cover', {
+        const uploadResponse = await fetch('/api/novels/upload/cover', {
           method: 'POST',
           body: imageFormData,
           signal: controller.signal
@@ -125,7 +125,7 @@ export default function UploadNovelForm() {
         const novelTimeout = setTimeout(() => novelController.abort(), 60000); // 60 second timeout
         
         // Submit novel data
-        const response = await fetch('/api/v1/novels/upload', {
+        const response = await fetch('/api/novels/upload', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

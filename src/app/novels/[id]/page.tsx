@@ -21,12 +21,10 @@ async function getNovel(id: string): Promise<Novel> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   
   try {
-    console.log(`Fetching novel with ID: ${id} from ${baseUrl}/api/v1/novels/${id}`);
+    console.log(`Fetching novel with ID: ${id} from ${baseUrl}/api/novels/${id}`);
     
-    const res = await fetch(`${baseUrl}/api/v1/novels/${id}`, {
-      next: {
-        revalidate: 3600 // Revalidate every hour
-      }
+    const res = await fetch(`${baseUrl}/api/novels/${id}`, {
+      cache: 'no-store',
     });
     
     if (!res.ok) {
