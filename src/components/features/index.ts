@@ -11,6 +11,7 @@ export * from './reading-history/ReadingStats'
 
 // Profile
 export * from './profile/FeaturedAuthors'
+export * from './profile/settings'
 
 // Auth
 export * from './auth/LoginForm'
