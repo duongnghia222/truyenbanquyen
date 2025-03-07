@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   UserIcon, 
   LockClosedIcon,
@@ -15,7 +15,7 @@ import {
 import { useTheme } from '@/components/providers/ThemeProvider'
 
 export default function ProfileSettingsPage() {
-  const { data: session, status } = useSession()
+  const { data: session, status, update } = useSession()
   const { theme, toggleTheme } = useTheme()
   
   // Form states
@@ -23,7 +23,7 @@ export default function ProfileSettingsPage() {
   const [formData, setFormData] = useState({
     name: session?.user?.name || '',
     email: session?.user?.email || '',
-    bio: '',
+    username: session?.user?.username || '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
@@ -31,6 +31,43 @@ export default function ProfileSettingsPage() {
     chapterUpdates: true,
     systemNotifications: true
   })
+  
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  
+  // Fetch user profile data
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.id) {
+      const fetchUserProfile = async () => {
+        try {
+          setIsLoading(true)
+          setError('')
+          
+          const response = await fetch('/api/user/profile')
+          const data = await response.json()
+          
+          if (!response.ok) {
+            throw new Error(data.message || 'Không thể tải thông tin người dùng')
+          }
+          
+          // Update form data with user profile information
+          setFormData(prevData => ({
+            ...prevData,
+            name: data.user.name || '',
+            username: data.user.username || '',
+            email: data.user.email || ''
+          }))
+        } catch (error) {
+          console.error('Error fetching user profile:', error)
+          setError(error instanceof Error ? error.message : 'Có lỗi xảy ra khi tải thông tin')
+        } finally {
+          setIsLoading(false)
+        }
+      }
+      
+      fetchUserProfile()
+    }
+  }, [status, session?.user?.id])
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -48,13 +85,59 @@ export default function ProfileSettingsPage() {
     })
   }
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // In a real app, you would send this data to an API
-    alert('Cài đặt đã được lưu!')
+    
+    try {
+      setIsLoading(true)
+      setError('')
+      
+      if (activeTab === 'account') {
+        // Save account information (name, username)
+        const response = await fetch('/api/user/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            username: formData.username,
+          }),
+        })
+        
+        const data = await response.json()
+        
+        if (!response.ok) {
+          throw new Error(data.message || 'Có lỗi xảy ra khi cập nhật thông tin')
+        }
+        
+        // Update the session
+        await update({
+          ...session,
+          user: {
+            ...session?.user,
+            name: data.user.name,
+            username: data.user.username
+          }
+        })
+        
+        alert('Thông tin cá nhân đã được cập nhật!')
+      } else if (activeTab === 'password') {
+        // Password change logic would go here
+        alert('Mật khẩu đã được cập nhật!')
+      } else if (activeTab === 'notifications') {
+        // Notification settings logic would go here
+        alert('Cài đặt thông báo đã được lưu!')
+      }
+    } catch (error) {
+      console.error('Error updating settings:', error)
+      alert(error instanceof Error ? error.message : 'Có lỗi xảy ra khi cập nhật thông tin')
+    } finally {
+      setIsLoading(false)
+    }
   }
   
-  if (status === 'loading') {
+  if (status === 'loading' || isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[70vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -186,6 +269,12 @@ export default function ProfileSettingsPage() {
                   Thông tin cá nhân
                 </h2>
                 
+                {error && (
+                  <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {error}
+                  </div>
+                )}
+                
                 <div className="space-y-4">
                   <div>
                     <label 
@@ -208,6 +297,29 @@ export default function ProfileSettingsPage() {
                   
                   <div>
                     <label 
+                      htmlFor="username" 
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    >
+                      Tên người dùng
+                    </label>
+                    <input
+                      type="text"
+                      id="username"
+                      name="username"
+                      value={formData.username}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600
+                        bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Nhập tên người dùng của bạn"
+                    />
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      Tên người dùng phải có ít nhất 3 ký tự và là duy nhất
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label 
                       htmlFor="email" 
                       className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                     >
@@ -224,35 +336,16 @@ export default function ProfileSettingsPage() {
                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
-                  
-                  <div>
-                    <label 
-                      htmlFor="bio" 
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                    >
-                      Giới thiệu
-                    </label>
-                    <textarea
-                      id="bio"
-                      name="bio"
-                      value={formData.bio}
-                      onChange={handleInputChange}
-                      rows={4}
-                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600
-                        bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Viết vài điều về bản thân..."
-                    />
-                  </div>
                 </div>
                 
                 <div className="mt-6">
                   <button
                     type="submit"
                     className="px-6 py-2.5 rounded-lg bg-blue-600 text-white font-medium 
-                      hover:bg-blue-700 transition-colors duration-200"
+                      hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isLoading}
                   >
-                    Lưu thay đổi
+                    {isLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
                   </button>
                 </div>
               </form>
@@ -264,6 +357,12 @@ export default function ProfileSettingsPage() {
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                   Đổi mật khẩu
                 </h2>
+                
+                {error && (
+                  <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {error}
+                  </div>
+                )}
                 
                 <div className="space-y-4">
                   <div>
@@ -328,9 +427,10 @@ export default function ProfileSettingsPage() {
                   <button
                     type="submit"
                     className="px-6 py-2.5 rounded-lg bg-blue-600 text-white font-medium 
-                      hover:bg-blue-700 transition-colors duration-200"
+                      hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isLoading}
                   >
-                    Cập nhật mật khẩu
+                    {isLoading ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
                   </button>
                 </div>
               </form>
@@ -342,6 +442,12 @@ export default function ProfileSettingsPage() {
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                   Cài đặt thông báo
                 </h2>
+                
+                {error && (
+                  <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {error}
+                  </div>
+                )}
                 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
@@ -412,9 +518,10 @@ export default function ProfileSettingsPage() {
                   <button
                     type="submit"
                     className="px-6 py-2.5 rounded-lg bg-blue-600 text-white font-medium 
-                      hover:bg-blue-700 transition-colors duration-200"
+                      hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isLoading}
                   >
-                    Lưu thay đổi
+                    {isLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
                   </button>
                 </div>
               </form>
