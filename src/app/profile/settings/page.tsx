@@ -121,13 +121,10 @@ export default function ProfileSettingsPage() {
           }
         })
         
-        alert('Thông tin cá nhân đã được cập nhật!')
       } else if (activeTab === 'password') {
         // Password change logic would go here
-        alert('Mật khẩu đã được cập nhật!')
       } else if (activeTab === 'notifications') {
         // Notification settings logic would go here
-        alert('Cài đặt thông báo đã được lưu!')
       }
     } catch (error) {
       console.error('Error updating settings:', error)
