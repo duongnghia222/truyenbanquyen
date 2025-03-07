@@ -64,7 +64,7 @@ export function ProfileUploadedNovels({ session }: ProfileUploadedNovelsProps) {
 
   if (isLoading) {
     return (
-      <div className="mt-8">
+      <div className="mt-8 p-6">
         <h2 className="text-xl font-bold mb-4">Truyện Đã Đăng</h2>
         <div className="animate-pulse">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -79,7 +79,7 @@ export function ProfileUploadedNovels({ session }: ProfileUploadedNovelsProps) {
 
   if (error) {
     return (
-      <div className="mt-8">
+      <div className="mt-8 p-6">
         <h2 className="text-xl font-bold mb-4">Truyện Đã Đăng</h2>
         <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-600 dark:text-red-400">
           {error}
@@ -89,7 +89,7 @@ export function ProfileUploadedNovels({ session }: ProfileUploadedNovelsProps) {
   }
 
   return (
-    <div className="mt-8">
+    <div className="mt-8 p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Truyện Đã Đăng</h2>
         <Link 

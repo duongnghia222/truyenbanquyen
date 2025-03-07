@@ -37,7 +37,10 @@ export default function ProfilePage() {
     if (status === 'authenticated') {
       fetchStats()
     }
-  }, [status])
+    
+    // This was causing constant reloading by including status in dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Empty dependency array to run only once after initial render
 
   if (status === 'loading') {
     return <ContentLoader />
