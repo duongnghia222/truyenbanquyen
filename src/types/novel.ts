@@ -10,6 +10,7 @@ export interface Novel {
   description?: string
   status?: 'ongoing' | 'completed' | 'hiatus'
   lastUpdated?: string
+  uploaderUsername?: string
 }
 
 export interface Announcement {

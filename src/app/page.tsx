@@ -12,6 +12,7 @@ import { LoginCTA } from '@/components/features/auth/LoginCTA'
 import { ensureDatabaseConnection } from '@/lib/db'
 import Novel from '@/models/Novel'
 import ClientAuthWrapper from '@/components/features/auth/ClientAuthWrapper'
+import User from '@/models/User'
 
 interface NovelType {
   _id: string
@@ -25,6 +26,10 @@ interface NovelType {
   views: number
   createdAt: string
   updatedAt: string
+  uploaderUsername?: string
+  uploadedBy?: {
+    username?: string
+  }
 }
 
 export const metadata: Metadata = {
@@ -37,12 +42,28 @@ export const revalidate = 0
 async function getLatestNovels(): Promise<NovelType[]> {
   try {
     await ensureDatabaseConnection()
+    
+    // First, find novels
     const novels = await Novel.find({})
       .sort({ createdAt: -1 })
       .limit(12)
       .lean()
     
-    return JSON.parse(JSON.stringify(novels))
+    // Process novel data to include username and convert to JSON-safe format
+    const processedNovels = [];
+    for (const novel of novels) {
+      // Get user info separately to avoid typing issues
+      if (novel.uploadedBy) {
+        const user = await User.findById(novel.uploadedBy).select('username').lean();
+        if (user) {
+          // @ts-expect-error - Add uploaderUsername field
+          novel.uploaderUsername = user.username;
+        }
+      }
+      processedNovels.push(novel);
+    }
+    
+    return JSON.parse(JSON.stringify(processedNovels))
   } catch (error) {
     console.error('Failed to fetch novels:', error)
     return []
@@ -53,12 +74,28 @@ async function getLatestNovels(): Promise<NovelType[]> {
 async function getTrendingNovels(): Promise<NovelType[]> {
   try {
     await ensureDatabaseConnection()
+    
+    // First, find novels
     const novels = await Novel.find({})
       .sort({ views: -1 })
       .limit(12)
       .lean()
     
-    return JSON.parse(JSON.stringify(novels))
+    // Process novel data to include username and convert to JSON-safe format
+    const processedNovels = [];
+    for (const novel of novels) {
+      // Get user info separately to avoid typing issues
+      if (novel.uploadedBy) {
+        const user = await User.findById(novel.uploadedBy).select('username').lean();
+        if (user) {
+          // @ts-expect-error - Add uploaderUsername field
+          novel.uploaderUsername = user.username;
+        }
+      }
+      processedNovels.push(novel);
+    }
+    
+    return JSON.parse(JSON.stringify(processedNovels))
   } catch (error) {
     console.error('Failed to fetch trending novels:', error)
     return []

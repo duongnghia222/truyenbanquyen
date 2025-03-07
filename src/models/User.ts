@@ -24,6 +24,7 @@ interface IUser extends Document {
     lastChapter: mongoose.Types.ObjectId;
     lastReadAt: Date;
   }>;
+  uploadedNovels: mongoose.Types.ObjectId[];
   bookmarks: mongoose.Types.ObjectId[];
   comments: mongoose.Types.ObjectId[];
   createdAt: Date;
@@ -105,6 +106,10 @@ const userSchema = new Schema({
       default: Date.now,
     },
   }],
+  uploadedNovels: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Novel',
+  }],
   bookmarks: [{
     type: Schema.Types.ObjectId,
     ref: 'Novel',
@@ -146,5 +151,10 @@ userSchema.pre('save', async function(this: mongoose.HydratedDocument<IUser>, ne
   }
 });
 
-const User = mongoose.models.User || mongoose.model<IUser>('User', userSchema);
+// Clear existing model if it exists to ensure schema changes are applied
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
+const User = mongoose.model<IUser>('User', userSchema);
 export default User; 

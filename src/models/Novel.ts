@@ -28,6 +28,11 @@ const novelSchema = new mongoose.Schema({
     enum: ['ongoing', 'completed', 'hiatus'],
     default: 'ongoing',
   },
+  uploadedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
   rating: {
     type: Number,
     min: 0,

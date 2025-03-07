@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Novel from '@/models/Novel';
+import User from '@/models/User';
 import { FilterQuery } from 'mongoose';
 import { createApiHandler } from '@/lib/api-utils';
 
@@ -36,14 +37,28 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   const skip = (page - 1) * limit;
 
   // Execute query with pagination
-  const [novels, total] = await Promise.all([
+  const [novelsData, total] = await Promise.all([
     Novel.find(query)
+      .populate({
+        path: 'uploadedBy',
+        select: 'username',
+        model: User
+      })
       .sort(sort)
       .skip(skip)
       .limit(limit)
       .lean(),
     Novel.countDocuments(query)
   ]);
+
+  // Add uploaderUsername to each novel
+  const novels = novelsData.map(novel => {
+    const formattedNovel = { ...novel };
+    if (novel.uploadedBy && novel.uploadedBy.username) {
+      formattedNovel.uploaderUsername = novel.uploadedBy.username;
+    }
+    return formattedNovel;
+  });
 
   // Calculate pagination metadata
   const totalPages = Math.ceil(total / limit);

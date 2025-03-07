@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import Novel from '@/models/Novel';
+import User from '@/models/User';
 import { ensureDatabaseConnection } from '@/lib/db';
 import { Types } from 'mongoose';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/config';
 
 // Set the maximum duration for this API route (60 seconds)
 export const maxDuration = 60;
@@ -15,6 +18,7 @@ interface NovelDocument {
   genres: string[];
   status: string;
   coverImage: string;
+  uploadedBy: Types.ObjectId | string;
   rating: number;
   views: number;
   chapterCount: number;
@@ -24,6 +28,16 @@ interface NovelDocument {
 
 export async function POST(request: Request) {
   try {
+    // Get the current user session
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user.id) {
+      return NextResponse.json(
+        { error: 'Vui lòng đăng nhập để đăng tải truyện' },
+        { status: 401 }
+      );
+    }
+    
     // Parse JSON with error handling
     let body;
     try {
@@ -79,6 +93,7 @@ export async function POST(request: Request) {
         genres,
         status,
         coverImage,
+        uploadedBy: session.user.id,
         rating: 0,
         views: 0,
         chapterCount: 0,
@@ -95,10 +110,17 @@ export async function POST(request: Request) {
       // Add proper type annotation to avoid 'unknown' type
       const novel = await Promise.race([dbPromise, timeoutPromise]) as NovelDocument;
 
+      // Add novel to user's uploadedNovels array
+      await User.findByIdAndUpdate(
+        session.user.id,
+        { $push: { uploadedNovels: novel._id } }
+      );
+
       // Debug log after creation
       console.log('Created novel:', {
         id: novel._id,
-        title: novel.title
+        title: novel.title,
+        uploadedBy: novel.uploadedBy
       });
 
       // Return the created novel

@@ -36,6 +36,11 @@ export function RecentNovelUpdates({ updates }: RecentNovelUpdatesProps) {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     {novel.author}
                   </p>
+                  {novel.uploaderUsername && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Đăng bởi: {novel.uploaderUsername}
+                    </p>
+                  )}
                   <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mt-2">
                     <span>⭐ {novel.rating.toFixed(1)}</span>
                     <span>👁 {formatNumber(novel.viewCount)}</span>

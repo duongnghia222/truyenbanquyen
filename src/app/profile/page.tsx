@@ -6,6 +6,7 @@ import { ProfileHeader } from '@/components/features/profile/ProfileHeader'
 import { ProfileUserInfo } from '@/components/features/profile/ProfileUserInfo'
 import { ProfileStats } from '@/components/features/profile/ProfileStats'
 import { ProfileRecentActivity } from '@/components/features/profile/ProfileRecentActivity'
+import { ProfileUploadedNovels } from '@/components/features/profile/ProfileUploadedNovels'
 
 // Import common components
 import { 
@@ -51,6 +52,7 @@ export default function ProfilePage() {
       <ProfileHeader session={session} />
       <ProfileUserInfo session={session} />
       <ProfileStats readingStats={readingStats} />
+      <ProfileUploadedNovels session={session} />
       <ProfileRecentActivity />
     </div>
   )

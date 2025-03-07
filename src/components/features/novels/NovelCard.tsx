@@ -15,6 +15,7 @@ interface NovelCardProps {
     status: 'ongoing' | 'completed' | 'hiatus';
     rating: number;
     views: number;
+    uploaderUsername?: string;
   };
 }
 
@@ -110,6 +111,13 @@ export function NovelCard({ novel }: NovelCardProps) {
           </h3>
           
           <p className="mt-1 text-sm text-gray-700 dark:text-gray-200 line-clamp-1">{novel.author}</p>
+          
+          {/* Add uploader username if available */}
+          {novel.uploaderUsername && (
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+              Đăng bởi: {novel.uploaderUsername}
+            </p>
+          )}
           
           {/* Rating */}
           <div className="mt-2">

@@ -69,6 +69,11 @@ export function FeaturedNovels({ novels }: FeaturedNovelsProps) {
                 <h3 className="font-bold text-lg line-clamp-2">{novel.title}</h3>
                 <div className="mt-2 text-sm space-y-1">
                   <p className="text-gray-300">{novel.author}</p>
+                  {novel.uploaderUsername && (
+                    <p className="text-xs text-gray-400">
+                      Đăng bởi: {novel.uploaderUsername}
+                    </p>
+                  )}
                   <div className="flex items-center gap-3">
                     <span>⭐ {novel.rating.toFixed(1)}</span>
                     <span>👁 {formatNumber(novel.viewCount)}</span>

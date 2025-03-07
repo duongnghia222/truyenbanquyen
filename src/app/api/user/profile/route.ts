@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
+import Novel from '@/models/Novel';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 
@@ -18,7 +19,14 @@ export async function GET() {
     
     await connectDB();
     
-    const user = await User.findById(session.user.id).select('name username email image');
+    // Include uploadedNovels in the selection
+    const user = await User.findById(session.user.id)
+      .select('name username email image uploadedNovels')
+      .populate({
+        path: 'uploadedNovels',
+        select: 'title author coverImage genres status views rating chapterCount createdAt',
+        options: { strictPopulate: false }
+      });
     
     if (!user) {
       return NextResponse.json(
@@ -27,7 +35,15 @@ export async function GET() {
       );
     }
     
-    return NextResponse.json({ user });
+    // Add uploaderUsername to each novel
+    const formattedUser = user.toObject();
+    if (Array.isArray(formattedUser.uploadedNovels)) {
+      formattedUser.uploadedNovels.forEach((novel: any) => {
+        novel.uploaderUsername = user.username;
+      });
+    }
+    
+    return NextResponse.json({ user: formattedUser });
     
   } catch (error) {
     console.error('Error fetching user profile:', error);
