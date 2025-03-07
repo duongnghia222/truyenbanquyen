@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
-import Novel from '@/models/Novel';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 
@@ -38,7 +37,19 @@ export async function GET() {
     // Add uploaderUsername to each novel
     const formattedUser = user.toObject();
     if (Array.isArray(formattedUser.uploadedNovels)) {
-      formattedUser.uploadedNovels.forEach((novel: any) => {
+      // Using unknown as intermediate step for type assertion
+      (formattedUser.uploadedNovels as unknown as Array<{ 
+        title: string;
+        author: string;
+        coverImage: string;
+        genres: string[];
+        status: string;
+        views: number;
+        rating: number;
+        chapterCount: number;
+        createdAt: Date;
+        uploaderUsername?: string;
+      }>).forEach(novel => {
         novel.uploaderUsername = user.username;
       });
     }

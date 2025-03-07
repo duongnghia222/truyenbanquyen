@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, FormEvent } from 'react'
+import { useState, useEffect, FormEvent, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import Image from 'next/image'
@@ -61,20 +61,7 @@ export default function EditNovelPage() {
     genres: [] as string[],
   })
   
-  useEffect(() => {
-    // Redirect to login if not authenticated
-    if (status === 'unauthenticated') {
-      router.push(`/auth/signin?callbackUrl=/novels/${novelId}/edit`)
-      return
-    }
-    
-    // Fetch novel data if authenticated
-    if (status === 'authenticated') {
-      fetchNovel()
-    }
-  }, [status, router, novelId])
-  
-  const fetchNovel = async () => {
+  const fetchNovel = useCallback(async () => {
     try {
       setIsLoading(true)
       const response = await fetch(`/api/novels/${novelId}`)
@@ -120,7 +107,20 @@ export default function EditNovelPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [novelId, session?.user?.id])
+  
+  useEffect(() => {
+    // Redirect to login if not authenticated
+    if (status === 'unauthenticated') {
+      router.push(`/auth/signin?callbackUrl=/novels/${novelId}/edit`)
+      return
+    }
+    
+    // Fetch novel data if authenticated
+    if (status === 'authenticated') {
+      fetchNovel()
+    }
+  }, [status, router, novelId, fetchNovel])
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target

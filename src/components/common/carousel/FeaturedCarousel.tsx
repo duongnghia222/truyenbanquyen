@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -27,9 +27,9 @@ export function FeaturedCarousel({ items, autoplaySpeed = 5000 }: FeaturedCarous
     setCurrentIndex((items.length + index) % items.length)
   }
 
-  const goToNext = () => {
+  const goToNext = useCallback(() => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % items.length)
-  }
+  }, [items.length])
 
   const goToPrev = () => {
     setCurrentIndex((prevIndex) => (prevIndex - 1 + items.length) % items.length)
@@ -54,7 +54,7 @@ export function FeaturedCarousel({ items, autoplaySpeed = 5000 }: FeaturedCarous
         clearInterval(timerRef.current)
       }
     }
-  }, [currentIndex, isPaused, items.length, autoplaySpeed])
+  }, [currentIndex, isPaused, items.length, autoplaySpeed, goToNext])
 
   if (items.length === 0) {
     return null
