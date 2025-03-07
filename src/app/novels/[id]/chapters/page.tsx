@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, BookOpen, Eye, Clock } from 'lucide-react';
 import { notFound } from 'next/navigation';
 
 interface Chapter {
@@ -49,47 +49,77 @@ export default async function ChaptersPage({
   const page = pageStr ? parseInt(pageStr) : 1;
   const { chapters, pagination } = await getNovelChapters(id, page);
 
+  // Format date to "Month Day, Year"
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-10">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        {/* Navigation */}
-        <div className="mb-6 flex items-center justify-between">
+        {/* Header & Navigation */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Chapter List</h1>
+          
           <Link 
             href={`/novels/${id}`}
-            className="inline-flex items-center gap-2 rounded-lg bg-white dark:bg-gray-800 px-4 py-2 text-gray-600 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-white dark:bg-gray-800 px-5 py-2.5 text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md transition-all duration-200 font-medium"
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={18} className="text-gray-500 dark:text-gray-400" />
             <span>Back to Novel</span>
-          </Link>
-
-          <Link
-            href={`/novels/${id}/upload`}
-            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
-          >
-            Đăng tải chương mới
           </Link>
         </div>
 
+        {/* Stats summary */}
+        <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BookOpen size={18} className="text-blue-500" />
+            <span className="text-gray-700 dark:text-gray-200 font-medium">
+              {pagination.totalItems} {pagination.totalItems === 1 ? 'Chapter' : 'Chapters'}
+            </span>
+          </div>
+          
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Page {pagination.currentPage} of {pagination.totalPages}
+          </div>
+        </div>
+
         {/* Chapter List */}
-        <div className="rounded-lg bg-white dark:bg-gray-800 shadow-md overflow-hidden">
+        <div className="rounded-xl bg-white dark:bg-gray-800 shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {chapters.map((chapter) => (
-              <li key={chapter._id}>
+              <li key={chapter._id} className="group">
                 <Link
                   href={`/novels/${id}/chapters/${chapter.chapterNumber}`}
-                  className="block p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  className="block p-5 hover:bg-blue-50 dark:hover:bg-gray-700/50 transition-all duration-200"
                 >
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                        {chapter.title}
-                      </h3>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(chapter.createdAt).toLocaleDateString()}
-                      </p>
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold">
+                        {chapter.chapterNumber}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          <span className="sm:hidden">#{chapter.chapterNumber}:</span> {chapter.title}
+                        </h3>
+                        <div className="mt-1.5 flex items-center gap-4">
+                          <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+                            <Clock size={14} />
+                            <span>{formatDate(chapter.createdAt)}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+                            <Eye size={14} />
+                            <span>{chapter.views.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {chapter.views.toLocaleString()} views
+                    <div className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                      <ChevronLeft size={16} className="rotate-180" />
                     </div>
                   </div>
                 </Link>
@@ -99,24 +129,24 @@ export default async function ChaptersPage({
         </div>
 
         {/* Pagination */}
-        <div className="mt-6 flex justify-center gap-2">
+        <div className="mt-8 flex justify-center gap-3">
           {pagination.hasPrevPage && (
             <Link
               href={`/novels/${id}/chapters?page=${page - 1}`}
-              className="rounded-lg bg-white dark:bg-gray-800 px-4 py-2 text-gray-600 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="rounded-lg bg-white dark:bg-gray-800 px-5 py-2.5 text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 flex items-center gap-2"
             >
-              Previous
+              <ChevronLeft size={16} />
+              <span>Previous</span>
             </Link>
           )}
-          <span className="rounded-lg bg-white dark:bg-gray-800 px-4 py-2 text-gray-600 dark:text-gray-300 shadow-sm">
-            Page {pagination.currentPage} of {pagination.totalPages}
-          </span>
+          
           {pagination.hasNextPage && (
             <Link
               href={`/novels/${id}/chapters?page=${page + 1}`}
-              className="rounded-lg bg-white dark:bg-gray-800 px-4 py-2 text-gray-600 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="rounded-lg bg-white dark:bg-gray-800 px-5 py-2.5 text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 flex items-center gap-2"
             >
-              Next
+              <span>Next</span>
+              <ChevronLeft size={16} className="rotate-180" />
             </Link>
           )}
         </div>
