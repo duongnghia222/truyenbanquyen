@@ -7,6 +7,7 @@ import Novel from '@/models/Novel'
 interface NovelType {
   _id: string
   title: string
+  slug: string
   author: string
   description: string
   coverImage: string

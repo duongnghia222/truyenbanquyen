@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack -p 3001",
+    "dev:local": "cross-env NODE_ENV=development next dev --turbopack -p 3001",
+    "dev:local:win": "set NODE_ENV=development && next dev --turbopack -p 3001",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3000",
     "lint": "next lint"
@@ -15,6 +17,7 @@
     "@heroicons/react": "^2.2.0",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.2",
+    "dotenv": "^16.4.7",
     "lucide-react": "^0.475.0",
     "mongodb": "^6.13.0",
     "mongoose": "^8.10.1",
@@ -29,6 +32,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^7.0.3",
     "eslint": "^9",
     "eslint-config-next": "15.1.7",
     "postcss": "^8",

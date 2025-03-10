@@ -23,7 +23,7 @@ export async function GET() {
       .select('name username email image uploadedNovels')
       .populate({
         path: 'uploadedNovels',
-        select: 'title author coverImage genres status views rating chapterCount createdAt',
+        select: 'title slug author coverImage genres status views rating chapterCount createdAt',
         options: { strictPopulate: false }
       });
     

@@ -6,6 +6,7 @@ import { User } from 'lucide-react';
 interface Novel {
   _id: string;
   title: string;
+  slug: string;
   author: string;
   description: string;
   coverImage: string;
@@ -19,19 +20,19 @@ interface Novel {
   uploaderUsername?: string;
 }
 
-async function getNovel(id: string): Promise<Novel> {
+async function getNovel(slug: string): Promise<Novel> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   
   try {
-    console.log(`Fetching novel with ID: ${id} from ${baseUrl}/api/novels/${id}`);
+    console.log(`Fetching novel with slug: ${slug} from ${baseUrl}/api/novels/${slug}`);
     
-    const res = await fetch(`${baseUrl}/api/novels/${id}`, {
+    const res = await fetch(`${baseUrl}/api/novels/${slug}`, {
       cache: 'no-store',
     });
     
     if (!res.ok) {
       if (res.status === 404) {
-        console.error(`Novel with ID ${id} not found`);
+        console.error(`Novel with slug ${slug} not found`);
         notFound();
       }
       
@@ -61,12 +62,12 @@ async function getNovel(id: string): Promise<Novel> {
 export default async function NovelDetailPage({ 
   params 
 }: { 
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }) {
   try {
-    const { id } = await params;
+    const { slug } = await params;
     
-    const novel = await getNovel(id);
+    const novel = await getNovel(slug);
     
     // Format date
     const formattedDate = new Date(novel.createdAt).toLocaleDateString('vi-VN', {
@@ -177,14 +178,14 @@ export default async function NovelDetailPage({
                 {/* Read Button */}
                 <div className="mt-8 flex gap-4">
                   <Link
-                    href={`/novels/${novel._id}/chapters`}
+                    href={`/novels/${novel.slug}/chapters`}
                     className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 text-base font-medium text-white shadow-md hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all transform hover:scale-105"
                   >
                     Đọc Truyện
                   </Link>
                   
                   <Link
-                    href={`/novels/${novel._id}#comments`}
+                    href={`/novels/${novel.slug}#comments`}
                     className="inline-flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 px-6 py-3 text-base font-medium text-gray-700 dark:text-gray-200 shadow-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all"
                   >
                     Bình luận

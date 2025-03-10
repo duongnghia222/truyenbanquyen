@@ -10,6 +10,7 @@ import { Loader2, AlertCircle, Save, ArrowLeft, Upload, Edit3, BookOpen } from '
 interface Novel {
   _id: string
   title: string
+  slug: string
   author: string
   description: string
   coverImage: string
@@ -42,7 +43,7 @@ export default function EditNovelPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
-  const novelId = params.id as string
+  const novelSlug = params.slug as string
   
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -64,7 +65,7 @@ export default function EditNovelPage() {
   const fetchNovel = useCallback(async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/novels/${novelId}`)
+      const response = await fetch(`/api/novels/${novelSlug}`)
       
       if (!response.ok) {
         throw new Error('Failed to fetch novel')
@@ -100,19 +101,20 @@ export default function EditNovelPage() {
         genres: data.genres || [],
       })
       
-      setCoverPreview(data.coverImage)
+      // Set cover preview
+      setCoverPreview(data.coverImage || null)
+      setIsLoading(false)
     } catch (err) {
       console.error('Error fetching novel:', err)
-      setError('Đã xảy ra lỗi khi tải thông tin truyện')
-    } finally {
+      setError('Không thể tải thông tin truyện')
       setIsLoading(false)
     }
-  }, [novelId, session?.user?.id])
+  }, [novelSlug, session?.user?.id])
   
   useEffect(() => {
     // Redirect to login if not authenticated
     if (status === 'unauthenticated') {
-      router.push(`/auth/signin?callbackUrl=/novels/${novelId}/edit`)
+      router.push(`/auth/signin?callbackUrl=/novels/${novelSlug}/edit`)
       return
     }
     
@@ -120,7 +122,7 @@ export default function EditNovelPage() {
     if (status === 'authenticated') {
       fetchNovel()
     }
-  }, [status, router, novelId, fetchNovel])
+  }, [status, router, novelSlug, fetchNovel])
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -230,7 +232,7 @@ export default function EditNovelPage() {
       }
       
       // Update novel data
-      const response = await fetch(`/api/novels/${novelId}`, {
+      const response = await fetch(`/api/novels/${novelSlug}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -245,12 +247,15 @@ export default function EditNovelPage() {
         throw new Error('Không thể cập nhật thông tin truyện')
       }
       
+      // Get the updated novel data with the new slug
+      const updatedNovel = await response.json()
+      
       // Show success before redirecting
       setSuccessMessage('Cập nhật truyện thành công! Đang chuyển hướng...')
       
-      // Redirect to novel page after a short delay
+      // Redirect to novel page using the new slug
       setTimeout(() => {
-        router.push(`/novels/${novelId}`)
+        router.push(`/novels/${updatedNovel.slug}`)
       }, 1000)
     } catch (err) {
       console.error('Error updating novel:', err)
@@ -326,7 +331,7 @@ export default function EditNovelPage() {
               {error}
             </p>
             <Link
-              href={`/novels/${novelId}`}
+              href={`/novels/${novelSlug}`}
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all transform hover:scale-105"
             >
               <BookOpen className="w-5 h-5" />
@@ -344,7 +349,7 @@ export default function EditNovelPage() {
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link 
-              href={`/novels/${novelId}`}
+              href={`/novels/${novelSlug}`}
               className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow transition-all duration-200"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -550,7 +555,7 @@ export default function EditNovelPage() {
             
             <div className="mt-10 pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-4">
               <Link
-                href={`/novels/${novelId}`}
+                href={`/novels/${novelSlug}`}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-200 font-medium"
               >
                 <ArrowLeft className="w-4 h-4" />

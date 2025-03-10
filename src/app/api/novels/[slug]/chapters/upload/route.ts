@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server';
 import Chapter from '@/models/Chapter';
 import Novel from '@/models/Novel';
+import { ensureDatabaseConnection } from '@/lib/db';
 
 type RouteParams = {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 };
 
 export async function POST(request: Request, { params }: RouteParams) {
   try {
-    const { id } = await params;
-    const { title, contentUrl, chapterNumber } = await request.json();
+    // Ensure database connection is established
+    await ensureDatabaseConnection();
+    
+    const { slug } = await params;
+    const { title, contentUrl, chapterNumber, summary } = await request.json();
 
     // Validate required fields
     if (!title || !contentUrl || !chapterNumber) {
@@ -19,8 +23,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       );
     }
 
-    // Check if novel exists
-    const novel = await Novel.findById(id);
+    // Find novel by slug
+    const novel = await Novel.findOne({ slug });
     if (!novel) {
       return NextResponse.json(
         { error: 'Không tìm thấy truyện' },
@@ -30,7 +34,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     // Check if chapter number already exists
     const existingChapter = await Chapter.findOne({
-      novelId: id,
+      novelId: novel._id,
       chapterNumber: chapterNumber
     });
 
@@ -43,30 +47,28 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     // Create the chapter
     const chapter = await Chapter.create({
-      novelId: id,
+      novelId: novel._id,
       title,
       contentUrl,
       chapterNumber,
+      summary: summary || null,
       views: 0,
-      createdAt: new Date(),
-      updatedAt: new Date()
     });
 
     // Update novel's chapter count
-    await Novel.findByIdAndUpdate(id, {
-      $inc: { chapterCount: 1 },
-      updatedAt: new Date()
-    });
-
-    return NextResponse.json(
-      { message: 'Đăng tải chương thành công', chapter },
-      { status: 201 }
+    await Novel.findByIdAndUpdate(
+      novel._id,
+      { 
+        $inc: { chapterCount: 1 },
+        updatedAt: new Date()
+      }
     );
 
+    return NextResponse.json(chapter, { status: 201 });
   } catch (error) {
-    console.error('Failed to upload chapter:', error);
+    console.error('Failed to create chapter:', error);
     return NextResponse.json(
-      { error: 'Không thể tải lên chương. Vui lòng thử lại.' },
+      { error: 'Không thể tạo chương mới' },
       { status: 500 }
     );
   }

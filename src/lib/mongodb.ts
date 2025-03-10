@@ -25,21 +25,21 @@ if (!cached) {
 // Define connection options outside the function to make them available for reconnection
 const connectionOptions = {
   bufferCommands: false, // Don't buffer commands when no connection is available
-  // Connection pool configuration for EC2 (non-serverless)
-  maxPoolSize: 20, // Increased for EC2 environment
-  minPoolSize: 5, // Increased for EC2 environment
-  connectTimeoutMS: 20000, // Connection timeout (20 seconds)
-  socketTimeoutMS: 45000, // Socket timeout in ms (45 seconds)
+  // Connection pool configuration optimized for performance
+  maxPoolSize: 10, // Reduced from 20 for better resource usage
+  minPoolSize: 3, // Reduced from 5 for better resource usage
+  connectTimeoutMS: 10000, // Reduced connection timeout (10 seconds)
+  socketTimeoutMS: 30000, // Reduced socket timeout in ms (30 seconds)
   // Performance improvements
   autoIndex: process.env.NODE_ENV !== 'production', // Don't build indexes in production
-  serverSelectionTimeoutMS: 15000, // Server selection timeout
+  serverSelectionTimeoutMS: 10000, // Reduced server selection timeout
   heartbeatFrequencyMS: 10000, // Heartbeat frequency
   // Additional options for stability
   family: 4, // Use IPv4, skip trying IPv6
   retryWrites: true,
   // Reduce wait time for connections in a persistent environment
-  waitQueueTimeoutMS: 10000, // How long to wait for a connection from the pool
-  maxIdleTimeMS: 30000, // How long a connection can remain idle before being removed
+  waitQueueTimeoutMS: 5000, // Reduced how long to wait for a connection from the pool
+  maxIdleTimeMS: 15000, // Reduced how long a connection can remain idle before being removed
   serverApi: {
     version: '1' as const,
     strict: true,

@@ -1,6 +1,7 @@
 export interface Novel {
   id: string
   title: string
+  slug: string
   coverImage: string
   rating: number
   viewCount: number

@@ -147,7 +147,7 @@ export default function UploadNovelForm() {
         const data = await response.json();
 
         // Redirect to novel chapters page for uploading chapters
-        router.push(`/novels/${data._id}/upload`);
+        router.push(`/novels/${data.slug}/upload`);
       } catch (fetchError) {
         if (fetchError instanceof DOMException && fetchError.name === 'AbortError') {
           throw new Error('Yêu cầu quá thời gian, vui lòng thử lại sau');

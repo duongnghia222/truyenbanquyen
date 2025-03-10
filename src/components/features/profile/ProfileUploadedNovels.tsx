@@ -9,6 +9,7 @@ import { PlusCircle } from 'lucide-react'
 interface Novel {
   _id: string
   title: string
+  slug: string
   author: string
   description: string
   coverImage: string

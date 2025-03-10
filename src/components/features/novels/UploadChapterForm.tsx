@@ -6,9 +6,10 @@ import { AlertCircle, CheckCircle2, FileText, Info } from 'lucide-react';
 
 interface UploadChapterFormProps {
   novelId: string;
+  novelSlug: string;
 }
 
-export default function UploadChapterForm({ novelId }: UploadChapterFormProps) {
+export default function UploadChapterForm({ novelId, novelSlug }: UploadChapterFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +72,7 @@ export default function UploadChapterForm({ novelId }: UploadChapterFormProps) {
       const contentFormData = new FormData();
       contentFormData.append('file', contentFile);
 
-      const uploadResponse = await fetch(`/api/novels/${novelId}/chapters/upload/content`, {
+      const uploadResponse = await fetch(`/api/novels/${novelSlug}/chapters/upload/content`, {
         method: 'POST',
         body: contentFormData,
       });
@@ -83,7 +84,7 @@ export default function UploadChapterForm({ novelId }: UploadChapterFormProps) {
       }
 
       // Then create the chapter with the content URL
-      const response = await fetch(`/api/novels/${novelId}/chapters/upload`, {
+      const response = await fetch(`/api/novels/${novelSlug}/chapters/upload`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,8 +120,10 @@ export default function UploadChapterForm({ novelId }: UploadChapterFormProps) {
         e.target.reset(); // Reset file input
       }
 
-      // Refresh the page to show the new chapter
-      router.refresh();
+      // Redirect to the chapters page after a short delay
+      setTimeout(() => {
+        router.push(`/novels/${novelSlug}/chapters`);
+      }, 1500);
 
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Đã xảy ra lỗi');

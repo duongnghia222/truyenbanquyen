@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Novel } from '@/types/novel'
-import { formatNumber, generateSlug } from '@/lib/utils'
+import { formatNumber } from '@/lib/utils'
 
 interface FeaturedNovelsProps {
   novels: Novel[]
@@ -53,7 +53,7 @@ export function FeaturedNovels({ novels }: FeaturedNovelsProps) {
         {novels.map((novel) => (
           <Link
             key={novel.id}
-            href={`/novel/${novel.id}/${generateSlug(novel.title)}`}
+            href={`/novels/${novel.slug}`}
             className="min-w-[280px] max-w-[280px] group snap-start"
           >
             <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-lg">

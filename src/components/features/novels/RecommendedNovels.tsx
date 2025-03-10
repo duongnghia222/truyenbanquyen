@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Novel } from '@/types/novel'
-import { formatNumber, generateSlug } from '@/lib/utils'
+import { formatNumber } from '@/lib/utils'
 
 export function RecommendedNovels() {
   // This would normally fetch from an API
@@ -9,6 +9,7 @@ export function RecommendedNovels() {
     {
       id: '1',
       title: 'Võ Luyện Đỉnh Phong',
+      slug: 'vo-luyen-dinh-phong',
       coverImage: '/images/novels/vo-luyen-dinh-phong.jpg',
       rating: 7.46,
       viewCount: 50000,
@@ -19,6 +20,7 @@ export function RecommendedNovels() {
     {
       id: '3',
       title: 'Tiên Nghịch',
+      slug: 'tien-nghich',
       coverImage: '/images/novels/vo-luyen-dinh-phong.jpg',
       rating: 7.8,
       viewCount: 35000,
@@ -42,7 +44,7 @@ export function RecommendedNovels() {
           return (
             <Link
               key={novel.id}
-              href={`/novel/${novel.id}/${generateSlug(novel.title)}`}
+              href={`/novels/${novel.slug}`}
               className="group"
             >
               <article>

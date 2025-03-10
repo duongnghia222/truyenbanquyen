@@ -1,13 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import Novel from '@/models/Novel';
 import User from '@/models/User';
-import { ensureDatabaseConnection } from '@/lib/db';
-import mongoose from 'mongoose';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
+import { createApiHandler } from '@/lib/api-utils';
 
 type RouteParams = {
-  params: Promise<{ id: string }>
+  params: { slug: string }
 };
 
 const handleError = (error: unknown, operation: string) => {
@@ -27,25 +26,18 @@ const handleNotFound = () => {
   );
 };
 
-export async function GET(request: Request, { params }: RouteParams) {
-  const { id } = await params;
+// Use createApiHandler to handle database connections automatically
+export const GET = createApiHandler(async (request: NextRequest) => {
+  // Extract slug from URL
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split('/');
+  const slug = pathParts[pathParts.length - 1];
+  
   try {
-    console.log(`API: Fetching novel with ID: ${id}`);
+    console.log(`API: Fetching novel with slug: ${slug}`);
     
-    // Ensure database connection is established
-    await ensureDatabaseConnection();
-    
-    // Validate the ID format
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      console.error(`API: Invalid novel ID format: ${id}`);
-      return NextResponse.json(
-        { error: 'Invalid novel ID format' },
-        { status: 400 }
-      );
-    }
-    
-    // Populate the uploader's username
-    const novel = await Novel.findById(id)
+    // Find novel by slug
+    const novel = await Novel.findOne({ slug })
       .populate({
         path: 'uploadedBy',
         select: 'username',
@@ -53,7 +45,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       });
     
     if (!novel) {
-      console.error(`API: Novel with ID ${id} not found`);
+      console.error(`API: Novel with slug ${slug} not found`);
       return handleNotFound();
     }
     
@@ -61,20 +53,27 @@ export async function GET(request: Request, { params }: RouteParams) {
     const formattedNovel = novel.toJSON();
     
     // Add uploaderUsername if uploadedBy exists
-    if (formattedNovel.uploadedBy && formattedNovel.uploadedBy.username) {
-      formattedNovel.uploaderUsername = formattedNovel.uploadedBy.username;
+    if (formattedNovel.uploadedBy && typeof formattedNovel.uploadedBy === 'object' && 
+        'username' in formattedNovel.uploadedBy && formattedNovel.uploadedBy.username) {
+      // Use type assertion to handle the dynamic property
+      (formattedNovel as any).uploaderUsername = formattedNovel.uploadedBy.username;
     }
     
     console.log(`API: Successfully fetched novel: ${novel.title}`);
     return NextResponse.json(formattedNovel);
   } catch (error) {
-    console.error(`API: Error fetching novel with ID ${id}:`, error);
+    console.error(`API: Error fetching novel with slug ${slug}:`, error);
     return handleError(error, 'fetch');
   }
-}
+});
 
-export async function PATCH(request: Request, { params }: RouteParams) {
-  const { id } = await params;
+// Use createApiHandler for PATCH method
+export const PATCH = createApiHandler(async (request: NextRequest) => {
+  // Extract slug from URL
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split('/');
+  const slug = pathParts[pathParts.length - 1];
+  
   try {
     // Get the current user session
     const session = await getServerSession(authOptions);
@@ -86,11 +85,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       );
     }
     
-    // Ensure database connection is established
-    await ensureDatabaseConnection();
-    
     // Find the novel first to check ownership
-    const existingNovel = await Novel.findById(id);
+    const existingNovel = await Novel.findOne({ slug });
     
     if (!existingNovel) return handleNotFound();
     
@@ -103,8 +99,19 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
     
     const data = await request.json();
-    const novel = await Novel.findByIdAndUpdate(
-      id,
+    
+    // If title is being updated, generate a new slug
+    if (data.title) {
+      data.slug = data.title
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim();
+    }
+    
+    const novel = await Novel.findOneAndUpdate(
+      { slug },
       { ...data, updatedAt: new Date() },
       { new: true, runValidators: true }
     );
@@ -113,10 +120,15 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   } catch (error) {
     return handleError(error, 'update');
   }
-}
+});
 
-export async function DELETE(request: Request, { params }: RouteParams) {
-  const { id } = await params;
+// Use createApiHandler for DELETE method
+export const DELETE = createApiHandler(async (request: NextRequest) => {
+  // Extract slug from URL
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split('/');
+  const slug = pathParts[pathParts.length - 1];
+  
   try {
     // Get the current user session
     const session = await getServerSession(authOptions);
@@ -128,11 +140,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       );
     }
     
-    // Ensure database connection is established
-    await ensureDatabaseConnection();
-    
     // Find the novel first to check ownership
-    const novel = await Novel.findById(id);
+    const novel = await Novel.findOne({ slug });
     
     if (!novel) return handleNotFound();
     
@@ -145,12 +154,12 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     }
     
     // Delete the novel
-    await Novel.findByIdAndDelete(id);
+    await Novel.findOneAndDelete({ slug });
     
     // Remove the novel from the user's uploadedNovels array
     await User.findByIdAndUpdate(
       session.user.id,
-      { $pull: { uploadedNovels: id } }
+      { $pull: { uploadedNovels: novel._id } }
     );
     
     return NextResponse.json(
@@ -160,4 +169,4 @@ export async function DELETE(request: Request, { params }: RouteParams) {
   } catch (error) {
     return handleError(error, 'delete');
   }
-} 
+}); 

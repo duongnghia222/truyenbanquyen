@@ -5,6 +5,7 @@ import { ensureDatabaseConnection } from '@/lib/db';
 import { Types } from 'mongoose';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
+import { generateSlug } from '@/lib/utils';
 
 // Set the maximum duration for this API route (60 seconds)
 export const maxDuration = 60;
@@ -13,6 +14,7 @@ export const maxDuration = 60;
 interface NovelDocument {
   _id: Types.ObjectId | string;
   title: string;
+  slug: string;
   author: string;
   description: string;
   genres: string[];
@@ -75,9 +77,24 @@ export async function POST(request: Request) {
       // Ensure database connection is established before proceeding
       await ensureDatabaseConnection();
       
+      // Generate slug from title
+      const slug = generateSlug(title);
+      
+      // Check if slug already exists
+      const existingNovel = await Novel.findOne({ slug });
+      if (existingNovel) {
+        // If slug exists, append a random string to make it unique
+        const uniqueSlug = `${slug}-${Math.random().toString(36).substring(2, 8)}`;
+        console.log(`Slug "${slug}" already exists, using "${uniqueSlug}" instead`);
+        body.slug = uniqueSlug;
+      } else {
+        body.slug = slug;
+      }
+      
       // Debug log before creation
       console.log('Creating novel with data:', {
         title,
+        slug: body.slug,
         author,
         description: description.substring(0, 50) + '...',
         genres,
@@ -88,6 +105,7 @@ export async function POST(request: Request) {
       // Create the novel in database with timeout
       const novelData = {
         title,
+        slug: body.slug,
         author,
         description,
         genres,
@@ -120,6 +138,7 @@ export async function POST(request: Request) {
       console.log('Created novel:', {
         id: novel._id,
         title: novel.title,
+        slug: novel.slug,
         uploadedBy: novel.uploadedBy
       });
 

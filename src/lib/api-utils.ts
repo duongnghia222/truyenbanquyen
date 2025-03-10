@@ -3,12 +3,14 @@ import { isStaticAsset } from './edge-utils';
 
 // Import database functions dynamically to avoid Edge Runtime errors
 let ensureDatabaseConnection: () => Promise<boolean>;
+let dbConnectionInitialized = false;
 
 // Only import database functions in a Node.js environment
 if (typeof window === 'undefined') {
   // This code will only run on the server, not in Edge Runtime
   import('./db').then((db) => {
     ensureDatabaseConnection = db.ensureDatabaseConnection;
+    dbConnectionInitialized = true;
   }).catch(err => {
     console.error('Failed to import database utilities:', err);
   });
@@ -32,13 +34,25 @@ export async function withDatabase<T>(
   // Check if URL is for an API route that requires database
   const isApiRoute = url.pathname.startsWith('/api/');
   
-  if (isApiRoute && ensureDatabaseConnection) {
+  if (isApiRoute && ensureDatabaseConnection && dbConnectionInitialized) {
     try {
       // Ensure database connection for API routes
-      await ensureDatabaseConnection();
+      // Use a short timeout to prevent hanging requests
+      const timeoutPromise = new Promise<boolean>((_, reject) => {
+        setTimeout(() => reject(new Error('Database connection timeout')), 3000);
+      });
+      
+      // Race the connection promise with a timeout
+      await Promise.race([
+        ensureDatabaseConnection(),
+        timeoutPromise
+      ]).catch(error => {
+        // Log error but continue with handler
+        console.error('Database connection error or timeout:', error);
+      });
     } catch (error) {
+      // Log error but continue with handler
       console.error('Database connection error:', error);
-      // Continue with the handler even if database connection fails
     }
   }
   

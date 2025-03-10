@@ -10,6 +10,7 @@ const MOCK_STATS = {
   readingTime: 126, // hours
   lastRead: {
     id: '12345',
+    slug: 'thien-long-bat-bo',
     title: 'Thiên Long Bát Bộ',
     chapter: 23,
     progress: 75, // percent
@@ -111,7 +112,7 @@ export function ReadingStats({ compact = false }: ReadingStatsProps) {
           {/* Last read book with progress */}
           <div className="mb-4">
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Truyện gần đây</p>
-            <Link href={`/novels/${MOCK_STATS.lastRead.id}`} className="block p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 transition-colors duration-200">
+            <Link href={`/novels/${MOCK_STATS.lastRead.slug}`} className="block p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 transition-colors duration-200">
               <p className="font-medium text-gray-900 dark:text-white mb-1 line-clamp-1">
                 {MOCK_STATS.lastRead.title}
               </p>

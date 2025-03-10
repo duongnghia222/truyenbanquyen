@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 import { initDatabase } from '@/lib/db';
 
 type RouteParams = {
-  params: Promise<{ id: string; chapterNumber: string }>
+  params: Promise<{ slug: string; chapterNumber: string }>
 };
 
 export async function GET(request: Request, { params }: RouteParams) {
@@ -13,15 +13,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     // Ensure database connection is established
     await initDatabase();
     
-    const { id, chapterNumber } = await params;
-    
-    // Validate novel ID
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { error: 'Invalid novel ID format' },
-        { status: 400 }
-      );
-    }
+    const { slug, chapterNumber } = await params;
     
     // Make sure chapterNumber is a valid number
     const chapterNum = parseInt(chapterNumber);
@@ -32,8 +24,8 @@ export async function GET(request: Request, { params }: RouteParams) {
       );
     }
     
-    // Check if the novel exists
-    const novel = await Novel.findById(id).select('_id chapterCount');
+    // Find the novel by slug
+    const novel = await Novel.findOne({ slug }).select('_id chapterCount');
     if (!novel) {
       return NextResponse.json(
         { error: 'Novel not found' },
@@ -51,7 +43,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     
     // Find the chapter
     const chapter = await Chapter.findOne({
-      novelId: id,
+      novelId: novel._id,
       chapterNumber: chapterNum
     });
     
@@ -61,11 +53,13 @@ export async function GET(request: Request, { params }: RouteParams) {
         { status: 404 }
       );
     }
-
-    // Increment views asynchronously (don't wait for completion)
-    Chapter.findByIdAndUpdate(chapter._id, { $inc: { views: 1 } }).exec()
-      .catch(err => console.error('Failed to increment chapter views:', err));
-
+    
+    // Increment view count
+    await Chapter.findByIdAndUpdate(
+      chapter._id,
+      { $inc: { views: 1 } }
+    );
+    
     return NextResponse.json(chapter);
   } catch (error) {
     console.error('Failed to fetch chapter:', error);

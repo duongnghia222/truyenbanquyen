@@ -15,21 +15,16 @@ export function truncateText(text: string, maxLength: number): string {
   return text.slice(0, maxLength) + '...'
 }
 
-export function generateSlug(text: string | undefined | null): string {
-  if (!text || typeof text !== 'string') return '';
-  
-  try {
-    return text
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[đĐ]/g, 'd')
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
-  } catch (error) {
-    console.error('Error generating slug:', error);
-    return '';
-  }
+/**
+ * Generates a URL-friendly slug from a string
+ * @param text The text to convert to a slug
+ * @returns A URL-friendly slug
+ */
+export function generateSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+    .trim();
 } 

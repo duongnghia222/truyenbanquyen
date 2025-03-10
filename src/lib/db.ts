@@ -73,16 +73,25 @@ export async function ensureDatabaseConnection() {
   // Check connection state
   const connectionState = mongoose.connection.readyState;
   
-  console.log(`Database connection state: ${connectionState}`);
+  // Only log connection state in development environment
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`Database connection state: ${connectionState}`);
+  }
   
   switch (connectionState) {
     case 1: // Connected
-      console.log('Database already connected');
+      // Only log in development environment
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Database already connected');
+      }
       return true;
       
     case 2: // Connecting
       try {
-        console.log('Database connection in progress, waiting...');
+        // Only log in development environment
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Database connection in progress, waiting...');
+        }
         // Wait for connection to complete with a reasonable timeout
         const connectionPromise = new Promise<boolean>((resolve, reject) => {
           // Set timeout for waiting

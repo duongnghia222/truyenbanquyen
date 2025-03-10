@@ -4,7 +4,7 @@ import Novel from '@/models/Novel';
 import { ensureDatabaseConnection } from '@/lib/db';
 
 type RouteParams = {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 };
 
 export async function GET(request: Request, { params }: RouteParams) {
@@ -12,21 +12,31 @@ export async function GET(request: Request, { params }: RouteParams) {
     // Ensure database connection is established
     await ensureDatabaseConnection();
     
-    const { id } = await params;
+    const { slug } = await params;
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const skip = (page - 1) * limit;
 
+    // First, find the novel by slug to get its ID
+    const novel = await Novel.findOne({ slug }).select('_id');
+    
+    if (!novel) {
+      return NextResponse.json(
+        { error: 'Novel not found' },
+        { status: 404 }
+      );
+    }
+
     // Fetch chapters for the novel with pagination
     const [chapters, total] = await Promise.all([
-      Chapter.find({ novelId: id })
+      Chapter.find({ novelId: novel._id })
         .sort({ chapterNumber: 1 })
         .skip(skip)
         .limit(limit)
         .select('title chapterNumber views createdAt')
         .lean(),
-      Chapter.countDocuments({ novelId: id })
+      Chapter.countDocuments({ novelId: novel._id })
     ]);
 
     // Calculate pagination metadata
@@ -60,19 +70,31 @@ export async function POST(request: Request, { params }: RouteParams) {
     // Ensure database connection is established
     await ensureDatabaseConnection();
     
-    const { id } = await params;
-    const body = await request.json();
+    const { slug } = await params;
     
-    // Simple implementation - adjust according to your actual needs
+    // First, find the novel by slug to get its ID
+    const novel = await Novel.findOne({ slug });
+    
+    if (!novel) {
+      return NextResponse.json(
+        { error: 'Novel not found' },
+        { status: 404 }
+      );
+    }
+    
+    const data = await request.json();
+    
+    // Create a new chapter
     const chapter = await Chapter.create({
-      ...body,
-      novelId: id,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      ...data,
+      novelId: novel._id
     });
     
     // Update the novel's chapter count
-    await Novel.findByIdAndUpdate(id, { $inc: { chapterCount: 1 } });
+    await Novel.findByIdAndUpdate(
+      novel._id,
+      { $inc: { chapterCount: 1 } }
+    );
     
     return NextResponse.json(chapter, { status: 201 });
   } catch (error) {

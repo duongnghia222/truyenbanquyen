@@ -6,6 +6,7 @@ import { NovelCard } from './NovelCard'
 interface NovelType {
   _id: string
   title: string
+  slug: string
   author: string
   description: string
   coverImage: string

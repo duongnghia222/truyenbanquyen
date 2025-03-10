@@ -6,6 +6,13 @@ const novelSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  slug: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    lowercase: true,
+  },
   author: {
     type: String,
     required: true,
@@ -59,6 +66,19 @@ const novelSchema = new mongoose.Schema({
   timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
+});
+
+// Generate slug from title before saving
+novelSchema.pre('save', function(next) {
+  if (this.isModified('title') || !this.slug) {
+    this.slug = this.title
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .trim();
+  }
+  next();
 });
 
 if (mongoose.models.Novel) {

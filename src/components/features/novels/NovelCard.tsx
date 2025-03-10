@@ -8,6 +8,7 @@ interface NovelCardProps {
   novel: {
     _id: string;
     title: string;
+    slug: string;
     author: string;
     description: string;
     coverImage: string;
@@ -70,7 +71,7 @@ export function NovelCard({ novel }: NovelCardProps) {
   };
 
   return (
-    <Link href={`/novels/${novel._id}`} className="group block h-full">
+    <Link href={`/novels/${novel.slug}`} className="group block h-full">
       <div className="relative flex flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 h-full transition-all duration-300 
         hover:shadow-lg hover:shadow-blue-500/5 dark:hover:shadow-blue-500/10 
         hover:border-blue-300 dark:hover:border-blue-700">
