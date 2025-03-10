@@ -21,7 +21,7 @@ interface Novel {
 }
 
 async function getNovel(slug: string): Promise<Novel> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truyenlight.com';
   
   try {
     console.log(`Fetching novel with slug: ${slug} from ${baseUrl}/api/novels/${slug}`);

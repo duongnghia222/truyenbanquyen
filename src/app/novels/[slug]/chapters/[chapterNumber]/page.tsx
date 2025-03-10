@@ -19,7 +19,7 @@ interface NovelInfo {
 }
 
 async function getChapter(slug: string, chapterNumber: string): Promise<Chapter> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truyenlight.com';
   const res = await fetch(
     `${baseUrl}/api/novels/${slug}/chapters/${chapterNumber}`,
     {
@@ -39,7 +39,7 @@ async function getChapter(slug: string, chapterNumber: string): Promise<Chapter>
 }
 
 async function getNovelInfo(slug: string): Promise<NovelInfo> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truyenlight.com';
   const res = await fetch(
     `${baseUrl}/api/novels/${slug}`,
     {

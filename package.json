@@ -7,7 +7,12 @@
     "dev:local": "cross-env NODE_ENV=development next dev --turbopack -p 3001",
     "dev:local:win": "set NODE_ENV=development && next dev --turbopack -p 3001",
     "build": "next build",
-    "start": "cross-env NODE_ENV=production NEXTAUTH_URL=https://truyenlight.com next start -H 0.0.0.0 -p 3000",
+    "start": "cross-env NODE_ENV=production node scripts/start-server.js",
+    "start:prod": "cross-env NODE_ENV=production node scripts/start-server.js",
+    "deploy:prod": "node scripts/deploy-production.js",
+    "check-env": "cross-env NODE_ENV=production node scripts/check-env.js",
+    "check-prod-env": "node scripts/load-production-env.js",
+    "prepare-prod": "node scripts/prepare-production.js",
     "lint": "next lint"
   },
   "dependencies": {

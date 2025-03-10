@@ -1,4 +1,11 @@
 /** @type {import('next').NextConfig} */
+
+// Log environment variables when Next.js config is loaded
+console.log('Loading Next.js config with NODE_ENV:', process.env.NODE_ENV);
+if (process.env.NODE_ENV === 'production') {
+  console.log('Production environment detected - should be loading from .env.production');
+}
+
 const nextConfig = {
   images: {
     remotePatterns: [

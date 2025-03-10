@@ -12,7 +12,7 @@ interface Novel {
 }
 
 async function getNovel(slug: string): Promise<Novel> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truyenlight.com';
   const res = await fetch(`${baseUrl}/api/novels/${slug}`, {
     cache: 'no-store'
   });

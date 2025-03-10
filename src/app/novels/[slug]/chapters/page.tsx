@@ -32,7 +32,7 @@ interface ChaptersResponse {
 }
 
 async function getNovelAndChapters(slug: string): Promise<{ novel: Novel, chaptersData: ChaptersResponse }> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truyenlight.com';
   
   try {
     // First, get the novel to get its ID
