@@ -33,8 +33,12 @@ interface NovelType {
 }
 
 export const metadata: Metadata = {
-  title: 'TruyenLight - Đọc Truyện Online',
-  description: 'Đọc truyện online, truyện mới, truyện full, truyện convert chất lượng cao.',
+  title: 'Truyện Light | Truyện Full, Truyện HD Mở Khóa Truyện Miễn Phí',
+  description: 'Truyện ngôn tình, truyện kiếm hiệp, truyện đam mỹ, truyện sắc, xuyên không, cổ đại. Truy cập trang web ngay để có cơ hội mở khóa truyện miễn phí.',
+  alternates: {
+    canonical: 'https://truyenlight.com/'
+  },
+  robots: 'index,follow',
 }
 
 export const revalidate = 0
