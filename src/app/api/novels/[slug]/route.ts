@@ -5,10 +5,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { createApiHandler } from '@/lib/api-utils';
 
-type RouteParams = {
-  params: { slug: string }
-};
-
 const handleError = (error: unknown, operation: string) => {
   if (error instanceof Error) {
     console.error(`Failed to ${operation} novel:`, error.message);
@@ -55,8 +51,8 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     // Add uploaderUsername if uploadedBy exists
     if (formattedNovel.uploadedBy && typeof formattedNovel.uploadedBy === 'object' && 
         'username' in formattedNovel.uploadedBy && formattedNovel.uploadedBy.username) {
-      // Use type assertion to handle the dynamic property
-      (formattedNovel as any).uploaderUsername = formattedNovel.uploadedBy.username;
+      // Use a more specific type instead of any
+      (formattedNovel as { uploaderUsername?: string }).uploaderUsername = formattedNovel.uploadedBy.username;
     }
     
     console.log(`API: Successfully fetched novel: ${novel.title}`);

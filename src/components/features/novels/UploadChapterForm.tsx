@@ -5,11 +5,10 @@ import { useRouter } from 'next/navigation';
 import { AlertCircle, CheckCircle2, FileText, Info } from 'lucide-react';
 
 interface UploadChapterFormProps {
-  novelId: string;
   novelSlug: string;
 }
 
-export default function UploadChapterForm({ novelId, novelSlug }: UploadChapterFormProps) {
+export default function UploadChapterForm({ novelSlug }: UploadChapterFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

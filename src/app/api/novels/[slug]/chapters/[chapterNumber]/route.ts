@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import Chapter from '@/models/Chapter';
 import Novel from '@/models/Novel';
-import mongoose from 'mongoose';
 import { initDatabase } from '@/lib/db';
 
 type RouteParams = {
