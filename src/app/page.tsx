@@ -61,14 +61,12 @@ async function getLatestNovels(): Promise<NovelType[]> {
       if (novel.uploadedBy) {
         const user = await User.findById(novel.uploadedBy).select('username').lean();
         if (user) {
-          // @ts-expect-error - Add uploaderUsername field
           novel.uploaderUsername = user.username;
         }
       }
       
       // Generate slug if not present
       if (!novel.slug) {
-        // @ts-expect-error - Add slug field if missing
         novel.slug = novel._id.toString();
       }
       
@@ -100,14 +98,12 @@ async function getTrendingNovels(): Promise<NovelType[]> {
       if (novel.uploadedBy) {
         const user = await User.findById(novel.uploadedBy).select('username').lean();
         if (user) {
-          // @ts-expect-error - Add uploaderUsername field
           novel.uploaderUsername = user.username;
         }
       }
       
       // Generate slug if not present
       if (!novel.slug) {
-        // @ts-expect-error - Add slug field if missing
         novel.slug = novel._id.toString();
       }
       

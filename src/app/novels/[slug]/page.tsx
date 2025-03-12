@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { User } from 'lucide-react';
+import CommentSection from '@/components/CommentSection';
 
 interface Novel {
   _id: string;
@@ -223,15 +224,21 @@ export default async function NovelDetailPage({
                     Đọc Truyện
                   </Link>
                   
-                  <Link
-                    href={`/novels/${novel.slug}#comments`}
+                  <a
+                    href="#comments"
                     className="inline-flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 px-6 py-3 text-base font-medium text-gray-700 dark:text-gray-200 shadow-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all"
                   >
                     Bình luận
-                  </Link>
+                  </a>
                 </div>
               </div>
             </div>
+          </div>
+          
+          {/* Comment Section */}
+          <div id="comments" className="mt-12 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700 p-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Bình luận</h2>
+            <CommentSection novelId={novel._id} />
           </div>
         </div>
       </div>
