@@ -30,6 +30,7 @@ interface NovelType {
   uploadedBy?: {
     username?: string
   }
+  slug: string
 }
 
 export const metadata: Metadata = {
@@ -64,6 +65,13 @@ async function getLatestNovels(): Promise<NovelType[]> {
           novel.uploaderUsername = user.username;
         }
       }
+      
+      // Generate slug if not present
+      if (!novel.slug) {
+        // @ts-expect-error - Add slug field if missing
+        novel.slug = novel._id.toString();
+      }
+      
       processedNovels.push(novel);
     }
     
@@ -96,6 +104,13 @@ async function getTrendingNovels(): Promise<NovelType[]> {
           novel.uploaderUsername = user.username;
         }
       }
+      
+      // Generate slug if not present
+      if (!novel.slug) {
+        // @ts-expect-error - Add slug field if missing
+        novel.slug = novel._id.toString();
+      }
+      
       processedNovels.push(novel);
     }
     
@@ -209,7 +224,7 @@ export default async function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
             {novels.map((novel, index) => (
               <div key={novel._id} className="transform hover:-translate-y-1 transition-transform duration-300 animate-fadeIn" style={{ animationDelay: `${index * 50}ms` }}>
-                <NovelCard novel={novel} />
+                <NovelCard novel={novel} showUpdateTime={true} />
               </div>
             ))}
           </div>

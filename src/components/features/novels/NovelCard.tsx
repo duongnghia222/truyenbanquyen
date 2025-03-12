@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import { formatTimeSince } from '@/lib/utils';
 
 interface NovelCardProps {
   novel: {
@@ -17,10 +18,12 @@ interface NovelCardProps {
     rating: number;
     views: number;
     uploaderUsername?: string;
+    updatedAt?: string;
   };
+  showUpdateTime?: boolean;
 }
 
-export function NovelCard({ novel }: NovelCardProps) {
+export function NovelCard({ novel, showUpdateTime = false }: NovelCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   
   const getStatusText = (status: 'ongoing' | 'completed' | 'hiatus') => {
@@ -136,6 +139,14 @@ export function NovelCard({ novel }: NovelCardProps) {
             </p>
           )}
           
+          {/* Show update time if requested and available */}
+          {showUpdateTime && novel.updatedAt && (
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 overflow-hidden text-ellipsis whitespace-nowrap flex items-center gap-1">
+              <ClockIcon className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">{formatTimeSince(novel.updatedAt)}</span>
+            </p>
+          )}
+          
           {/* Rating */}
           <div className="mt-2">
             {renderRatingStars(novel.rating)}
@@ -206,6 +217,14 @@ function UserIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  );
+}
+
+function ClockIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );
 } 
