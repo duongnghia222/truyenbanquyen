@@ -70,6 +70,11 @@ export function NovelCard({ novel }: NovelCardProps) {
     );
   };
 
+  // Format title with proper line breaks for Vietnamese text
+  const formatTitle = (title: string) => {
+    return title.replace(/\s+/g, ' ').trim();
+  };
+
   return (
     <Link href={`/novels/${novel.slug}`} className="group block h-full">
       <div className="relative flex flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 h-full transition-all duration-300 
@@ -100,24 +105,34 @@ export function NovelCard({ novel }: NovelCardProps) {
           <div className="absolute bottom-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <span className="inline-flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs text-white">
               <EyeIcon className="h-3 w-3" />
-              {novel.views.toLocaleString()}
+              {novel.views.toLocaleString('vi-VN')}
             </span>
           </div>
         </div>
         
         {/* Content - fixed height to ensure consistency */}
         <div className="p-4 flex-1 flex flex-col min-h-[130px]">
-          <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-300 line-clamp-2 transition-colors duration-300">
-            {novel.title}
+          <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors duration-300 break-words hyphens-auto"
+              style={{ 
+                wordBreak: 'break-word', 
+                overflowWrap: 'break-word',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                lineHeight: '1.3'
+              }}>
+            {formatTitle(novel.title)}
           </h3>
           
-          <p className="mt-1 text-sm text-gray-700 dark:text-gray-200 line-clamp-1">{novel.author}</p>
+          <p className="mt-1 text-sm text-gray-700 dark:text-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">{novel.author}</p>
           
           {/* Add uploader username if available */}
           {novel.uploaderUsername && (
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-1 flex items-center gap-1">
-              <UserIcon className="h-3 w-3" />
-              {novel.uploaderUsername}
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 overflow-hidden text-ellipsis whitespace-nowrap flex items-center gap-1">
+              <UserIcon className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">{novel.uploaderUsername}</span>
             </p>
           )}
           
@@ -131,7 +146,7 @@ export function NovelCard({ novel }: NovelCardProps) {
             {novel.genres.slice(0, 2).map((genre) => (
               <span
                 key={genre}
-                className="inline-block rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs text-gray-700 dark:text-gray-200 border border-transparent group-hover:border-gray-200 dark:group-hover:border-gray-600 transition-colors duration-300"
+                className="inline-block rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs text-gray-700 dark:text-gray-200 border border-transparent group-hover:border-gray-200 dark:group-hover:border-gray-600 transition-colors duration-300 truncate max-w-[100px]"
               >
                 {genre}
               </span>

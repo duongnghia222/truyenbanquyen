@@ -59,6 +59,22 @@ async function getNovel(slug: string): Promise<Novel> {
   }
 }
 
+// Format text with proper line breaks for Vietnamese text
+function formatText(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+// Format description with proper paragraph breaks
+function formatDescription(description: string): string {
+  // Split by double newlines or other paragraph separators
+  const paragraphs = description
+    .split(/\n\n|\r\n\r\n|\n\r\n/)
+    .map(p => p.trim())
+    .filter(p => p.length > 0);
+  
+  return paragraphs.join('\n\n');
+}
+
 export default async function NovelDetailPage({ 
   params 
 }: { 
@@ -76,6 +92,9 @@ export default async function NovelDetailPage({
       day: 'numeric'
     });
 
+    // Format description for better display
+    const formattedDescription = formatDescription(novel.description);
+
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 py-8">
         <div className="container mx-auto px-4">
@@ -86,7 +105,7 @@ export default async function NovelDetailPage({
               <span className="mx-2">/</span>
               <Link href="/novel-list" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Danh sách</Link>
               <span className="mx-2">/</span>
-              <span className="text-gray-900 dark:text-white font-medium">{novel.title}</span>
+              <span className="text-gray-900 dark:text-white font-medium truncate max-w-[200px] md:max-w-md">{formatText(novel.title)}</span>
             </nav>
           </div>
 
@@ -109,21 +128,29 @@ export default async function NovelDetailPage({
 
               {/* Novel info */}
               <div className="md:w-2/3 lg:w-3/4 p-8">
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3 leading-tight">{novel.title}</h1>
+                <h1 
+                  className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3 leading-tight break-words hyphens-auto"
+                  style={{ 
+                    wordBreak: 'break-word', 
+                    overflowWrap: 'break-word'
+                  }}
+                >
+                  {formatText(novel.title)}
+                </h1>
                 
                 <div className="mb-4 flex items-center text-gray-600 dark:text-gray-300">
                   <span className="font-medium">Tác giả:</span>
-                  <span className="ml-2">{novel.author}</span>
+                  <span className="ml-2 truncate">{formatText(novel.author)}</span>
                 </div>
                 
                 {/* Uploader info with enhanced styling */}
                 {novel.uploaderUsername && (
                   <div className="mb-4 flex items-center text-gray-600 dark:text-gray-300">
                     <div className="flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full">
-                      <User size={16} className="text-blue-600 dark:text-blue-400" />
+                      <User size={16} className="text-blue-600 dark:text-blue-400 flex-shrink-0" />
                       <span className="text-sm">
                         <span className="font-medium text-blue-700 dark:text-blue-300">Đăng bởi:</span>
-                        <span className="ml-1 text-blue-600 dark:text-blue-400">{novel.uploaderUsername}</span>
+                        <span className="ml-1 text-blue-600 dark:text-blue-400 truncate">{novel.uploaderUsername}</span>
                       </span>
                     </div>
                   </div>
@@ -131,7 +158,10 @@ export default async function NovelDetailPage({
                 
                 <div className="mb-6 flex flex-wrap gap-2">
                   {novel.genres.map((genre, index) => (
-                    <span key={index} className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm transition-all hover:bg-blue-200 dark:hover:bg-blue-800">
+                    <span 
+                      key={index} 
+                      className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm transition-all hover:bg-blue-200 dark:hover:bg-blue-800 truncate max-w-[150px]"
+                    >
                       {genre}
                     </span>
                   ))}
@@ -149,12 +179,12 @@ export default async function NovelDetailPage({
                   
                   <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
                     <div className="text-sm text-gray-500 dark:text-gray-400">Số chương</div>
-                    <div className="text-gray-900 dark:text-white font-medium">{novel.chapterCount}</div>
+                    <div className="text-gray-900 dark:text-white font-medium">{novel.chapterCount.toLocaleString('vi-VN')}</div>
                   </div>
                   
                   <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
                     <div className="text-sm text-gray-500 dark:text-gray-400">Lượt đọc</div>
-                    <div className="text-gray-900 dark:text-white font-medium">{novel.views.toLocaleString()}</div>
+                    <div className="text-gray-900 dark:text-white font-medium">{novel.views.toLocaleString('vi-VN')}</div>
                   </div>
                   
                   <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
@@ -171,7 +201,16 @@ export default async function NovelDetailPage({
                 <div className="mb-6">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Giới thiệu</h2>
                   <div className="prose prose-gray dark:prose-invert max-w-none">
-                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{novel.description}</p>
+                    {formattedDescription.split('\n\n').map((paragraph, index) => (
+                      <p key={index} className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4 break-words hyphens-auto"
+                         style={{ 
+                           wordBreak: 'break-word', 
+                           overflowWrap: 'break-word',
+                           textAlign: 'justify'
+                         }}>
+                        {paragraph}
+                      </p>
+                    ))}
                   </div>
                 </div>
                 
