@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import CommentSection from '@/components/CommentSection';
 

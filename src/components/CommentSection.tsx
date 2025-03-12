@@ -46,6 +46,10 @@ interface CommentSectionProps {
   chapterNumber?: number;
 }
 
+interface ApiErrorResponse {
+  error: string;
+}
+
 export default function CommentSection({ novelId, chapterId, chapterNumber }: CommentSectionProps) {
   const { data: session } = useSession();
   const [comments, setComments] = useState<CommentData[]>([]);
@@ -78,8 +82,8 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
           
           const chapter = await response.json();
           setChapterIdFromNumber(chapter._id);
-        } catch (err) {
-          console.error('Error fetching chapter ID:', err);
+        } catch (error) {
+          console.error('Error fetching chapter ID:', error);
         }
       };
       
@@ -122,8 +126,8 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         const data = await response.json();
         setComments(data.comments);
         setPagination(data.pagination);
-      } catch (err) {
-        console.error('Error fetching comments:', err);
+      } catch (error) {
+        console.error('Error fetching comments:', error);
         setError('Không thể tải bình luận. Vui lòng thử lại sau.');
       } finally {
         setLoading(false);
@@ -156,7 +160,14 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       // Determine which API to use
       const apiUrl = isChapterComment ? '/api/chapter-comments' : '/api/comments';
       
-      const requestBody: any = {
+      interface CommentRequestBody {
+        content: string;
+        novelId: string;
+        parentId: null;
+        chapterId?: string;
+      }
+      
+      const requestBody: CommentRequestBody = {
         content: newComment,
         novelId,
         parentId: null,
@@ -176,11 +187,11 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as ApiErrorResponse;
         throw new Error(errorData.error || 'Failed to post comment');
       }
       
-      const newCommentData = await response.json();
+      const newCommentData = await response.json() as CommentData;
       
       // Add the new comment to the list
       setComments([newCommentData, ...comments]);
@@ -194,9 +205,9 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
           totalPages: Math.ceil((pagination.totalItems + 1) / pagination.limit),
         });
       }
-    } catch (err: any) {
-      console.error('Error posting comment:', err);
-      setError(err.message || 'Không thể đăng bình luận. Vui lòng thử lại sau.');
+    } catch (error) {
+      console.error('Error posting comment:', error);
+      setError(error instanceof Error ? error.message : 'Không thể đăng bình luận. Vui lòng thử lại sau.');
     } finally {
       setSubmitting(false);
     }
@@ -223,7 +234,14 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       // Determine which API to use
       const apiUrl = isChapterComment ? '/api/chapter-comments' : '/api/comments';
       
-      const requestBody: any = {
+      interface ReplyRequestBody {
+        content: string;
+        novelId: string;
+        parentId: string;
+        chapterId?: string;
+      }
+      
+      const requestBody: ReplyRequestBody = {
         content: replyContent,
         novelId,
         parentId,
@@ -243,11 +261,11 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as ApiErrorResponse;
         throw new Error(errorData.error || 'Failed to post reply');
       }
       
-      const newReplyData = await response.json();
+      const newReplyData = await response.json() as CommentData;
       
       // Find the parent comment and add the reply
       const updatedComments = comments.map(comment => {
@@ -263,9 +281,9 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       setComments(updatedComments);
       setReplyingTo(null);
       setReplyContent('');
-    } catch (err: any) {
-      console.error('Error posting reply:', err);
-      setError(err.message || 'Không thể đăng trả lời. Vui lòng thử lại sau.');
+    } catch (error) {
+      console.error('Error posting reply:', error);
+      setError(error instanceof Error ? error.message : 'Không thể đăng trả lời. Vui lòng thử lại sau.');
     } finally {
       setSubmitting(false);
     }
@@ -303,11 +321,11 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as ApiErrorResponse;
         throw new Error(errorData.error || 'Failed to edit comment');
       }
       
-      const updatedComment = await response.json();
+      const updatedComment = await response.json() as CommentData;
       
       // Update the comment in the list
       const updatedComments = comments.map(comment => {
@@ -329,9 +347,9 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       setComments(updatedComments);
       setEditingId(null);
       setEditContent('');
-    } catch (err: any) {
-      console.error('Error editing comment:', err);
-      setError(err.message || 'Không thể chỉnh sửa bình luận. Vui lòng thử lại sau.');
+    } catch (error) {
+      console.error('Error editing comment:', error);
+      setError(error instanceof Error ? error.message : 'Không thể chỉnh sửa bình luận. Vui lòng thử lại sau.');
     } finally {
       setSubmitting(false);
     }
@@ -362,7 +380,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as ApiErrorResponse;
         throw new Error(errorData.error || 'Failed to delete comment');
       }
       
@@ -386,9 +404,9 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       });
       
       setComments(updatedComments);
-    } catch (err: any) {
-      console.error('Error deleting comment:', err);
-      setError(err.message || 'Không thể xóa bình luận. Vui lòng thử lại sau.');
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      setError(error instanceof Error ? error.message : 'Không thể xóa bình luận. Vui lòng thử lại sau.');
     } finally {
       setSubmitting(false);
     }
@@ -412,11 +430,11 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as ApiErrorResponse;
         throw new Error(errorData.error || 'Failed to like comment');
       }
       
-      const likeData = await response.json();
+      const likeData = await response.json() as { likes: number; userLiked: boolean };
       
       // Update the comment in the list
       const updatedComments = comments.map(comment => {
@@ -463,9 +481,9 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       });
       
       setComments(updatedComments);
-    } catch (err: any) {
-      console.error('Error liking comment:', err);
-      setError(err.message || 'Không thể thích bình luận. Vui lòng thử lại sau.');
+    } catch (error) {
+      console.error('Error liking comment:', error);
+      setError(error instanceof Error ? error.message : 'Không thể thích bình luận. Vui lòng thử lại sau.');
     }
   };
 
@@ -500,7 +518,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         addSuffix: true,
         locale: vi 
       });
-    } catch (err) {
+    } catch {
       return 'Unknown date';
     }
   };

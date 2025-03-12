@@ -9,6 +9,28 @@ import { authOptions } from '@/lib/auth/config';
 import mongoose from 'mongoose';
 import { FilterQuery } from 'mongoose';
 
+// Define interfaces for comment data
+interface CommentUser {
+  _id: string;
+  username: string;
+  avatar?: string;
+}
+
+interface CommentData {
+  _id: mongoose.Types.ObjectId;
+  content: string;
+  user: CommentUser;
+  novel: mongoose.Types.ObjectId;
+  chapter: mongoose.Types.ObjectId;
+  parent?: mongoose.Types.ObjectId;
+  likes: mongoose.Types.ObjectId[];
+  isEdited: boolean;
+  isDeleted: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  replies?: CommentData[];
+}
+
 // Get chapter comments with pagination and filtering
 export const GET = createApiHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
@@ -66,7 +88,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
         .sort(sort)
         .skip(skip)
         .limit(limit)
-        .lean(),
+        .lean<CommentData[]>(),
       ChapterComment.countDocuments(query)
     ]);
     
@@ -86,17 +108,17 @@ export const GET = createApiHandler(async (request: NextRequest) => {
           model: User
         })
         .sort('-createdAt')
-        .lean();
+        .lean<CommentData[]>();
       
       // Group replies by parent comment
       const repliesByParent = replies.reduce((acc, reply) => {
-        const parentId = reply.parent.toString();
+        const parentId = reply.parent?.toString() || '';
         if (!acc[parentId]) {
           acc[parentId] = [];
         }
         acc[parentId].push(reply);
         return acc;
-      }, {} as Record<string, any[]>);
+      }, {} as Record<string, CommentData[]>);
       
       // Add replies to their parent comments
       commentsData.forEach(comment => {
@@ -154,7 +176,13 @@ export const POST = createApiHandler(async (request: NextRequest) => {
   
   try {
     // Parse request body
-    const body = await request.json();
+    const body = await request.json() as {
+      content: string;
+      novelId: string;
+      chapterId: string;
+      parentId?: string;
+    };
+    
     const { content, novelId, chapterId, parentId } = body;
     
     // Validate required fields
