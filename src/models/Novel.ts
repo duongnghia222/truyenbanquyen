@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { transliterateVietnamese } from '../lib/utils';
 
 const novelSchema = new mongoose.Schema({
   title: {
@@ -71,7 +72,10 @@ const novelSchema = new mongoose.Schema({
 // Generate slug from title before saving
 novelSchema.pre('save', function(next) {
   if (this.isModified('title') || !this.slug) {
-    this.slug = this.title
+    // First transliterate Vietnamese characters to Latin equivalents
+    const transliterated = transliterateVietnamese(this.title);
+    
+    this.slug = transliterated
       .toLowerCase()
       .replace(/[^\w\s-]/g, '') // Remove special characters
       .replace(/\s+/g, '-') // Replace spaces with hyphens
