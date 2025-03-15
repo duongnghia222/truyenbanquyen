@@ -6,20 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Loader2, AlertCircle, Save, ArrowLeft, Upload, Edit3, BookOpen } from 'lucide-react'
-
-interface Novel {
-  _id: string
-  title: string
-  slug: string
-  author: string
-  description: string
-  coverImage: string
-  genres: string[]
-  status: 'ongoing' | 'completed' | 'hiatus'
-  uploadedBy: string | { _id: string; username?: string }
-}
-
-type NovelStatus = 'ongoing' | 'completed' | 'hiatus';
+import { Novel, NovelStatus } from '@/types/novel'
 
 const GENRES = [
   'Hành Động', 'Phiêu Lưu', 'Hài Hước', 'Kịch Tính', 'Giả Tưởng',

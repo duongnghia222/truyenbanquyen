@@ -6,23 +6,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { PlusCircle, Book, Clock, Eye, Star, Loader2, AlertCircle } from 'lucide-react'
-
-interface Novel {
-  _id: string
-  title: string
-  slug: string
-  author: string
-  description: string
-  coverImage: string
-  genres: string[]
-  status: 'ongoing' | 'completed' | 'hiatus'
-  rating: number
-  views: number
-  chapterCount: number
-  createdAt: string
-  updatedAt: string
-  uploadedBy?: string | object
-}
+import { Novel } from '@/types/novel'
 
 export default function MyNovelsPage() {
   const { status } = useSession()

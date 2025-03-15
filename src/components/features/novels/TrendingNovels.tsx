@@ -2,21 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { NovelCard } from './NovelCard'
-
-interface NovelType {
-  _id: string
-  title: string
-  slug: string
-  author: string
-  description: string
-  coverImage: string
-  genres: string[]
-  status: 'ongoing' | 'completed' | 'hiatus'
-  rating: number
-  views: number
-  createdAt: string
-  updatedAt: string
-}
+import { Novel as NovelType } from '@/types/novel'
 
 interface TrendingNovelsProps {
   novels: NovelType[]

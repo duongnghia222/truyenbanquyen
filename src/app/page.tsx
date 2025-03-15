@@ -13,25 +13,7 @@ import { ensureDatabaseConnection } from '@/lib/db'
 import Novel from '@/models/Novel'
 import ClientAuthWrapper from '@/components/features/auth/ClientAuthWrapper'
 import User from '@/models/User'
-
-interface NovelType {
-  _id: string
-  title: string
-  author: string
-  description: string
-  coverImage: string
-  genres: string[]
-  status: 'ongoing' | 'completed' | 'hiatus'
-  rating: number
-  views: number
-  createdAt: string
-  updatedAt: string
-  uploaderUsername?: string
-  uploadedBy?: {
-    username?: string
-  }
-  slug: string
-}
+import { Novel as NovelType, FeaturedNovel } from '@/types/novel'
 
 export const metadata: Metadata = {
   title: 'Truyện Light | Truyện Full, Truyện HD Mở Khóa Truyện Miễn Phí',
@@ -57,20 +39,23 @@ async function getLatestNovels(): Promise<NovelType[]> {
     // Process novel data to include username and convert to JSON-safe format
     const processedNovels = [];
     for (const novel of novels) {
+      // Create a mutable copy of the novel
+      const processedNovel: any = { ...novel };
+      
       // Get user info separately to avoid typing issues
-      if (novel.uploadedBy) {
-        const user = await User.findById(novel.uploadedBy).select('username').lean();
+      if (processedNovel.uploadedBy) {
+        const user = await User.findById(processedNovel.uploadedBy).select('username').lean();
         if (user) {
-          novel.uploaderUsername = user.username;
+          processedNovel.uploaderUsername = user.username;
         }
       }
       
       // Generate slug if not present
-      if (!novel.slug) {
-        novel.slug = novel._id.toString();
+      if (!processedNovel.slug) {
+        processedNovel.slug = processedNovel._id.toString();
       }
       
-      processedNovels.push(novel);
+      processedNovels.push(processedNovel);
     }
     
     return JSON.parse(JSON.stringify(processedNovels))
@@ -80,7 +65,6 @@ async function getLatestNovels(): Promise<NovelType[]> {
   }
 }
 
-// Mock function to get trending novels (would be replaced with real API call)
 async function getTrendingNovels(): Promise<NovelType[]> {
   try {
     await ensureDatabaseConnection()
@@ -94,20 +78,23 @@ async function getTrendingNovels(): Promise<NovelType[]> {
     // Process novel data to include username and convert to JSON-safe format
     const processedNovels = [];
     for (const novel of novels) {
+      // Create a mutable copy of the novel
+      const processedNovel: any = { ...novel };
+      
       // Get user info separately to avoid typing issues
-      if (novel.uploadedBy) {
-        const user = await User.findById(novel.uploadedBy).select('username').lean();
+      if (processedNovel.uploadedBy) {
+        const user = await User.findById(processedNovel.uploadedBy).select('username').lean();
         if (user) {
-          novel.uploaderUsername = user.username;
+          processedNovel.uploaderUsername = user.username;
         }
       }
       
       // Generate slug if not present
-      if (!novel.slug) {
-        novel.slug = novel._id.toString();
+      if (!processedNovel.slug) {
+        processedNovel.slug = processedNovel._id.toString();
       }
       
-      processedNovels.push(novel);
+      processedNovels.push(processedNovel);
     }
     
     return JSON.parse(JSON.stringify(processedNovels))

@@ -1,35 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-
-interface Chapter {
-  _id: string;
-  title: string;
-  novelId: string;
-  chapterNumber: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Novel {
-  _id: string;
-  title: string;
-  slug: string;
-  author: string;
-  coverImage: string;
-  chapterCount: number;
-}
-
-interface ChaptersResponse {
-  chapters: Chapter[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-    limit: number;
-  };
-}
+import { Novel, Chapter, ChaptersResponse } from '@/types/novel';
 
 async function getNovelAndChapters(slug: string): Promise<{ novel: Novel, chaptersData: ChaptersResponse }> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truyenlight.com';

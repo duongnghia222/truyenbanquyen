@@ -4,22 +4,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { formatTimeSince } from '@/lib/utils';
+import { Novel } from '@/types/novel';
 
 interface NovelCardProps {
-  novel: {
-    _id: string;
-    title: string;
-    slug: string;
-    author: string;
-    description: string;
-    coverImage: string;
-    genres: string[];
-    status: 'ongoing' | 'completed' | 'hiatus';
-    rating: number;
-    views: number;
-    uploaderUsername?: string;
-    updatedAt?: string;
-  };
+  novel: Novel;
   showUpdateTime?: boolean;
 }
 

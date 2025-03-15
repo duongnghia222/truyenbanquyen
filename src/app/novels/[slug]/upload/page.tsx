@@ -2,14 +2,7 @@ import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import UploadChapterForm from '@/components/features/novels/UploadChapterForm';
-
-interface Novel {
-  _id: string;
-  title: string;
-  slug: string;
-  author: string;
-  chapterCount: number;
-}
+import { Novel } from '@/types/novel';
 
 async function getNovel(slug: string): Promise<Novel> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truyenlight.com';

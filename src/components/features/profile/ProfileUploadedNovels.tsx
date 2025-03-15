@@ -5,21 +5,7 @@ import { NovelCard } from '@/components/features/novels/NovelCard'
 import Link from 'next/link'
 import { Session } from 'next-auth'
 import { PlusCircle } from 'lucide-react'
-
-interface Novel {
-  _id: string
-  title: string
-  slug: string
-  author: string
-  description: string
-  coverImage: string
-  genres: string[]
-  status: 'ongoing' | 'completed' | 'hiatus'
-  rating: number
-  views: number
-  chapterCount: number
-  createdAt: string
-}
+import { Novel } from '@/types/novel'
 
 interface ProfileUploadedNovelsProps {
   session: Session | null

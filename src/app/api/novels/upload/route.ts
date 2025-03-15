@@ -6,11 +6,12 @@ import { Types } from 'mongoose';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { generateSlug } from '@/lib/utils';
+import { Novel as NovelType, NovelStatus } from '@/types/novel';
 
 // Set the maximum duration for this API route (60 seconds)
 export const maxDuration = 60;
 
-// Define the Novel document type for proper typing
+// Define the Novel document type for Mongoose with MongoDB specifics
 interface NovelDocument {
   _id: Types.ObjectId | string;
   title: string;
@@ -18,7 +19,7 @@ interface NovelDocument {
   author: string;
   description: string;
   genres: string[];
-  status: string;
+  status: NovelStatus;
   coverImage: string;
   uploadedBy: Types.ObjectId | string;
   rating: number;
@@ -26,6 +27,13 @@ interface NovelDocument {
   chapterCount: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Define a ValidationError interface for Mongoose errors
+interface ValidationError extends Error {
+  name: string;
+  message: string;
+  errors?: Record<string, any>;
 }
 
 export async function POST(request: Request) {
@@ -41,7 +49,16 @@ export async function POST(request: Request) {
     }
     
     // Parse JSON with error handling
-    let body;
+    let body: {
+      title: string;
+      author: string;
+      description: string;
+      genres: string[];
+      status?: NovelStatus;
+      coverImage: string;
+      slug?: string;
+    };
+    
     try {
       body = await request.json();
     } catch (parseError) {
@@ -109,7 +126,7 @@ export async function POST(request: Request) {
         author,
         description,
         genres,
-        status,
+        status: status as NovelStatus,
         coverImage,
         uploadedBy: session.user.id,
         rating: 0,
@@ -143,7 +160,16 @@ export async function POST(request: Request) {
       });
 
       // Return the created novel
-      return NextResponse.json(novel, { status: 201 });
+      return NextResponse.json(
+        // Convert NovelDocument to NovelType format for consistent API responses
+        {
+          ...novel.toObject(),
+          _id: novel._id.toString(),
+          createdAt: novel.createdAt.toISOString(),
+          updatedAt: novel.updatedAt.toISOString(),
+        } as NovelType, 
+        { status: 201 }
+      );
     } catch (error: unknown) {
       console.error('Error creating novel:', error);
       
@@ -164,8 +190,9 @@ export async function POST(request: Request) {
         'message' in error &&
         typeof error.message === 'string'
       ) {
+        const validationError = error as ValidationError;
         return NextResponse.json(
-          { error: 'Dữ liệu không hợp lệ', details: error.message },
+          { error: 'Dữ liệu không hợp lệ', details: validationError.message },
           { status: 400 }
         );
       }
@@ -176,7 +203,7 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in novel upload:', error);
     // Ensure we return valid JSON even for unexpected errors
     return NextResponse.json(

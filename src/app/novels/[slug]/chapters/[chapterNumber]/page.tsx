@@ -1,22 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import CommentSection from '@/components/CommentSection';
-
-interface Chapter {
-  _id: string;
-  title: string;
-  contentUrl: string;
-  chapterNumber: number;
-  views: number;
-  createdAt: string;
-}
-
-interface NovelInfo {
-  _id: string;
-  title: string;
-  slug: string;
-  chapterCount: number;
-}
+import { Chapter, NovelInfo } from '@/types/novel';
 
 async function getChapter(slug: string, chapterNumber: string): Promise<Chapter> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truyenlight.com';
@@ -59,13 +44,16 @@ async function getNovelInfo(slug: string): Promise<NovelInfo> {
 }
 
 async function getChapterContent(contentUrl: string): Promise<string> {
-  const res = await fetch(contentUrl, { cache: 'no-store' });
-  
-  if (!res.ok) {
-    throw new Error('Failed to fetch chapter content');
+  try {
+    const res = await fetch(contentUrl);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch chapter content: ${res.status} ${res.statusText}`);
+    }
+    return res.text();
+  } catch (error) {
+    console.error('Error fetching chapter content:', error);
+    return 'Không thể tải nội dung chương. Vui lòng thử lại sau.';
   }
-  
-  return res.text();
 }
 
 export default async function ChapterPage({ 
@@ -76,14 +64,16 @@ export default async function ChapterPage({
   try {
     const { slug, chapterNumber } = await params;
     
-    // Fetch chapter data and novel info in parallel
+    // Fetch the chapter and novel info in parallel
     const [chapter, novelInfo] = await Promise.all([
       getChapter(slug, chapterNumber),
       getNovelInfo(slug)
     ]);
     
     // Fetch chapter content
-    const content = await getChapterContent(chapter.contentUrl);
+    const content = chapter.contentUrl 
+      ? await getChapterContent(chapter.contentUrl)
+      : 'Nội dung chương không có sẵn.';
     
     // Format content for display
     const formattedContent = content

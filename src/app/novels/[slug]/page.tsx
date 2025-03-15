@@ -3,23 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { User } from 'lucide-react';
 import CommentSection from '@/components/CommentSection';
-
-interface Novel {
-  _id: string;
-  title: string;
-  slug: string;
-  author: string;
-  description: string;
-  coverImage: string;
-  genres: string[];
-  status: 'ongoing' | 'completed' | 'hiatus';
-  views: number;
-  rating: number;
-  chapterCount: number;
-  createdAt: string;
-  updatedAt: string;
-  uploaderUsername?: string;
-}
+import { Novel } from '@/types/novel';
 
 async function getNovel(slug: string): Promise<Novel> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truyenlight.com';

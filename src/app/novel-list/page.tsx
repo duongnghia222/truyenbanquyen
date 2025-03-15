@@ -3,21 +3,7 @@ import Link from 'next/link'
 import { NovelCard } from '@/components/features/novels/NovelCard'
 import { ensureDatabaseConnection } from '@/lib/db'
 import Novel from '@/models/Novel'
-
-interface NovelType {
-  _id: string
-  title: string
-  slug: string
-  author: string
-  description: string
-  coverImage: string
-  genres: string[]
-  status: 'ongoing' | 'completed' | 'hiatus'
-  rating: number
-  views: number
-  createdAt: string
-  updatedAt: string
-}
+import { NovelType } from '@/types/novel'
 
 export const metadata: Metadata = {
   title: 'Danh Sách Truyện - TruyenLight',

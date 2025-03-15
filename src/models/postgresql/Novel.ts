@@ -1,7 +1,8 @@
 import { query, transaction } from '../../config/database';
 import { transliterateVietnamese } from '../../lib/utils';
+import { NovelStatus } from '@/types/novel';
 
-// Novel type definition
+// PostgreSQL-specific Novel type definition
 export interface Novel {
   id: number;
   title: string;
@@ -10,7 +11,7 @@ export interface Novel {
   description: string;
   coverImage: string;
   genres: string[];
-  status: 'ongoing' | 'completed' | 'hiatus';
+  status: NovelStatus;
   uploadedBy: number;
   rating: number;
   views: number;
