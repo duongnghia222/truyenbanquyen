@@ -134,7 +134,7 @@ class UserModel {
   async update(id: number, userData: Partial<User>): Promise<User | null> {
     // Start building the query
     let updateQuery = 'UPDATE users SET ';
-    const queryParams: any[] = [];
+    const queryParams: (string | number | Date | null)[] = [];
     const updateFields: string[] = [];
     let paramIndex = 1;
 
@@ -225,7 +225,7 @@ class UserModel {
    * Add coins to a user's budget
    */
   async addCoins(userId: number, amount: number, description: string, novelId?: number): Promise<User | null> {
-    return await transaction(async (client) => {
+    return transaction<User | null>(async (client) => {
       // Add transaction record
       await client.query(
         `INSERT INTO user_transactions (user_id, amount, description, novel_id)
@@ -352,21 +352,22 @@ class UserModel {
   /**
    * Transform database row to User object
    */
-  private transformUserData(row: any): User {
+  private transformUserData(row: Record<string, unknown>): User {
     return {
-      id: row.id,
-      name: row.name,
-      username: row.username,
-      email: row.email,
-      password: row.password,
-      googleId: row.google_id,
-      image: row.image,
-      coins: row.coins,
-      role: row.role,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
+      id: Number(row.id),
+      name: String(row.name),
+      username: String(row.username),
+      email: String(row.email),
+      password: row.password ? String(row.password) : undefined,
+      googleId: row.google_id ? String(row.google_id) : undefined,
+      image: row.image ? String(row.image) : undefined,
+      coins: Number(row.coins),
+      role: String(row.role) as 'user' | 'admin',
+      createdAt: new Date(row.created_at as string),
+      updatedAt: new Date(row.updated_at as string)
     };
   }
 }
 
-export default new UserModel(); 
+const userModel = new UserModel();
+export default userModel; 

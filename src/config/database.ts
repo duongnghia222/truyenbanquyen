@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -23,7 +23,7 @@ pool.on('error', (err) => {
 });
 
 // Helper function for executing queries
-export const query = async (text: string, params?: any[]) => {
+export const query = async (text: string, params?: (string | number | boolean | Date | null | undefined)[]) => {
   const start = Date.now();
   try {
     const res = await pool.query(text, params);
@@ -37,12 +37,13 @@ export const query = async (text: string, params?: any[]) => {
 };
 
 // Helper function for transactions
-export const transaction = async (callback: (client: any) => Promise<void>) => {
+export const transaction = async <T>(callback: (client: PoolClient) => Promise<T>): Promise<T> => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    await callback(client);
+    const result = await callback(client);
     await client.query('COMMIT');
+    return result;
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

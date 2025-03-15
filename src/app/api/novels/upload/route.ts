@@ -33,7 +33,7 @@ interface NovelDocument {
 interface ValidationError extends Error {
   name: string;
   message: string;
-  errors?: Record<string, any>;
+  errors?: Record<string, { message: string; path: string; value?: unknown }>;
 }
 
 export async function POST(request: Request) {
@@ -163,7 +163,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         // Convert NovelDocument to NovelType format for consistent API responses
         {
-          ...novel.toObject(),
+          ...(typeof novel.toObject === 'function' ? novel.toObject() : novel),
           _id: novel._id.toString(),
           createdAt: novel.createdAt.toISOString(),
           updatedAt: novel.updatedAt.toISOString(),

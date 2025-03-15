@@ -36,8 +36,8 @@ const idMap: {
 };
 
 // Helper function to parse CSV file
-async function parseCSV(filePath: string): Promise<any[]> {
-  const data: any[] = [];
+async function parseCSV<T>(filePath: string): Promise<T[]> {
+  const data: T[] = [];
   
   const parser = fs
     .createReadStream(filePath)
@@ -47,7 +47,7 @@ async function parseCSV(filePath: string): Promise<any[]> {
     }));
 
   for await (const record of parser) {
-    data.push(record);
+    data.push(record as T);
   }
   
   return data;
@@ -64,7 +64,7 @@ function extractMongoId(objectId: string): string {
 function parseStringArray(arrayString: string): string[] {
   try {
     return JSON.parse(arrayString);
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -78,7 +78,7 @@ async function seed() {
     
     // 1. Seed users
     console.log('Seeding users...');
-    const users = await parseCSV(USER_CSV);
+    const users = await parseCSV<Record<string, unknown>>(USER_CSV);
     
     for (const user of users) {
       const mongoId = extractMongoId(user._id);
@@ -96,7 +96,7 @@ async function seed() {
     
     // 2. Seed genres and novels
     console.log('Seeding novels and genres...');
-    const novels = await parseCSV(NOVEL_CSV);
+    const novels = await parseCSV<Record<string, unknown>>(NOVEL_CSV);
     
     // Create a set of unique genres
     const uniqueGenres = new Set<string>();
@@ -153,7 +153,7 @@ async function seed() {
     
     // 3. Seed chapters
     console.log('Seeding chapters...');
-    const chapters = await parseCSV(CHAPTER_CSV);
+    const chapters = await parseCSV<Record<string, unknown>>(CHAPTER_CSV);
     
     for (const chapter of chapters) {
       const mongoId = extractMongoId(chapter._id);
@@ -183,7 +183,7 @@ async function seed() {
     
     // 4. Seed novel comments
     console.log('Seeding novel comments...');
-    const comments = await parseCSV(COMMENT_CSV);
+    const comments = await parseCSV<Record<string, unknown>>(COMMENT_CSV);
     
     // First pass: Insert comments without parent relationship
     for (const comment of comments) {
@@ -231,7 +231,7 @@ async function seed() {
     
     // 5. Seed chapter comments
     console.log('Seeding chapter comments...');
-    const chapterComments = await parseCSV(CHAPTER_COMMENT_CSV);
+    const chapterComments = await parseCSV<Record<string, unknown>>(CHAPTER_COMMENT_CSV);
     
     // First pass: Insert comments without parent relationship
     for (const comment of chapterComments) {

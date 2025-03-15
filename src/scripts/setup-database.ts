@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
 import dotenv from 'dotenv';
-import { execSync } from 'child_process';
 import { Client } from 'pg';
-import path from 'path';
 import runMigrations from '../migrations/runner';
+import fs from 'fs';
 
 // Load environment variables
 dotenv.config();
@@ -64,8 +63,8 @@ function updateEnvironmentFile() {
     // Check current .env file
     let envContent;
     try {
-      envContent = require('fs').readFileSync('.env', 'utf8');
-    } catch (err) {
+      envContent = fs.readFileSync('.env', 'utf8');
+    } catch {
       // File might not exist, create it
       envContent = '';
     }
@@ -89,7 +88,7 @@ function updateEnvironmentFile() {
     }
 
     if (modified) {
-      require('fs').writeFileSync('.env', envContent);
+      fs.writeFileSync('.env', envContent);
       console.log('.env file updated with PostgreSQL configuration.');
     }
   } catch (error) {

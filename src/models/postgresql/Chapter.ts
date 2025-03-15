@@ -177,7 +177,7 @@ class ChapterModel {
   async update(id: number, chapterData: Partial<Omit<Chapter, 'id' | 'novelId' | 'createdAt' | 'updatedAt'>>): Promise<Chapter | null> {
     // Start building the update query
     let updateQuery = 'UPDATE chapters SET ';
-    const queryParams: any[] = [];
+    const queryParams: (string | number | Date)[] = [];
     const updateFields: string[] = [];
     let paramIndex = 1;
     
@@ -297,18 +297,19 @@ class ChapterModel {
   /**
    * Transform database row to Chapter object
    */
-  private transformChapterData(row: any): Chapter {
+  private transformChapterData(row: Record<string, unknown>): Chapter {
     return {
-      id: row.id,
-      novelId: row.novel_id,
-      chapterNumber: row.chapter_number,
-      title: row.title,
-      contentUrl: row.content_url,
-      views: row.views,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
+      id: Number(row.id),
+      novelId: Number(row.novel_id),
+      chapterNumber: Number(row.chapter_number),
+      title: String(row.title),
+      contentUrl: String(row.content_url),
+      views: Number(row.views),
+      createdAt: new Date(row.created_at as string),
+      updatedAt: new Date(row.updated_at as string)
     };
   }
 }
 
-export default new ChapterModel(); 
+const chapterModel = new ChapterModel();
+export default chapterModel; 

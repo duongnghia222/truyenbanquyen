@@ -1,4 +1,4 @@
-import { query, transaction } from '../../config/database';
+import { query } from '../../config/database';
 
 // Novel Comment type definition
 export interface NovelComment {
@@ -453,39 +453,40 @@ class CommentModel {
   /**
    * Transform database row to NovelComment object
    */
-  private transformNovelCommentData(row: any): NovelComment {
+  private transformNovelCommentData(row: Record<string, unknown>): NovelComment {
     return {
-      id: row.id,
-      content: row.content,
-      userId: row.user_id,
-      novelId: row.novel_id,
-      parentId: row.parent_id,
-      isEdited: row.is_edited,
-      isDeleted: row.is_deleted,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
+      id: Number(row.id),
+      content: String(row.content),
+      userId: Number(row.user_id),
+      novelId: Number(row.novel_id),
+      parentId: row.parent_id ? Number(row.parent_id) : undefined,
+      isEdited: Boolean(row.is_edited),
+      isDeleted: Boolean(row.is_deleted),
+      createdAt: new Date(row.created_at as string),
+      updatedAt: new Date(row.updated_at as string)
     };
   }
 
   /**
    * Transform database row to ChapterComment object
    */
-  private transformChapterCommentData(row: any): ChapterComment {
+  private transformChapterCommentData(row: Record<string, unknown>): ChapterComment {
     return {
-      id: row.id,
-      content: row.content,
-      userId: row.user_id,
-      novelId: row.novel_id,
-      chapterId: row.chapter_id,
-      parentId: row.parent_id,
-      isEdited: row.is_edited,
-      isDeleted: row.is_deleted,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
+      id: Number(row.id),
+      content: String(row.content),
+      userId: Number(row.user_id),
+      novelId: Number(row.novel_id),
+      chapterId: Number(row.chapter_id),
+      parentId: row.parent_id ? Number(row.parent_id) : undefined,
+      isEdited: Boolean(row.is_edited),
+      isDeleted: Boolean(row.is_deleted),
+      createdAt: new Date(row.created_at as string),
+      updatedAt: new Date(row.updated_at as string)
     };
   }
 }
 
-export default new CommentModel();
+const commentModel = new CommentModel();
+export default commentModel;
 export const NovelCommentModel = CommentModel;
 export const ChapterCommentModel = CommentModel; 

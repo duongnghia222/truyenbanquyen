@@ -13,7 +13,7 @@ import { ensureDatabaseConnection } from '@/lib/db'
 import Novel from '@/models/Novel'
 import ClientAuthWrapper from '@/components/features/auth/ClientAuthWrapper'
 import User from '@/models/User'
-import { Novel as NovelType, FeaturedNovel } from '@/types/novel'
+import { Novel as NovelType } from '@/types/novel'
 
 export const metadata: Metadata = {
   title: 'Truyện Light | Truyện Full, Truyện HD Mở Khóa Truyện Miễn Phí',
@@ -39,8 +39,14 @@ async function getLatestNovels(): Promise<NovelType[]> {
     // Process novel data to include username and convert to JSON-safe format
     const processedNovels = [];
     for (const novel of novels) {
-      // Create a mutable copy of the novel
-      const processedNovel: any = { ...novel };
+      // Create a JSON-safe copy with proper type conversion
+      const processedNovel = {
+        ...novel,
+        _id: novel._id.toString(),
+        createdAt: novel.createdAt.toISOString(),
+        updatedAt: novel.updatedAt.toISOString(),
+        uploaderUsername: undefined as string | undefined
+      };
       
       // Get user info separately to avoid typing issues
       if (processedNovel.uploadedBy) {
@@ -52,13 +58,13 @@ async function getLatestNovels(): Promise<NovelType[]> {
       
       // Generate slug if not present
       if (!processedNovel.slug) {
-        processedNovel.slug = processedNovel._id.toString();
+        processedNovel.slug = processedNovel._id;
       }
       
       processedNovels.push(processedNovel);
     }
     
-    return JSON.parse(JSON.stringify(processedNovels))
+    return processedNovels;
   } catch (error) {
     console.error('Failed to fetch novels:', error)
     return []
@@ -78,8 +84,14 @@ async function getTrendingNovels(): Promise<NovelType[]> {
     // Process novel data to include username and convert to JSON-safe format
     const processedNovels = [];
     for (const novel of novels) {
-      // Create a mutable copy of the novel
-      const processedNovel: any = { ...novel };
+      // Create a JSON-safe copy with proper type conversion
+      const processedNovel = {
+        ...novel,
+        _id: novel._id.toString(),
+        createdAt: novel.createdAt.toISOString(),
+        updatedAt: novel.updatedAt.toISOString(),
+        uploaderUsername: undefined as string | undefined
+      };
       
       // Get user info separately to avoid typing issues
       if (processedNovel.uploadedBy) {
@@ -91,13 +103,13 @@ async function getTrendingNovels(): Promise<NovelType[]> {
       
       // Generate slug if not present
       if (!processedNovel.slug) {
-        processedNovel.slug = processedNovel._id.toString();
+        processedNovel.slug = processedNovel._id;
       }
       
       processedNovels.push(processedNovel);
     }
     
-    return JSON.parse(JSON.stringify(processedNovels))
+    return processedNovels;
   } catch (error) {
     console.error('Failed to fetch trending novels:', error)
     return []

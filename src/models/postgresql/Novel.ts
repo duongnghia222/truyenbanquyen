@@ -25,7 +25,7 @@ class NovelModel {
    * Create a new novel
    */
   async create(novelData: Omit<Novel, 'id' | 'slug' | 'rating' | 'views' | 'chapterCount' | 'createdAt' | 'updatedAt'>): Promise<Novel> {
-    return await transaction(async (client) => {
+    return transaction<Novel>(async (client) => {
       // Generate slug from title
       const slug = this.generateSlug(novelData.title);
 
@@ -155,10 +155,10 @@ class NovelModel {
    * Update a novel
    */
   async update(id: number, novelData: Partial<Novel>): Promise<Novel | null> {
-    return await transaction(async (client) => {
+    return transaction<Novel | null>(async (client) => {
       // Start building the update query
       let updateQuery = 'UPDATE novels SET ';
-      const queryParams: any[] = [];
+      const queryParams: (string | number | boolean | Date | null)[] = [];
       const updateFields: string[] = [];
       let paramIndex = 1;
 
@@ -503,24 +503,25 @@ class NovelModel {
   /**
    * Transform database row to Novel object
    */
-  private transformNovelData(row: any, genres: string[]): Novel {
+  private transformNovelData(row: Record<string, unknown>, genres: string[]): Novel {
     return {
-      id: row.id,
-      title: row.title,
-      slug: row.slug,
-      author: row.author,
-      description: row.description,
-      coverImage: row.cover_image,
+      id: Number(row.id),
+      title: String(row.title),
+      slug: String(row.slug),
+      author: String(row.author),
+      description: String(row.description),
+      coverImage: String(row.cover_image),
       genres: genres,
-      status: row.status,
-      uploadedBy: row.uploaded_by,
-      rating: parseFloat(row.rating), // Convert from DECIMAL to number
-      views: row.views,
-      chapterCount: row.chapter_count,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
+      status: String(row.status) as NovelStatus,
+      uploadedBy: Number(row.uploaded_by),
+      rating: Number(row.rating),
+      views: Number(row.views),
+      chapterCount: Number(row.chapter_count),
+      createdAt: new Date(row.created_at as string),
+      updatedAt: new Date(row.updated_at as string)
     };
   }
 }
 
-export default new NovelModel(); 
+const novelModel = new NovelModel();
+export default novelModel; 

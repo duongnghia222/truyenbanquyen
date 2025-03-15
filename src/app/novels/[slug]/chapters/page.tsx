@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Novel, Chapter, ChaptersResponse } from '@/types/novel';
+import { Novel, ChaptersResponse } from '@/types/novel';
 
 async function getNovelAndChapters(slug: string): Promise<{ novel: Novel, chaptersData: ChaptersResponse }> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truyenlight.com';

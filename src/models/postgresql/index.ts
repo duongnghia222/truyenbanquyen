@@ -31,9 +31,11 @@ export type {
   CommentLike,
 };
 
-export default {
+const models = {
   UserModel,
   NovelModel,
   ChapterModel,
   CommentModel,
-}; 
+};
+
+export default models; 
