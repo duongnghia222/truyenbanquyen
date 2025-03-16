@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Project Structure
 
-## Getting Started
+This project follows the Next.js App Router architecture. Below is a detailed breakdown of the project structure:
 
-First, run the development server:
+### Root Directory
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+/
+├── .next/               # Next.js build output
+├── .git/                # Git repository
+├── .vscode/             # VS Code configuration
+├── node_modules/        # Dependencies
+├── public/              # Static assets
+├── scripts/             # Build and deployment scripts
+├── src/                 # Source code
+├── mongodb-csv-export/  # Database export files
+├── .env                 # Environment variables
+├── .env.production      # Production environment variables
+├── .gitignore           # Git ignore file
+├── ecosystem.config.js  # PM2 configuration
+├── next.config.js       # Next.js configuration
+├── package.json         # Project dependencies and scripts
+├── postcss.config.mjs   # PostCSS configuration
+├── tailwind.config.ts   # Tailwind CSS configuration
+├── tsconfig.json        # TypeScript configuration
+└── vercel.json          # Vercel deployment configuration
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Source Code Structure (`/src`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+src/
+├── app/                 # Next.js App Router pages and routes
+│   ├── api/             # API routes
+│   ├── auth/            # Authentication pages
+│   ├── novels/          # Novel related pages
+│   ├── profile/         # User profile pages
+│   ├── reading-history/ # Reading history pages
+│   ├── my-novels/       # User's novel management
+│   ├── novel-list/      # Novel listing pages
+│   ├── bookmark/        # Bookmarks functionality
+│   ├── notifications/   # User notifications
+│   ├── globals.css      # Global CSS
+│   ├── layout.tsx       # Root layout component
+│   ├── page.tsx         # Homepage
+│   └── metadata.ts      # SEO metadata
+│
+├── components/          # Reusable UI components
+│   ├── analytics/       # Analytics components
+│   ├── common/          # Common UI elements
+│   ├── features/        # Feature-specific components
+│   ├── layout/          # Layout components
+│   ├── providers/       # Context providers
+│   └── ui/              # UI component library
+│
+├── lib/                 # Utility functions and shared libraries
+├── models/              # Database models
+├── types/               # TypeScript type definitions
+├── config/              # Application configuration
+├── migrations/          # Database migrations
+├── seeders/             # Database seed data
+└── middleware.ts        # Next.js middleware
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### API Structure (`/src/app/api`)
 
-## Learn More
+```
+api/
+├── auth/                # Authentication endpoints
+├── chapter-comments/    # Chapter comments API
+├── comments/            # General comments API
+├── cron/                # Scheduled tasks
+├── debug/               # Debugging endpoints
+├── novels/              # Novel management endpoints
+└── user/                # User management endpoints
+```
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This structure follows Next.js best practices with the App Router architecture, organizing code by feature while maintaining clear separation of concerns. The application uses TypeScript for type safety and includes configuration for various tools like Tailwind CSS and PostCSS for styling.
