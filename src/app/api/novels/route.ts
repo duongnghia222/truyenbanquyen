@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Novel from '@/models/Novel';
-import User from '@/models/User';
-import { FilterQuery } from 'mongoose';
+import { NovelModel, UserModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
 
 // Using our optimized handler wrapper
@@ -15,49 +13,41 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   const genre = searchParams.get('genre');
   const search = searchParams.get('search');
   
-  // Build query
-  const query: FilterQuery<typeof Novel> = {};
+  // Convert MongoDB sort format to PostgreSQL
+  const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
+  const sortOrder = sort.startsWith('-') ? 'DESC' : 'ASC';
   
-  // Add filters
-  if (status) {
-    query.status = status;
-  }
-  if (genre) {
-    query.genres = genre;
-  }
+  let result;
+  
+  // Handle different query scenarios
   if (search) {
-    query.$or = [
-      { title: { $regex: search, $options: 'i' } },
-      { author: { $regex: search, $options: 'i' } },
-      { description: { $regex: search, $options: 'i' } }
-    ];
+    result = await NovelModel.search(search, page, limit);
+  } else if (genre) {
+    result = await NovelModel.findByGenre(genre, page, limit);
+  } else {
+    // Build query options for findAll
+    const options = {
+      status: status || undefined,
+      sortBy: sortField,
+      order: sortOrder as 'ASC' | 'DESC'
+    };
+    
+    result = await NovelModel.findAll(page, limit, options.sortBy, options.order);
   }
-
-  // Calculate skip value for pagination
-  const skip = (page - 1) * limit;
-
-  // Execute query with pagination
-  const [novelsData, total] = await Promise.all([
-    Novel.find(query)
-      .populate({
-        path: 'uploadedBy',
-        select: 'username',
-        model: User
-      })
-      .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .lean(),
-    Novel.countDocuments(query)
-  ]);
-
+  
+  const { novels, total } = result;
+  
+  // Fetch uploader usernames
+  const userIds = novels.map(novel => novel.uploadedBy);
+  const users = await UserModel.findByIds(userIds);
+  
   // Add uploaderUsername to each novel
-  const novels = novelsData.map(novel => {
-    const formattedNovel = { ...novel };
-    if (novel.uploadedBy && novel.uploadedBy.username) {
-      formattedNovel.uploaderUsername = novel.uploadedBy.username;
-    }
-    return formattedNovel;
+  const novelsWithUsername = novels.map(novel => {
+    const user = users.find(u => u.id === novel.uploadedBy);
+    return {
+      ...novel,
+      uploaderUsername: user ? user.username : null
+    };
   });
 
   // Calculate pagination metadata
@@ -66,7 +56,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   const hasPrevPage = page > 1;
 
   return NextResponse.json({
-    novels,
+    novels: novelsWithUsername,
     pagination: {
       currentPage: page,
       totalPages,
@@ -83,10 +73,14 @@ export const POST = createApiHandler(async (request: NextRequest) => {
   const body = await request.json();
   
   // Create new novel
-  const novel = await Novel.create({
-    ...body,
-    createdAt: new Date(),
-    updatedAt: new Date()
+  const novel = await NovelModel.create({
+    title: body.title,
+    author: body.author,
+    description: body.description,
+    coverImage: body.coverImage,
+    genres: body.genres,
+    status: body.status,
+    uploadedBy: body.uploadedBy
   });
 
   return NextResponse.json(novel, { status: 201 });

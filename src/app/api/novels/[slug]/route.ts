@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Novel from '@/models/Novel';
-import User from '@/models/User';
+import { NovelModel, UserModel } from '@/models/postgresql';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { createApiHandler } from '@/lib/api-utils';
@@ -33,27 +32,21 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     console.log(`API: Fetching novel with slug: ${slug}`);
     
     // Find novel by slug
-    const novel = await Novel.findOne({ slug })
-      .populate({
-        path: 'uploadedBy',
-        select: 'username',
-        model: User
-      });
+    const novel = await NovelModel.findBySlug(slug);
     
     if (!novel) {
       console.error(`API: Novel with slug ${slug} not found`);
       return handleNotFound();
     }
     
-    // Format the response to include uploader username
-    const formattedNovel = novel.toJSON();
+    // Get uploader information
+    const uploader = await UserModel.findById(novel.uploadedBy);
     
-    // Add uploaderUsername if uploadedBy exists
-    if (formattedNovel.uploadedBy && typeof formattedNovel.uploadedBy === 'object' && 
-        'username' in formattedNovel.uploadedBy && formattedNovel.uploadedBy.username) {
-      // Use a more specific type instead of any
-      (formattedNovel as { uploaderUsername?: string }).uploaderUsername = formattedNovel.uploadedBy.username;
-    }
+    // Format the response to include uploader username
+    const formattedNovel = {
+      ...novel,
+      uploaderUsername: uploader ? uploader.username : null
+    };
     
     console.log(`API: Successfully fetched novel: ${novel.title}`);
     return NextResponse.json(formattedNovel);
@@ -82,12 +75,12 @@ export const PATCH = createApiHandler(async (request: NextRequest) => {
     }
     
     // Find the novel first to check ownership
-    const existingNovel = await Novel.findOne({ slug });
+    const existingNovel = await NovelModel.findBySlug(slug);
     
     if (!existingNovel) return handleNotFound();
     
     // Check if the user is the one who uploaded the novel
-    if (existingNovel.uploadedBy && existingNovel.uploadedBy.toString() !== session.user.id) {
+    if (existingNovel.uploadedBy !== parseInt(session.user.id)) {
       return NextResponse.json(
         { error: 'Bạn không có quyền cập nhật truyện này' },
         { status: 403 }
@@ -96,21 +89,8 @@ export const PATCH = createApiHandler(async (request: NextRequest) => {
     
     const data = await request.json();
     
-    // If title is being updated, generate a new slug
-    if (data.title) {
-      data.slug = data.title
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .trim();
-    }
-    
-    const novel = await Novel.findOneAndUpdate(
-      { slug },
-      { ...data, updatedAt: new Date() },
-      { new: true, runValidators: true }
-    );
+    // Update the novel
+    const novel = await NovelModel.update(existingNovel.id, data);
     
     return NextResponse.json(novel);
   } catch (error) {
@@ -137,12 +117,12 @@ export const DELETE = createApiHandler(async (request: NextRequest) => {
     }
     
     // Find the novel first to check ownership
-    const novel = await Novel.findOne({ slug });
+    const novel = await NovelModel.findBySlug(slug);
     
     if (!novel) return handleNotFound();
     
     // Check if the user is the one who uploaded the novel
-    if (novel.uploadedBy.toString() !== session.user.id) {
+    if (novel.uploadedBy !== parseInt(session.user.id)) {
       return NextResponse.json(
         { error: 'Bạn không có quyền xóa truyện này' },
         { status: 403 }
@@ -150,13 +130,7 @@ export const DELETE = createApiHandler(async (request: NextRequest) => {
     }
     
     // Delete the novel
-    await Novel.findOneAndDelete({ slug });
-    
-    // Remove the novel from the user's uploadedNovels array
-    await User.findByIdAndUpdate(
-      session.user.id,
-      { $pull: { uploadedNovels: novel._id } }
-    );
+    await NovelModel.delete(novel.id);
     
     return NextResponse.json(
       { message: 'Novel deleted successfully' },

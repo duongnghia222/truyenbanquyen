@@ -9,114 +9,11 @@ import { ReadingStats } from '@/components/features/reading-history/ReadingStats
 import { FeaturedAuthors } from '@/components/features/profile/FeaturedAuthors'
 import { FeaturedCarousel } from '@/components/common/carousel/FeaturedCarousel'
 import { LoginCTA } from '@/components/features/auth/LoginCTA'
-import { ensureDatabaseConnection } from '@/lib/db'
-import Novel from '@/models/Novel'
+import { NovelModel, UserModel } from '@/models/postgresql'
 import ClientAuthWrapper from '@/components/features/auth/ClientAuthWrapper'
-import User from '@/models/User'
-import { Novel as NovelType } from '@/types/novel'
+import type { Novel } from '@/types/novel'
 
-export const metadata: Metadata = {
-  title: 'Truyện Light | Truyện Full, Truyện HD Mở Khóa Truyện Miễn Phí',
-  description: 'Truyện ngôn tình, truyện kiếm hiệp, truyện đam mỹ, truyện sắc, xuyên không, cổ đại. Truy cập trang web ngay để có cơ hội mở khóa truyện miễn phí.',
-  alternates: {
-    canonical: 'https://truyenlight.com/'
-  },
-  robots: 'index,follow',
-}
-
-export const revalidate = 0
-
-async function getLatestNovels(): Promise<NovelType[]> {
-  try {
-    await ensureDatabaseConnection()
-    
-    // First, find novels
-    const novels = await Novel.find({})
-      .sort({ createdAt: -1 })
-      .limit(12)
-      .lean()
-    
-    // Process novel data to include username and convert to JSON-safe format
-    const processedNovels = [];
-    for (const novel of novels) {
-      // Create a JSON-safe copy with proper type conversion
-      const processedNovel = {
-        ...novel,
-        _id: novel._id.toString(),
-        createdAt: novel.createdAt.toISOString(),
-        updatedAt: novel.updatedAt.toISOString(),
-        uploaderUsername: undefined as string | undefined
-      };
-      
-      // Get user info separately to avoid typing issues
-      if (processedNovel.uploadedBy) {
-        const user = await User.findById(processedNovel.uploadedBy).select('username').lean();
-        if (user) {
-          processedNovel.uploaderUsername = user.username;
-        }
-      }
-      
-      // Generate slug if not present
-      if (!processedNovel.slug) {
-        processedNovel.slug = processedNovel._id;
-      }
-      
-      processedNovels.push(processedNovel);
-    }
-    
-    return processedNovels;
-  } catch (error) {
-    console.error('Failed to fetch novels:', error)
-    return []
-  }
-}
-
-async function getTrendingNovels(): Promise<NovelType[]> {
-  try {
-    await ensureDatabaseConnection()
-    
-    // First, find novels
-    const novels = await Novel.find({})
-      .sort({ views: -1 })
-      .limit(12)
-      .lean()
-    
-    // Process novel data to include username and convert to JSON-safe format
-    const processedNovels = [];
-    for (const novel of novels) {
-      // Create a JSON-safe copy with proper type conversion
-      const processedNovel = {
-        ...novel,
-        _id: novel._id.toString(),
-        createdAt: novel.createdAt.toISOString(),
-        updatedAt: novel.updatedAt.toISOString(),
-        uploaderUsername: undefined as string | undefined
-      };
-      
-      // Get user info separately to avoid typing issues
-      if (processedNovel.uploadedBy) {
-        const user = await User.findById(processedNovel.uploadedBy).select('username').lean();
-        if (user) {
-          processedNovel.uploaderUsername = user.username;
-        }
-      }
-      
-      // Generate slug if not present
-      if (!processedNovel.slug) {
-        processedNovel.slug = processedNovel._id;
-      }
-      
-      processedNovels.push(processedNovel);
-    }
-    
-    return processedNovels;
-  } catch (error) {
-    console.error('Failed to fetch trending novels:', error)
-    return []
-  }
-}
-
-// Mock featured novels for carousel (would be replaced with real data)
+// Mock featured novels for carousel
 const FEATURED_NOVELS = [
   {
     id: '1',
@@ -143,6 +40,93 @@ const FEATURED_NOVELS = [
     badge: 'Đề cử'
   }
 ]
+
+// Define a type that extends Novel for our frontend needs
+interface NovelWithUsername extends Novel {
+  uploaderUsername?: string;
+}
+
+export const metadata: Metadata = {
+  title: 'Truyện Light | Truyện Full, Truyện HD Mở Khóa Truyện Miễn Phí',
+  description: 'Truyện ngôn tình, truyện kiếm hiệp, truyện đam mỹ, truyện sắc, xuyên không, cổ đại. Truy cập trang web ngay để có cơ hội mở khóa truyện miễn phí.',
+  alternates: {
+    canonical: 'https://truyenlight.com/'
+  },
+  robots: 'index,follow',
+}
+
+export const revalidate = 0
+
+async function getLatestNovels(): Promise<NovelWithUsername[]> {
+  try {
+    const result = await NovelModel.findAll(1, 12, 'createdAt', 'DESC');
+    const { novels } = result;
+
+    // Get uploader usernames
+    const userIds = novels.map(novel => novel.uploadedBy);
+    const users = await UserModel.findByIds(userIds);
+    
+    // Process novel data to include username
+    const processedNovels = novels.map(novel => {
+      // Find the user who uploaded this novel
+      const user = users.find(u => u.id === novel.uploadedBy);
+      
+      // Create a processed novel with uploader username
+      return {
+        ...novel,
+        _id: novel.id.toString(), // Add _id for backward compatibility
+        uploaderUsername: user ? user.username : undefined,
+        views: novel.views || 0,
+        viewCount: novel.views || 0, // Add viewCount for components that use it
+        genres: novel.genres || [],
+        rating: novel.rating || 0,
+        status: novel.status || 'ongoing',
+        chapterCount: novel.chapterCount || 0
+      } as unknown as NovelWithUsername;
+    });
+    
+    return processedNovels;
+  } catch (error) {
+    console.error('Failed to fetch novels:', error)
+    return []
+  }
+}
+
+async function getTrendingNovels(): Promise<NovelWithUsername[]> {
+  try {
+    // Get trending novels with pagination
+    const result = await NovelModel.findAll(1, 12, 'views', 'DESC');
+    const { novels } = result;
+
+    // Get uploader usernames
+    const userIds = novels.map(novel => novel.uploadedBy);
+    const users = await UserModel.findByIds(userIds);
+    
+    // Process novel data to include username
+    const processedNovels = novels.map(novel => {
+      // Find the user who uploaded this novel
+      const user = users.find(u => u.id === novel.uploadedBy);
+      
+      // Create a processed novel with uploader username
+      return {
+        ...novel,
+        _id: novel.id.toString(), // Add _id for backward compatibility
+        uploaderUsername: user ? user.username : undefined,
+        views: novel.views || 0,
+        viewCount: novel.views || 0, // Add viewCount for components that use it
+        genres: novel.genres || [],
+        rating: novel.rating || 0,
+        status: novel.status || 'ongoing',
+        chapterCount: novel.chapterCount || 0
+      } as unknown as NovelWithUsername;
+    });
+    
+    return processedNovels;
+  } catch (error) {
+    console.error('Failed to fetch trending novels:', error)
+    return []
+  }
+}
 
 export default async function HomePage() {
   const novels = await getLatestNovels()
@@ -196,7 +180,7 @@ export default async function HomePage() {
         />
         
         {trendingNovels.length > 0 ? (
-          <TrendingNovels novels={trendingNovels} />
+          <TrendingNovels novels={trendingNovels as Novel[]} />
         ) : (
           <div className="text-center py-16 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 mx-auto text-gray-400 mb-4">
@@ -219,7 +203,7 @@ export default async function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
             {novels.map((novel, index) => (
               <div key={novel._id} className="transform hover:-translate-y-1 transition-transform duration-300 animate-fadeIn" style={{ animationDelay: `${index * 50}ms` }}>
-                <NovelCard novel={novel} showUpdateTime={true} />
+                <NovelCard novel={novel as Novel} showUpdateTime={true} />
               </div>
             ))}
           </div>

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/models/User';
+import { UserModel } from '@/models/postgresql';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 
@@ -16,9 +15,7 @@ export async function GET() {
       );
     }
     
-    await connectDB();
-    
-    const user = await User.findById(session.user.id).select('budget');
+    const user = await UserModel.findById(Number(session.user.id));
     
     if (!user) {
       return NextResponse.json(
@@ -27,7 +24,15 @@ export async function GET() {
       );
     }
     
-    return NextResponse.json({ budget: user.budget });
+    // Get user transactions
+    const transactions = await UserModel.getTransactionsByUserId(Number(session.user.id));
+    
+    return NextResponse.json({ 
+      budget: {
+        coins: user.coins,
+        transactions
+      }
+    });
     
   } catch (error) {
     console.error('Error fetching user budget:', error);
@@ -59,9 +64,7 @@ export async function POST(req: Request) {
       );
     }
     
-    await connectDB();
-    
-    const user = await User.findById(session.user.id);
+    const user = await UserModel.findById(Number(session.user.id));
     
     if (!user) {
       return NextResponse.json(
@@ -71,22 +74,30 @@ export async function POST(req: Request) {
     }
     
     // Add coins and record transaction
-    const updatedUser = await User.findByIdAndUpdate(
-      session.user.id,
-      {
-        $inc: { 'budget.coins': amount },
-        $push: {
-          'budget.transactions': {
-            amount,
-            description: description || 'Nạp tiền',
-            createdAt: new Date()
-          }
-        }
-      },
-      { new: true }
-    ).select('budget');
+    await UserModel.addTransaction(
+      Number(session.user.id),
+      amount,
+      description || 'Nạp tiền'
+    );
     
-    return NextResponse.json({ budget: updatedUser.budget });
+    // Get updated user data
+    const updatedUser = await UserModel.findById(Number(session.user.id));
+    
+    if (!updatedUser) {
+      return NextResponse.json(
+        { message: 'Không thể cập nhật thông tin người dùng' },
+        { status: 500 }
+      );
+    }
+    
+    const transactions = await UserModel.getTransactionsByUserId(Number(session.user.id));
+    
+    return NextResponse.json({ 
+      budget: {
+        coins: updatedUser.coins,
+        transactions
+      }
+    });
     
   } catch (error) {
     console.error('Error adding coins to budget:', error);
@@ -125,9 +136,7 @@ export async function PUT(req: Request) {
       );
     }
     
-    await connectDB();
-    
-    const user = await User.findById(session.user.id);
+    const user = await UserModel.findById(Number(session.user.id));
     
     if (!user) {
       return NextResponse.json(
@@ -137,7 +146,7 @@ export async function PUT(req: Request) {
     }
     
     // Check if user has enough coins
-    if (user.budget.coins < amount) {
+    if (user.coins < amount) {
       return NextResponse.json(
         { message: 'Số dư không đủ để thực hiện giao dịch này' },
         { status: 400 }
@@ -145,25 +154,31 @@ export async function PUT(req: Request) {
     }
     
     // Deduct coins and record transaction
-    const updatedUser = await User.findByIdAndUpdate(
-      session.user.id,
-      {
-        $inc: { 'budget.coins': -amount },
-        $push: {
-          'budget.transactions': {
-            amount: -amount,
-            description: description || 'Mua chương truyện',
-            novelId,
-            createdAt: new Date()
-          }
-        }
-      },
-      { new: true }
-    ).select('budget');
+    await UserModel.addTransaction(
+      Number(session.user.id),
+      -amount,
+      description || 'Mua chương truyện',
+      Number(novelId)
+    );
+    
+    // Get updated user data
+    const updatedUser = await UserModel.findById(Number(session.user.id));
+    
+    if (!updatedUser) {
+      return NextResponse.json(
+        { message: 'Không thể cập nhật thông tin người dùng' },
+        { status: 500 }
+      );
+    }
+    
+    const transactions = await UserModel.getTransactionsByUserId(Number(session.user.id));
     
     return NextResponse.json({ 
       success: true,
-      budget: updatedUser.budget 
+      budget: {
+        coins: updatedUser.coins,
+        transactions
+      }
     });
     
   } catch (error) {

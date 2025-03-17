@@ -74,17 +74,29 @@ class ChapterModel {
   }
 
   /**
-   * Find chapters by novel ID
+   * Find chapters by novel ID with pagination
    */
-  async findByNovelId(novelId: number, sortOrder: 'ASC' | 'DESC' = 'ASC'): Promise<Chapter[]> {
-    const result = await query(
-      `SELECT * FROM chapters 
-       WHERE novel_id = $1 
-       ORDER BY chapter_number ${sortOrder}`,
-      [novelId]
-    );
+  async findByNovelId(novelId: number, page: number = 1, limit: number = 20, sortOrder: 'ASC' | 'DESC' = 'ASC'): Promise<{ chapters: Chapter[], total: number }> {
+    const offset = (page - 1) * limit;
     
-    return result.rows.map(row => this.transformChapterData(row));
+    const [chaptersResult, countResult] = await Promise.all([
+      query(
+        `SELECT * FROM chapters 
+         WHERE novel_id = $1 
+         ORDER BY chapter_number ${sortOrder}
+         LIMIT $2 OFFSET $3`,
+        [novelId, limit, offset]
+      ),
+      query(
+        `SELECT COUNT(*) FROM chapters WHERE novel_id = $1`,
+        [novelId]
+      )
+    ]);
+
+    const chapters = chaptersResult.rows.map(this.transformChapterData);
+    const total = parseInt(countResult.rows[0].count);
+
+    return { chapters, total };
   }
 
   /**

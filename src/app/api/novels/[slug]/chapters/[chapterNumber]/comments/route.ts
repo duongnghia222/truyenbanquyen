@@ -1,32 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ChapterComment } from '@/models/Comment';
-import User from '@/models/User';
-import Novel from '@/models/Novel';
-import Chapter from '@/models/Chapter';
+import { CommentModel } from '@/models/postgresql';
+import { UserModel } from '@/models/postgresql';
+import { NovelModel } from '@/models/postgresql';
+import { ChapterModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
-import { FilterQuery } from 'mongoose';
-import mongoose from 'mongoose';
+import { ChapterComment } from '@/models/postgresql';
 
 // Define interfaces for comment data
 interface CommentUser {
-  _id: string;
+  id: number;
   username: string;
-  avatar?: string;
+  image?: string;
 }
 
-interface CommentData {
-  _id: mongoose.Types.ObjectId;
-  content: string;
-  user: CommentUser;
-  novel: mongoose.Types.ObjectId;
-  chapter: mongoose.Types.ObjectId;
-  parent?: mongoose.Types.ObjectId;
-  likes: mongoose.Types.ObjectId[];
-  isEdited: boolean;
-  isDeleted: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  replies?: CommentData[];
+interface ExtendedChapterComment extends ChapterComment {
+  user?: CommentUser;
+  replies?: ExtendedChapterComment[];
 }
 
 // Get comments for a specific chapter
@@ -41,7 +30,6 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   const { searchParams } = url;
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '10');
-  const sort = searchParams.get('sort') || '-createdAt'; // Default sort by newest
   const parentId = searchParams.get('parent');
   
   // Validate chapter number
@@ -54,7 +42,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   }
   
   // Find the novel by slug
-  const novel = await Novel.findOne({ slug });
+  const novel = await NovelModel.findBySlug(slug);
   
   if (!novel) {
     return NextResponse.json(
@@ -64,10 +52,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   }
   
   // Find the chapter
-  const chapter = await Chapter.findOne({
-    novelId: novel._id,
-    chapterNumber: chapterNum
-  });
+  const chapter = await ChapterModel.findByNovelIdAndChapterNumber(novel.id, chapterNum);
   
   if (!chapter) {
     return NextResponse.json(
@@ -76,83 +61,57 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     );
   }
   
-  // Build query
-  const query: FilterQuery<typeof ChapterComment> = {
-    novel: novel._id,
-    chapter: chapter._id,
-    isDeleted: false
-  };
-  
-  // Filter by parent (null for top-level comments, or specific parent ID)
-  if (parentId === 'null') {
-    query.parent = null; // Top-level comments only
-  } else if (parentId) {
-    query.parent = parentId; // Replies to a specific comment
-  }
-  
-  // Calculate skip value for pagination
-  const skip = (page - 1) * limit;
-  
   try {
-    // Execute query with pagination
-    const [commentsData, total] = await Promise.all([
-      ChapterComment.find(query)
-        .populate({
-          path: 'user',
-          select: 'username avatar',
-          model: User
-        })
-        .sort(sort)
-        .skip(skip)
-        .limit(limit)
-        .lean<CommentData[]>(),
-      ChapterComment.countDocuments(query)
-    ]);
+    // Get comments for the chapter
+    const { comments: commentsData, total } = await CommentModel.getChapterComments(
+      chapter.id,
+      page,
+      limit
+    );
+    
+    // Create extended comments with user and replies properties
+    const extendedComments: ExtendedChapterComment[] = commentsData.map(comment => ({
+      ...comment
+    }));
     
     // For top-level comments, fetch their replies
     if (parentId === 'null' || !parentId) {
-      // Get all comment IDs
-      const commentIds = commentsData.map(comment => comment._id);
-      
-      // Fetch all replies for these comments
-      const replies = await ChapterComment.find({
-        parent: { $in: commentIds },
-        isDeleted: false
-      })
-        .populate({
-          path: 'user',
-          select: 'username avatar',
-          model: User
-        })
-        .sort('-createdAt')
-        .lean<CommentData[]>();
-      
-      // Group replies by parent comment
-      const repliesByParent = replies.reduce((acc, reply) => {
-        const parentId = reply.parent?.toString() || '';
-        if (!acc[parentId]) {
-          acc[parentId] = [];
+      // Process each comment to add replies
+      for (const comment of extendedComments) {
+        // Get replies for this comment
+        const replies = await CommentModel.getChapterCommentReplies(comment.id);
+        
+        // Create extended replies with user property
+        const extendedReplies: ExtendedChapterComment[] = replies.map(reply => ({
+          ...reply
+        }));
+        
+        // Add replies to the comment
+        comment.replies = extendedReplies;
+        
+        // Get user data for the comment
+        const user = await UserModel.findById(comment.userId);
+        if (user) {
+          comment.user = {
+            id: user.id,
+            username: user.username,
+            image: user.image
+          };
         }
-        acc[parentId].push(reply);
-        return acc;
-      }, {} as Record<string, CommentData[]>);
-      
-      // Add replies to their parent comments
-      commentsData.forEach(comment => {
-        const commentId = comment._id.toString();
-        comment.replies = repliesByParent[commentId] || [];
-      });
-    }
-    
-    // Format comments for response
-    const comments = commentsData.map(comment => {
-      const formattedComment = { ...comment };
-      if (comment.user) {
-        formattedComment.username = comment.user.username;
-        formattedComment.userAvatar = comment.user.avatar;
+        
+        // Get user data for each reply
+        for (const reply of extendedReplies) {
+          const replyUser = await UserModel.findById(reply.userId);
+          if (replyUser) {
+            reply.user = {
+              id: replyUser.id,
+              username: replyUser.username,
+              image: replyUser.image
+            };
+          }
+        }
       }
-      return formattedComment;
-    });
+    }
     
     // Calculate pagination metadata
     const totalPages = Math.ceil(total / limit);
@@ -160,7 +119,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     const hasPrevPage = page > 1;
     
     return NextResponse.json({
-      comments,
+      comments: extendedComments,
       pagination: {
         currentPage: page,
         totalPages,

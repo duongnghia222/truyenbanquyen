@@ -453,7 +453,7 @@ class CommentModel {
   /**
    * Transform database row to NovelComment object
    */
-  private transformNovelCommentData(row: Record<string, unknown>): NovelComment {
+  transformNovelCommentData(row: Record<string, unknown>): NovelComment {
     return {
       id: Number(row.id),
       content: String(row.content),
@@ -484,9 +484,187 @@ class CommentModel {
       updatedAt: new Date(row.updated_at as string)
     };
   }
+
+  /**
+   * Get likes for a novel comment
+   */
+  async getLikes(commentId: number): Promise<number[]> {
+    return this.getNovelCommentLikes(commentId);
+  }
+
+  /**
+   * Convert camelCase field name to snake_case column name
+   */
+  convertFieldToColumn(field: string): string {
+    // If field already contains underscore, assume it's already in snake_case
+    if (field.includes('_')) return field;
+    
+    // Handle special cases
+    if (field === 'createdAt') return 'created_at';
+    if (field === 'updatedAt') return 'updated_at';
+    if (field === 'userId') return 'user_id';
+    if (field === 'novelId') return 'novel_id';
+    if (field === 'parentId') return 'parent_id';
+    if (field === 'isDeleted') return 'is_deleted';
+    
+    // Default conversion
+    return field.replace(/([A-Z])/g, '_$1').toLowerCase();
+  }
 }
 
 const commentModel = new CommentModel();
 export default commentModel;
-export const NovelCommentModel = CommentModel;
-export const ChapterCommentModel = CommentModel; 
+
+// Novel Comment Model
+class NovelCommentModelClass {
+  /**
+   * Create a novel comment
+   */
+  async create(commentData: Omit<NovelComment, 'id' | 'isEdited' | 'isDeleted' | 'createdAt' | 'updatedAt'>): Promise<NovelComment> {
+    return commentModel.createNovelComment(commentData);
+  }
+
+  /**
+   * Find a novel comment by ID
+   */
+  async findById(id: number): Promise<NovelComment | null> {
+    return commentModel.getNovelCommentById(id);
+  }
+
+  /**
+   * Find all novel comments with pagination and filtering
+   */
+  async findAll(page: number = 1, limit: number = 20, options: {
+    novelId?: number;
+    userId?: number;
+    parentId?: number | null;
+    isDeleted?: boolean;
+    sortBy?: string;
+    order?: 'ASC' | 'DESC';
+  } = {}): Promise<{ comments: NovelComment[], total: number }> {
+    const offset = (page - 1) * limit;
+    const sortField = this.convertFieldToColumn(options.sortBy || 'created_at');
+    const sortOrder = options.order || 'DESC';
+    
+    // Build the WHERE clause
+    const whereConditions: string[] = [];
+    const queryParams: (string | number | boolean)[] = [];
+    let paramIndex = 1;
+    
+    if (options.isDeleted !== undefined) {
+      whereConditions.push(`is_deleted = $${paramIndex++}`);
+      queryParams.push(options.isDeleted);
+    }
+    
+    if (options.novelId !== undefined) {
+      whereConditions.push(`novel_id = $${paramIndex++}`);
+      queryParams.push(options.novelId);
+    }
+    
+    if (options.userId !== undefined) {
+      whereConditions.push(`user_id = $${paramIndex++}`);
+      queryParams.push(options.userId);
+    }
+    
+    if (options.parentId === null) {
+      whereConditions.push(`parent_id IS NULL`);
+    } else if (options.parentId !== undefined) {
+      whereConditions.push(`parent_id = $${paramIndex++}`);
+      queryParams.push(options.parentId);
+    }
+    
+    const whereClause = whereConditions.length > 0 
+      ? `WHERE ${whereConditions.join(' AND ')}` 
+      : '';
+    
+    // Get total count
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM novel_comments
+      ${whereClause}
+    `;
+    
+    const countResult = await query(countQuery, queryParams);
+    const total = parseInt(countResult.rows[0].total);
+    
+    // Get comments with pagination
+    const commentsQuery = `
+      SELECT *
+      FROM novel_comments
+      ${whereClause}
+      ORDER BY ${sortField} ${sortOrder}
+      LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+    `;
+    
+    const commentsResult = await query(
+      commentsQuery,
+      [...queryParams, limit, offset]
+    );
+    
+    const comments = commentsResult.rows.map(row => commentModel.transformNovelCommentData(row));
+    
+    return { comments, total };
+  }
+
+  /**
+   * Update a novel comment
+   */
+  async update(id: number, content: string): Promise<NovelComment | null> {
+    return commentModel.updateNovelComment(id, content);
+  }
+
+  /**
+   * Delete a novel comment (soft delete)
+   */
+  async delete(id: number): Promise<boolean> {
+    return commentModel.deleteNovelComment(id);
+  }
+
+  /**
+   * Like a novel comment
+   */
+  async like(userId: number, commentId: number): Promise<boolean> {
+    return commentModel.likeNovelComment(userId, commentId);
+  }
+
+  /**
+   * Unlike a novel comment
+   */
+  async unlike(userId: number, commentId: number): Promise<boolean> {
+    return commentModel.unlikeNovelComment(userId, commentId);
+  }
+
+  /**
+   * Get likes for a novel comment
+   */
+  async getLikes(commentId: number): Promise<number[]> {
+    return commentModel.getNovelCommentLikes(commentId);
+  }
+
+  /**
+   * Convert camelCase field name to snake_case column name
+   */
+  convertFieldToColumn(field: string): string {
+    // If field already contains underscore, assume it's already in snake_case
+    if (field.includes('_')) return field;
+    
+    // Handle special cases
+    if (field === 'createdAt') return 'created_at';
+    if (field === 'updatedAt') return 'updated_at';
+    if (field === 'userId') return 'user_id';
+    if (field === 'novelId') return 'novel_id';
+    if (field === 'parentId') return 'parent_id';
+    if (field === 'isDeleted') return 'is_deleted';
+    
+    // Default conversion
+    return field.replace(/([A-Z])/g, '_$1').toLowerCase();
+  }
+}
+
+// Chapter Comment Model
+class ChapterCommentModelClass {
+  // Similar methods for chapter comments
+}
+
+export const NovelCommentModel = new NovelCommentModelClass();
+export const ChapterCommentModel = new ChapterCommentModelClass(); 

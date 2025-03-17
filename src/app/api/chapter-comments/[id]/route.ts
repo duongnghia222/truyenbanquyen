@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ChapterComment } from '@/models/Comment';
-import User from '@/models/User';
+import { CommentModel } from '@/models/postgresql';
+import { UserModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
-import mongoose from 'mongoose';
 
 // Get a single chapter comment by ID
 export const GET = createApiHandler(async (request: NextRequest) => {
@@ -14,29 +13,15 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   const id = pathParts[pathParts.length - 1]; // Get the ID from the URL path
   
   // Validate ID format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (isNaN(Number(id))) {
     return NextResponse.json(
       { error: 'Invalid comment ID format' },
       { status: 400 }
     );
   }
   
-  // Find comment and populate user data
-  const comment = await ChapterComment.findById(id)
-    .populate({
-      path: 'user',
-      select: 'username avatar',
-      model: User
-    })
-    .populate({
-      path: 'replies',
-      match: { isDeleted: false },
-      populate: {
-        path: 'user',
-        select: 'username avatar',
-        model: User
-      }
-    });
+  // Find comment
+  const comment = await CommentModel.getChapterCommentById(Number(id));
   
   if (!comment) {
     return NextResponse.json(
@@ -45,7 +30,24 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     );
   }
   
-  return NextResponse.json(comment);
+  // Get user data
+  const user = await UserModel.findById(comment.userId);
+  
+  // Get replies if any
+  const replies = await CommentModel.getChapterCommentReplies(comment.id);
+  
+  // Format the response
+  const formattedComment = {
+    ...comment,
+    user: user ? {
+      id: user.id,
+      username: user.username,
+      avatar: user.image
+    } : null,
+    replies: replies
+  };
+  
+  return NextResponse.json(formattedComment);
 });
 
 // Update a chapter comment
@@ -66,7 +68,7 @@ export const PATCH = createApiHandler(async (request: NextRequest) => {
   }
   
   // Validate ID format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (isNaN(Number(id))) {
     return NextResponse.json(
       { error: 'Invalid comment ID format' },
       { status: 400 }
@@ -74,7 +76,7 @@ export const PATCH = createApiHandler(async (request: NextRequest) => {
   }
   
   // Find the comment
-  const comment = await ChapterComment.findById(id);
+  const comment = await CommentModel.getChapterCommentById(Number(id));
   
   if (!comment) {
     return NextResponse.json(
@@ -84,7 +86,7 @@ export const PATCH = createApiHandler(async (request: NextRequest) => {
   }
   
   // Check if user is the comment owner
-  if (comment.user.toString() !== session.user.id) {
+  if (comment.userId !== Number(session.user.id)) {
     return NextResponse.json(
       { error: 'You can only edit your own comments' },
       { status: 403 }
@@ -103,20 +105,29 @@ export const PATCH = createApiHandler(async (request: NextRequest) => {
   }
   
   // Update the comment
-  comment.content = content;
-  comment.isEdited = true;
-  comment.updatedAt = new Date();
-  await comment.save();
+  const updatedComment = await CommentModel.updateChapterComment(Number(id), content);
   
-  // Return updated comment with user data
-  const updatedComment = await ChapterComment.findById(id)
-    .populate({
-      path: 'user',
-      select: 'username avatar',
-      model: User
-    });
+  if (!updatedComment) {
+    return NextResponse.json(
+      { error: 'Failed to update comment' },
+      { status: 500 }
+    );
+  }
   
-  return NextResponse.json(updatedComment);
+  // Get user data
+  const user = await UserModel.findById(updatedComment.userId);
+  
+  // Format the response
+  const formattedComment = {
+    ...updatedComment,
+    user: user ? {
+      id: user.id,
+      username: user.username,
+      avatar: user.image
+    } : null
+  };
+  
+  return NextResponse.json(formattedComment);
 });
 
 // Delete a chapter comment (soft delete)
@@ -137,7 +148,7 @@ export const DELETE = createApiHandler(async (request: NextRequest) => {
   }
   
   // Validate ID format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (isNaN(Number(id))) {
     return NextResponse.json(
       { error: 'Invalid comment ID format' },
       { status: 400 }
@@ -145,7 +156,7 @@ export const DELETE = createApiHandler(async (request: NextRequest) => {
   }
   
   // Find the comment
-  const comment = await ChapterComment.findById(id);
+  const comment = await CommentModel.getChapterCommentById(Number(id));
   
   if (!comment) {
     return NextResponse.json(
@@ -155,7 +166,7 @@ export const DELETE = createApiHandler(async (request: NextRequest) => {
   }
   
   // Check if user is the comment owner or an admin
-  const isOwner = comment.user.toString() === session.user.id;
+  const isOwner = comment.userId === Number(session.user.id);
   const isAdmin = session.user.role === 'admin';
   
   if (!isOwner && !isAdmin) {
@@ -166,12 +177,14 @@ export const DELETE = createApiHandler(async (request: NextRequest) => {
   }
   
   // Soft delete the comment
-  comment.isDeleted = true;
-  comment.content = isAdmin && !isOwner 
-    ? 'This comment was removed by an administrator.' 
-    : 'This comment was deleted by the user.';
-  comment.updatedAt = new Date();
-  await comment.save();
+  const deleted = await CommentModel.deleteChapterComment(Number(id));
+  
+  if (!deleted) {
+    return NextResponse.json(
+      { error: 'Failed to delete comment' },
+      { status: 500 }
+    );
+  }
   
   return NextResponse.json({ success: true });
 }); 

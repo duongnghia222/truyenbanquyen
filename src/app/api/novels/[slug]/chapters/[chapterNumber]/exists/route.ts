@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import Chapter from '@/models/Chapter';
+import { ChapterModel } from '@/models/postgresql';
 
 type RouteParams = {
   params: Promise<{ id: string; chapterNumber: string }>
@@ -10,10 +10,10 @@ export async function GET(request: Request, { params }: RouteParams) {
     const { id, chapterNumber } = await params;
     
     // Check if chapter exists
-    const chapter = await Chapter.findOne({
-      novelId: id,
-      chapterNumber: parseInt(chapterNumber)
-    }).select('_id');
+    const chapter = await ChapterModel.findByNovelIdAndChapterNumber(
+      Number(id),
+      parseInt(chapterNumber)
+    );
     
     if (!chapter) {
       return NextResponse.json(

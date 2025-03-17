@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ChapterComment } from '@/models/Comment';
+import { CommentModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
-import mongoose from 'mongoose';
 
 // Toggle like status for a chapter comment
 export const POST = createApiHandler(async (request: NextRequest) => {
@@ -23,48 +22,36 @@ export const POST = createApiHandler(async (request: NextRequest) => {
   }
   
   // Validate ID format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  const commentId = parseInt(id);
+  if (isNaN(commentId)) {
     return NextResponse.json(
       { error: 'Invalid comment ID format' },
       { status: 400 }
     );
   }
   
-  // Find the comment
-  const comment = await ChapterComment.findById(id);
+  // Get the user ID
+  const userId = parseInt(session.user.id);
   
-  if (!comment) {
+  try {
+    // Check if user has already liked the comment
+    const hasLiked = await CommentModel.likeChapterComment(userId, commentId);
+    
+    // Get updated likes count
+    const likes = await CommentModel.getChapterCommentLikes(commentId);
+    
+    // Return updated like count and user's like status
+    return NextResponse.json({
+      likes: likes.length,
+      userLiked: hasLiked
+    });
+  } catch (error) {
+    console.error('Error toggling chapter comment like:', error);
     return NextResponse.json(
-      { error: 'Comment not found' },
-      { status: 404 }
+      { error: 'Failed to update like status' },
+      { status: 500 }
     );
   }
-  
-  const userId = session.user.id;
-  const userObjectId = new mongoose.Types.ObjectId(userId);
-  
-  // Check if user has already liked the comment
-  const userLikedIndex = comment.likes.findIndex(
-    (id: mongoose.Types.ObjectId) => id.equals(userObjectId)
-  );
-  
-  // Toggle like status
-  if (userLikedIndex === -1) {
-    // User hasn't liked the comment yet, add like
-    comment.likes.push(userObjectId);
-  } else {
-    // User already liked the comment, remove like
-    comment.likes.splice(userLikedIndex, 1);
-  }
-  
-  // Save the updated comment
-  await comment.save();
-  
-  // Return updated like count and user's like status
-  return NextResponse.json({
-    likes: comment.likes.length,
-    userLiked: userLikedIndex === -1 // Returns true if like was added, false if removed
-  });
 });
 
 // Get like status and count for a chapter comment
@@ -76,39 +63,38 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   
   // Get the authenticated user
   const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
   
   // Validate ID format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  const commentId = parseInt(id);
+  if (isNaN(commentId)) {
     return NextResponse.json(
       { error: 'Invalid comment ID format' },
       { status: 400 }
     );
   }
   
-  // Find the comment
-  const comment = await ChapterComment.findById(id);
-  
-  if (!comment) {
+  try {
+    // Get likes for the comment
+    const likes = await CommentModel.getChapterCommentLikes(commentId);
+    
+    // Check if the authenticated user has liked the comment
+    let userLiked = false;
+    
+    if (session?.user?.id) {
+      const userId = parseInt(session.user.id);
+      userLiked = likes.includes(userId);
+    }
+    
+    // Return like count and user's like status
+    return NextResponse.json({
+      likes: likes.length,
+      userLiked
+    });
+  } catch (error) {
+    console.error('Error getting chapter comment likes:', error);
     return NextResponse.json(
-      { error: 'Comment not found' },
-      { status: 404 }
+      { error: 'Failed to get like status' },
+      { status: 500 }
     );
   }
-  
-  // Check if the authenticated user has liked the comment
-  let userLiked = false;
-  
-  if (userId) {
-    const userObjectId = new mongoose.Types.ObjectId(userId);
-    userLiked = comment.likes.some(
-      (id: mongoose.Types.ObjectId) => id.equals(userObjectId)
-    );
-  }
-  
-  // Return like count and user's like status
-  return NextResponse.json({
-    likes: comment.likes.length,
-    userLiked
-  });
 }); 

@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Comment from '@/models/Comment';
-import User from '@/models/User';
+import { CommentModel, UserModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
-import mongoose from 'mongoose';
 
 // Get a single comment by ID
 export const GET = createApiHandler(async (request: NextRequest) => {
@@ -14,38 +12,68 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   const id = pathParts[pathParts.length - 1]; // Get the ID from the URL path
   
   // Validate ID format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  const commentId = parseInt(id);
+  if (isNaN(commentId)) {
     return NextResponse.json(
       { error: 'Invalid comment ID format' },
       { status: 400 }
     );
   }
   
-  // Find comment and populate user data
-  const comment = await Comment.findById(id)
-    .populate({
-      path: 'user',
-      select: 'username avatar',
-      model: User
-    })
-    .populate({
-      path: 'replies',
-      match: { isDeleted: false },
-      populate: {
-        path: 'user',
-        select: 'username avatar',
-        model: User
+  try {
+    // Find comment by ID
+    const comment = await CommentModel.getNovelCommentById(commentId);
+    
+    if (!comment) {
+      return NextResponse.json(
+        { error: 'Comment not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Get user data
+    const user = await UserModel.findById(comment.userId);
+    
+    // Get replies if this is a parent comment
+    let replies = [];
+    if (!comment.parentId) {
+      // Get replies to this comment
+      const repliesResult = await CommentModel.getNovelCommentReplies(commentId);
+      replies = repliesResult.comments || [];
+      
+      // Get user data for replies
+      if (replies.length > 0) {
+        const userIds = replies.map(reply => reply.userId);
+        const users = await UserModel.findByIds(userIds);
+        
+        // Add user data to replies
+        replies = replies.map(reply => {
+          const replyUser = users.find(u => u.id === reply.userId);
+          return {
+            ...reply,
+            username: replyUser ? replyUser.username : null,
+            userAvatar: replyUser ? replyUser.image : null
+          };
+        });
       }
-    });
-  
-  if (!comment) {
+    }
+    
+    // Format response
+    const formattedComment = {
+      ...comment,
+      username: user ? user.username : null,
+      userAvatar: user ? user.image : null,
+      replies: replies
+    };
+    
+    return NextResponse.json(formattedComment);
+  } catch (error) {
+    console.error('Error fetching comment:', error);
     return NextResponse.json(
-      { error: 'Comment not found' },
-      { status: 404 }
+      { error: 'Failed to fetch comment' },
+      { status: 500 }
     );
   }
-  
-  return NextResponse.json(comment);
 });
 
 // Update a comment
@@ -66,57 +94,72 @@ export const PATCH = createApiHandler(async (request: NextRequest) => {
   }
   
   // Validate ID format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  const commentId = parseInt(id);
+  if (isNaN(commentId)) {
     return NextResponse.json(
       { error: 'Invalid comment ID format' },
       { status: 400 }
     );
   }
   
-  // Find the comment
-  const comment = await Comment.findById(id);
-  
-  if (!comment) {
+  try {
+    // Find the comment
+    const comment = await CommentModel.getNovelCommentById(commentId);
+    
+    if (!comment) {
+      return NextResponse.json(
+        { error: 'Comment not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Check if user is the comment owner
+    if (comment.userId !== parseInt(session.user.id)) {
+      return NextResponse.json(
+        { error: 'You can only edit your own comments' },
+        { status: 403 }
+      );
+    }
+    
+    // Get update data
+    const body = await request.json();
+    const { content } = body;
+    
+    if (!content) {
+      return NextResponse.json(
+        { error: 'Content is required' },
+        { status: 400 }
+      );
+    }
+    
+    // Update the comment
+    const updatedComment = await CommentModel.updateNovelComment(commentId, content);
+    
+    if (!updatedComment) {
+      return NextResponse.json(
+        { error: 'Failed to update comment' },
+        { status: 500 }
+      );
+    }
+    
+    // Get user data
+    const user = await UserModel.findById(updatedComment.userId);
+    
+    // Format response
+    const formattedComment = {
+      ...updatedComment,
+      username: user ? user.username : null,
+      userAvatar: user ? user.image : null
+    };
+    
+    return NextResponse.json(formattedComment);
+  } catch (error) {
+    console.error('Error updating comment:', error);
     return NextResponse.json(
-      { error: 'Comment not found' },
-      { status: 404 }
+      { error: 'Failed to update comment' },
+      { status: 500 }
     );
   }
-  
-  // Check if user is the comment owner
-  if (comment.user.toString() !== session.user.id) {
-    return NextResponse.json(
-      { error: 'You can only edit your own comments' },
-      { status: 403 }
-    );
-  }
-  
-  // Get update data
-  const body = await request.json();
-  const { content } = body;
-  
-  if (!content) {
-    return NextResponse.json(
-      { error: 'Content is required' },
-      { status: 400 }
-    );
-  }
-  
-  // Update the comment
-  comment.content = content;
-  comment.isEdited = true;
-  comment.updatedAt = new Date();
-  await comment.save();
-  
-  // Return updated comment with user data
-  const updatedComment = await Comment.findById(id)
-    .populate({
-      path: 'user',
-      select: 'username avatar',
-      model: User
-    });
-  
-  return NextResponse.json(updatedComment);
 });
 
 // Delete a comment (soft delete)
@@ -137,41 +180,52 @@ export const DELETE = createApiHandler(async (request: NextRequest) => {
   }
   
   // Validate ID format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  const commentId = parseInt(id);
+  if (isNaN(commentId)) {
     return NextResponse.json(
       { error: 'Invalid comment ID format' },
       { status: 400 }
     );
   }
   
-  // Find the comment
-  const comment = await Comment.findById(id);
-  
-  if (!comment) {
+  try {
+    // Find the comment
+    const comment = await CommentModel.getNovelCommentById(commentId);
+    
+    if (!comment) {
+      return NextResponse.json(
+        { error: 'Comment not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Check if user is the comment owner or an admin
+    const isOwner = comment.userId === parseInt(session.user.id);
+    const isAdmin = session.user.role === 'admin';
+    
+    if (!isOwner && !isAdmin) {
+      return NextResponse.json(
+        { error: 'You can only delete your own comments' },
+        { status: 403 }
+      );
+    }
+    
+    // Soft delete the comment
+    const success = await CommentModel.deleteNovelComment(commentId);
+    
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Failed to delete comment' },
+        { status: 500 }
+      );
+    }
+    
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting comment:', error);
     return NextResponse.json(
-      { error: 'Comment not found' },
-      { status: 404 }
+      { error: 'Failed to delete comment' },
+      { status: 500 }
     );
   }
-  
-  // Check if user is the comment owner or an admin
-  const isOwner = comment.user.toString() === session.user.id;
-  const isAdmin = session.user.role === 'admin';
-  
-  if (!isOwner && !isAdmin) {
-    return NextResponse.json(
-      { error: 'You can only delete your own comments' },
-      { status: 403 }
-    );
-  }
-  
-  // Soft delete the comment
-  comment.isDeleted = true;
-  comment.content = isAdmin && !isOwner 
-    ? 'This comment was removed by an administrator.' 
-    : 'This comment was deleted by the user.';
-  comment.updatedAt = new Date();
-  await comment.save();
-  
-  return NextResponse.json({ success: true });
 }); 

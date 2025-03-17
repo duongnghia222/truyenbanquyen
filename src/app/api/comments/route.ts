@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Comment from '@/models/Comment';
-import User from '@/models/User';
-import Novel from '@/models/Novel';
-import { FilterQuery } from 'mongoose';
+import { NovelCommentModel, UserModel, NovelModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
@@ -15,61 +12,39 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   const limit = parseInt(searchParams.get('limit') || '10');
   const sort = searchParams.get('sort') || '-createdAt'; // Default sort by newest
   const novelId = searchParams.get('novel');
-  const chapterId = searchParams.get('chapter');
   const userId = searchParams.get('user');
   const parentId = searchParams.get('parent');
   
-  // Build query
-  const query: FilterQuery<typeof Comment> = {
-    isDeleted: false // Only return non-deleted comments by default
+  // Convert MongoDB sort format to PostgreSQL
+  const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
+  const sortOrder = sort.startsWith('-') ? 'DESC' : 'ASC';
+  
+  // Build query options
+  const options = {
+    novelId: novelId ? (isNaN(parseInt(novelId)) ? undefined : parseInt(novelId)) : undefined,
+    userId: userId ? (isNaN(parseInt(userId)) ? undefined : parseInt(userId)) : undefined,
+    parentId: parentId === 'null' ? null : parentId ? (isNaN(parseInt(parentId)) ? undefined : parseInt(parentId)) : undefined,
+    isDeleted: false,
+    sortBy: sortField,
+    order: sortOrder as 'ASC' | 'DESC'
   };
-  
-  // Add filters
-  if (novelId) {
-    query.novel = novelId;
-  }
-  
-  if (chapterId) {
-    query.chapter = chapterId;
-  }
-  
-  if (userId) {
-    query.user = userId;
-  }
-  
-  // Filter by parent (null for top-level comments, or specific parent ID)
-  if (parentId === 'null') {
-    query.parent = null; // Top-level comments only
-  } else if (parentId) {
-    query.parent = parentId; // Replies to a specific comment
-  }
-
-  // Calculate skip value for pagination
-  const skip = (page - 1) * limit;
 
   // Execute query with pagination
-  const [commentsData, total] = await Promise.all([
-    Comment.find(query)
-      .populate({
-        path: 'user',
-        select: 'username avatar',
-        model: User
-      })
-      .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .lean(),
-    Comment.countDocuments(query)
-  ]);
+  const result = await NovelCommentModel.findAll(page, limit, options);
+  const { comments, total } = result;
+
+  // Fetch user information for all comments
+  const userIds = comments.map(comment => comment.userId);
+  const users = await UserModel.findByIds(userIds);
 
   // Format comments for response
-  const comments = commentsData.map(comment => {
-    const formattedComment = { ...comment };
-    if (comment.user) {
-      formattedComment.username = comment.user.username;
-      formattedComment.userAvatar = comment.user.avatar;
-    }
-    return formattedComment;
+  const formattedComments = comments.map(comment => {
+    const user = users.find(u => u.id === comment.userId);
+    return {
+      ...comment,
+      username: user ? user.username : null,
+      userAvatar: user ? user.image : null
+    };
   });
 
   // Calculate pagination metadata
@@ -78,7 +53,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   const hasPrevPage = page > 1;
 
   return NextResponse.json({
-    comments,
+    comments: formattedComments,
     pagination: {
       currentPage: page,
       totalPages,
@@ -103,7 +78,7 @@ export const POST = createApiHandler(async (request: NextRequest) => {
   }
   
   const body = await request.json();
-  const { content, novelId, chapterId, parentId } = body;
+  const { content, novelId, parentId } = body;
   
   // Validate required fields
   if (!content || !novelId) {
@@ -114,7 +89,15 @@ export const POST = createApiHandler(async (request: NextRequest) => {
   }
   
   // Verify novel exists
-  const novel = await Novel.findById(novelId);
+  const novelIdInt = isNaN(parseInt(novelId)) ? null : parseInt(novelId);
+  if (!novelIdInt) {
+    return NextResponse.json(
+      { error: 'Invalid novel ID' },
+      { status: 400 }
+    );
+  }
+  
+  const novel = await NovelModel.findById(novelIdInt);
   if (!novel) {
     return NextResponse.json(
       { error: 'Novel not found' },
@@ -125,24 +108,23 @@ export const POST = createApiHandler(async (request: NextRequest) => {
   // Create comment data
   const commentData = {
     content,
-    user: session.user.id,
-    novel: novelId,
-    chapter: chapterId || null,
-    parent: parentId || null,
-    createdAt: new Date(),
-    updatedAt: new Date()
+    userId: parseInt(session.user.id),
+    novelId: novelIdInt,
+    parentId: parentId ? (isNaN(parseInt(parentId)) ? null : parseInt(parentId)) : null
   };
   
   // Create new comment
-  const comment = await Comment.create(commentData);
+  const comment = await NovelCommentModel.create(commentData);
   
-  // Populate user data for response
-  const populatedComment = await Comment.findById(comment._id)
-    .populate({
-      path: 'user',
-      select: 'username avatar',
-      model: User
-    });
+  // Get user data for response
+  const user = await UserModel.findById(parseInt(session.user.id));
+  
+  // Format response
+  const formattedComment = {
+    ...comment,
+    username: user ? user.username : null,
+    userAvatar: user ? user.image : null
+  };
     
-  return NextResponse.json(populatedComment, { status: 201 });
+  return NextResponse.json(formattedComment, { status: 201 });
 }); 

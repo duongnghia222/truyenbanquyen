@@ -1,4 +1,3 @@
-import { Pool } from 'pg';
 import connectDB from './postgresql';
 
 // Helper function to check if a request is for a static asset

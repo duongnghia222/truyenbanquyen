@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { NovelCard } from '@/components/features/novels/NovelCard'
-import { ensureDatabaseConnection } from '@/lib/db'
-import Novel from '@/models/Novel'
+import { NovelModel } from '@/models/postgresql'
+import { Novel } from '@/models/postgresql'
 import { NovelType } from '@/types/novel'
 
 export const metadata: Metadata = {
@@ -12,14 +12,10 @@ export const metadata: Metadata = {
 
 export const revalidate = 0
 
-async function getNovels(): Promise<NovelType[]> {
+async function getNovels(): Promise<Novel[]> {
   try {
-    await ensureDatabaseConnection()
-    const novels = await Novel.find({})
-      .sort({ createdAt: -1 })
-      .lean()
-    
-    return JSON.parse(JSON.stringify(novels))
+    const result = await NovelModel.findAll();
+    return result.novels;
   } catch (error) {
     console.error('Failed to fetch novels:', error)
     return []
@@ -28,6 +24,26 @@ async function getNovels(): Promise<NovelType[]> {
 
 export default async function NovelListPage() {
   const novels = await getNovels()
+  
+  // Map PostgreSQL novels to the format expected by NovelCard
+  const formattedNovels: NovelType[] = novels.map(novel => {
+    // Convert PostgreSQL model to NovelType
+    return {
+      _id: novel.id.toString(),
+      title: novel.title,
+      slug: novel.slug,
+      author: novel.author,
+      description: novel.description,
+      coverImage: novel.coverImage,
+      genres: novel.genres,
+      status: novel.status,
+      chapterCount: novel.chapterCount,
+      views: novel.views,
+      rating: novel.rating,
+      createdAt: novel.createdAt.toISOString(),
+      updatedAt: novel.updatedAt.toISOString()
+    };
+  });
   
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 pt-24 pb-16">
@@ -132,7 +148,7 @@ export default async function NovelListPage() {
         {/* Novels Grid */}
         {novels.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 animate-fade-in animation-delay-400">
-            {novels.map((novel, index) => (
+            {formattedNovels.map((novel, index) => (
               <div key={novel._id} className="animate-fade-in" style={{animationDelay: `${(index * 50) + 400}ms`}}>
                 <NovelCard novel={novel} />
               </div>

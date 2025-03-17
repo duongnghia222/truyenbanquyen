@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/models/User';
+import { UserModel, NovelModel } from '@/models/postgresql';
+import { createApiHandler } from '@/lib/api-utils';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 
 // Get user profile information
-export async function GET() {
+export const GET = createApiHandler(async () => {
   try {
     const session = await getServerSession(authOptions);
     
@@ -16,16 +16,9 @@ export async function GET() {
       );
     }
     
-    await connectDB();
-    
-    // Include uploadedNovels in the selection
-    const user = await User.findById(session.user.id)
-      .select('name username email image uploadedNovels')
-      .populate({
-        path: 'uploadedNovels',
-        select: 'title slug author coverImage genres status views rating chapterCount createdAt',
-        options: { strictPopulate: false }
-      });
+    // Get user data
+    const userId = parseInt(session.user.id);
+    const user = await UserModel.findById(userId);
     
     if (!user) {
       return NextResponse.json(
@@ -34,25 +27,22 @@ export async function GET() {
       );
     }
     
-    // Add uploaderUsername to each novel
-    const formattedUser = user.toObject();
-    if (Array.isArray(formattedUser.uploadedNovels)) {
-      // Using unknown as intermediate step for type assertion
-      (formattedUser.uploadedNovels as unknown as Array<{ 
-        title: string;
-        author: string;
-        coverImage: string;
-        genres: string[];
-        status: string;
-        views: number;
-        rating: number;
-        chapterCount: number;
-        createdAt: Date;
-        uploaderUsername?: string;
-      }>).forEach(novel => {
-        novel.uploaderUsername = user.username;
-      });
-    }
+    // Get user's uploaded novels
+    const result = await NovelModel.findByUploader(userId);
+    const novels = result.novels;
+    
+    // Format user data for response
+    const formattedUser = {
+      id: user.id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      image: user.image,
+      uploadedNovels: novels.map((novel: { id: number; title: string; slug: string; coverImage: string; status: string }) => ({
+        ...novel,
+        uploaderUsername: user.username
+      }))
+    };
     
     return NextResponse.json({ user: formattedUser });
     
@@ -63,10 +53,10 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});
 
 // Update user profile information
-export async function PUT(req: Request) {
+export const PUT = createApiHandler(async (req: Request) => {
   try {
     const session = await getServerSession(authOptions);
     
@@ -101,15 +91,12 @@ export async function PUT(req: Request) {
       );
     }
     
-    await connectDB();
+    const userId = parseInt(session.user.id);
     
     // Check if username is already taken (by another user)
-    const existingUser = await User.findOne({ 
-      username: username.trim(),
-      _id: { $ne: session.user.id } // Exclude current user
-    });
+    const existingUser = await UserModel.findByUsername(username.trim());
     
-    if (existingUser) {
+    if (existingUser && existingUser.id !== userId) {
       return NextResponse.json(
         { message: 'Tên người dùng đã được sử dụng, vui lòng chọn tên khác' },
         { status: 400 }
@@ -117,14 +104,10 @@ export async function PUT(req: Request) {
     }
     
     // Update user profile
-    const updatedUser = await User.findByIdAndUpdate(
-      session.user.id,
-      {
-        name: name.trim(),
-        username: username.trim(),
-      },
-      { new: true }
-    ).select('name username email image');
+    const updatedUser = await UserModel.update(userId, {
+      name: name.trim(),
+      username: username.trim()
+    });
     
     if (!updatedUser) {
       return NextResponse.json(
@@ -135,7 +118,13 @@ export async function PUT(req: Request) {
     
     return NextResponse.json({ 
       success: true,
-      user: updatedUser
+      user: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        image: updatedUser.image
+      }
     });
     
   } catch (error) {
@@ -145,4 +134,4 @@ export async function PUT(req: Request) {
       { status: 500 }
     );
   }
-} 
+}); 

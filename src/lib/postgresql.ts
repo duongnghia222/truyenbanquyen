@@ -13,18 +13,17 @@ type PostgresCache = {
 
 // Declare global variable to maintain connection across hot reloads
 declare global {
+  // eslint-disable-next-line no-var
   var postgres: PostgresCache;
 }
-
-// Initialize cache
-var postgres: PostgresCache;
 
 // Initialize global cache if it doesn't exist yet
 if (!global.postgres) {
   global.postgres = { pool: null, client: null, isConnecting: false };
 }
 
-postgres = global.postgres;
+// Initialize cache
+const postgres = global.postgres;
 
 // Get database connection details
 const getConnectionConfig = () => {
@@ -117,7 +116,7 @@ export async function closeConnections(): Promise<void> {
 /**
  * Execute a query with optional parameters
  */
-export async function query(text: string, params?: any[]) {
+export async function query(text: string, params?: unknown[]) {
   const pool = await connectDB();
   const start = Date.now();
   

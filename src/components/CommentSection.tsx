@@ -16,8 +16,10 @@ interface CommentUser {
 
 interface CommentData {
   _id: string;
+  id?: number;  // PostgreSQL ID
   content: string;
-  user: CommentUser;
+  user?: CommentUser;
+  userId?: number;  // PostgreSQL field
   username?: string;
   userAvatar?: string;
   novel: string;
@@ -41,7 +43,7 @@ interface PaginationData {
 }
 
 interface CommentSectionProps {
-  novelId: string;
+  novelId: string | number;
   chapterId?: string;
   chapterNumber?: number;
 }
@@ -59,7 +61,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyContent, setReplyContent] = useState('');
+  const [replyContent, setReplyContent] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [page, setPage] = useState(1);
@@ -99,10 +101,36 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         let url;
         const effectiveChapterId = chapterId || chapterIdFromNumber;
         
+        // Extract numeric ID from MongoDB-style ID if needed
+        // MongoDB IDs are strings, PostgreSQL IDs are numbers
+        let effectiveNovelId = novelId;
+        
+        // Handle the case where the novel object has both id and _id properties
+        if (typeof novelId === 'object' && novelId !== null) {
+          // @ts-ignore - Handle the case where novelId is an object with id or _id
+          effectiveNovelId = novelId.id || novelId._id;
+        }
+        
+        // If it's a string that can be parsed as a number, convert it
+        if (typeof effectiveNovelId === 'string' && !isNaN(parseInt(effectiveNovelId))) {
+          effectiveNovelId = parseInt(effectiveNovelId);
+        }
+        
+        // If we still don't have a valid ID, try to extract it from the URL
+        if (!effectiveNovelId) {
+          const slug = window.location.pathname.split('/')[2];
+          // Make a request to get the novel ID from the slug
+          const response = await fetch(`/api/novels/${slug}`);
+          if (response.ok) {
+            const novel = await response.json();
+            effectiveNovelId = novel.id || novel._id;
+          }
+        }
+        
         if (isChapterComment) {
           // Use chapter comments API
           if (effectiveChapterId) {
-            url = `/api/chapter-comments?novel=${novelId}&chapter=${effectiveChapterId}&page=${page}&parent=null`;
+            url = `/api/chapter-comments?novel=${effectiveNovelId}&chapter=${effectiveChapterId}&page=${page}&parent=null`;
           } else if (chapterNumber) {
             // If we have a chapter number but no ID yet, use the chapter number route
             const slug = window.location.pathname.split('/')[2];
@@ -110,7 +138,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
           }
         } else {
           // Use regular comments API for novel comments
-          url = `/api/comments?novel=${novelId}&page=${page}&parent=null`;
+          url = `/api/comments?novel=${effectiveNovelId}&page=${page}&parent=null`;
         }
         
         if (!url) {
@@ -162,14 +190,45 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       
       interface CommentRequestBody {
         content: string;
-        novelId: string;
+        novelId: string | number;
         parentId: null;
         chapterId?: string;
       }
       
+      // Extract numeric ID from MongoDB-style ID if needed
+      // MongoDB IDs are strings, PostgreSQL IDs are numbers
+      let effectiveNovelId = novelId;
+      
+      // Handle the case where the novel object has both id and _id properties
+      if (typeof novelId === 'object' && novelId !== null) {
+        // @ts-ignore - Handle the case where novelId is an object with id or _id
+        effectiveNovelId = novelId.id || novelId._id;
+      }
+      
+      // If it's a string that can be parsed as a number, convert it
+      if (typeof effectiveNovelId === 'string' && !isNaN(parseInt(effectiveNovelId))) {
+        effectiveNovelId = parseInt(effectiveNovelId);
+      }
+      
+      // If we still don't have a valid ID, try to extract it from the URL
+      if (!effectiveNovelId) {
+        const slug = window.location.pathname.split('/')[2];
+        // Make a request to get the novel ID from the slug
+        const response = await fetch(`/api/novels/${slug}`);
+        if (response.ok) {
+          const novel = await response.json();
+          effectiveNovelId = novel.id || novel._id;
+        }
+      }
+      
+      // If we still don't have a valid ID, throw an error
+      if (!effectiveNovelId) {
+        throw new Error('Novel ID is required');
+      }
+      
       const requestBody: CommentRequestBody = {
         content: newComment,
-        novelId,
+        novelId: effectiveNovelId,
         parentId: null,
       };
       
@@ -186,12 +245,13 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         body: JSON.stringify(requestBody),
       });
       
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json() as ApiErrorResponse;
-        throw new Error(errorData.error || 'Failed to post comment');
+        throw new Error(responseData.error || 'Failed to post comment');
       }
       
-      const newCommentData = await response.json() as CommentData;
+      const newCommentData = responseData as CommentData;
       
       // Add the new comment to the list
       setComments([newCommentData, ...comments]);
@@ -216,12 +276,13 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
   // Submit a reply to a comment
   const handleSubmitReply = async (parentId: string) => {
     if (!session) {
-      setError('Vui lòng đăng nhập để trả lời bình luận');
+      setError('Vui lòng đăng nhập để bình luận');
       return;
     }
     
-    if (!replyContent.trim()) {
-      setError('Trả lời không được để trống');
+    const replyText = replyContent[parentId];
+    if (!replyText || !replyText.trim()) {
+      setError('Bình luận không được để trống');
       return;
     }
     
@@ -236,14 +297,45 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       
       interface ReplyRequestBody {
         content: string;
-        novelId: string;
+        novelId: string | number;
         parentId: string;
         chapterId?: string;
       }
       
+      // Extract numeric ID from MongoDB-style ID if needed
+      // MongoDB IDs are strings, PostgreSQL IDs are numbers
+      let effectiveNovelId = novelId;
+      
+      // Handle the case where the novel object has both id and _id properties
+      if (typeof novelId === 'object' && novelId !== null) {
+        // @ts-ignore - Handle the case where novelId is an object with id or _id
+        effectiveNovelId = novelId.id || novelId._id;
+      }
+      
+      // If it's a string that can be parsed as a number, convert it
+      if (typeof effectiveNovelId === 'string' && !isNaN(parseInt(effectiveNovelId))) {
+        effectiveNovelId = parseInt(effectiveNovelId);
+      }
+      
+      // If we still don't have a valid ID, try to extract it from the URL
+      if (!effectiveNovelId) {
+        const slug = window.location.pathname.split('/')[2];
+        // Make a request to get the novel ID from the slug
+        const response = await fetch(`/api/novels/${slug}`);
+        if (response.ok) {
+          const novel = await response.json();
+          effectiveNovelId = novel.id || novel._id;
+        }
+      }
+      
+      // If we still don't have a valid ID, throw an error
+      if (!effectiveNovelId) {
+        throw new Error('Novel ID is required');
+      }
+      
       const requestBody: ReplyRequestBody = {
-        content: replyContent,
-        novelId,
+        content: replyText,
+        novelId: effectiveNovelId,
         parentId,
       };
       
@@ -260,16 +352,18 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         body: JSON.stringify(requestBody),
       });
       
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json() as ApiErrorResponse;
-        throw new Error(errorData.error || 'Failed to post reply');
+        throw new Error(responseData.error || 'Failed to post reply');
       }
       
-      const newReplyData = await response.json() as CommentData;
+      const newReplyData = responseData as CommentData;
       
       // Find the parent comment and add the reply
       const updatedComments = comments.map(comment => {
-        if (comment._id === parentId) {
+        const commentId = comment._id || `${comment.id}`;
+        if (commentId === parentId) {
           return {
             ...comment,
             replies: comment.replies ? [...comment.replies, newReplyData] : [newReplyData],
@@ -280,7 +374,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       
       setComments(updatedComments);
       setReplyingTo(null);
-      setReplyContent('');
+      setReplyContent({});
     } catch (error) {
       console.error('Error posting reply:', error);
       setError(error instanceof Error ? error.message : 'Không thể đăng trả lời. Vui lòng thử lại sau.');
@@ -320,24 +414,27 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         }),
       });
       
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json() as ApiErrorResponse;
-        throw new Error(errorData.error || 'Failed to edit comment');
+        throw new Error(responseData.error || 'Failed to edit comment');
       }
       
-      const updatedComment = await response.json() as CommentData;
+      const updatedComment = responseData as CommentData;
       
       // Update the comment in the list
       const updatedComments = comments.map(comment => {
-        if (comment._id === commentId) {
+        const currentCommentId = comment._id || `${comment.id}`;
+        if (currentCommentId === commentId) {
           return updatedComment;
         }
         
         // Check if it's a reply
         if (comment.replies) {
-          const updatedReplies = comment.replies.map(reply => 
-            reply._id === commentId ? updatedComment : reply
-          );
+          const updatedReplies = comment.replies.map(reply => {
+            const replyId = reply._id || `${reply.id}`;
+            return replyId === commentId ? updatedComment : reply;
+          });
           return { ...comment, replies: updatedReplies };
         }
         
@@ -386,17 +483,19 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       
       // Update the comment list
       const updatedComments = comments.map(comment => {
-        if (comment._id === commentId) {
+        const currentCommentId = comment._id || `${comment.id}`;
+        if (currentCommentId === commentId) {
           return { ...comment, isDeleted: true, content: 'This comment was deleted by the user.' };
         }
         
         // Check if it's a reply
         if (comment.replies) {
-          const updatedReplies = comment.replies.map(reply => 
-            reply._id === commentId 
+          const updatedReplies = comment.replies.map(reply => {
+            const replyId = reply._id || `${reply.id}`;
+            return replyId === commentId 
               ? { ...reply, isDeleted: true, content: 'This comment was deleted by the user.' } 
-              : reply
-          );
+              : reply;
+          });
           return { ...comment, replies: updatedReplies };
         }
         
@@ -429,27 +528,32 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         method: 'POST',
       });
       
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json() as ApiErrorResponse;
-        throw new Error(errorData.error || 'Failed to like comment');
+        throw new Error(responseData.error || 'Failed to like comment');
       }
       
-      const likeData = await response.json() as { likes: number; userLiked: boolean };
+      const likeData = responseData as { likes: number; userLiked: boolean };
       
       // Update the comment in the list
       const updatedComments = comments.map(comment => {
-        if (comment._id === commentId) {
+        const currentCommentId = comment._id || `${comment.id}`;
+        if (currentCommentId === commentId) {
           // Toggle like status
           const userId = session.user?.id;
           const userLiked = likeData.userLiked;
           
-          let updatedLikes = [...comment.likes];
+          // Ensure comment.likes is an array
+          let updatedLikes = Array.isArray(comment.likes) ? [...comment.likes] : [];
           if (userLiked) {
             // Add user to likes
-            updatedLikes.push(userId as string);
+            if (!updatedLikes.some(id => id.toString() === userId?.toString())) {
+              updatedLikes.push(userId as string);
+            }
           } else {
             // Remove user from likes
-            updatedLikes = updatedLikes.filter(id => id !== userId);
+            updatedLikes = updatedLikes.filter(id => id.toString() !== userId?.toString());
           }
           
           return { ...comment, likes: updatedLikes };
@@ -458,18 +562,22 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         // Check if it's a reply
         if (comment.replies) {
           const updatedReplies = comment.replies.map(reply => {
-            if (reply._id === commentId) {
+            const replyId = reply._id || `${reply.id}`;
+            if (replyId === commentId) {
               const userId = session.user?.id;
               const userLiked = likeData.userLiked;
               
-              let updatedLikes = [...reply.likes];
+              // Ensure reply.likes is an array
+              let updatedReplyLikes = Array.isArray(reply.likes) ? [...reply.likes] : [];
               if (userLiked) {
-                updatedLikes.push(userId as string);
+                if (!updatedReplyLikes.some(id => id.toString() === userId?.toString())) {
+                  updatedReplyLikes.push(userId as string);
+                }
               } else {
-                updatedLikes = updatedLikes.filter(id => id !== userId);
+                updatedReplyLikes = updatedReplyLikes.filter(id => id.toString() !== userId?.toString());
               }
               
-              return { ...reply, likes: updatedLikes };
+              return { ...reply, likes: updatedReplyLikes };
             }
             return reply;
           });
@@ -502,13 +610,13 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
   // Start replying to a comment
   const startReplying = (commentId: string) => {
     setReplyingTo(commentId);
-    setReplyContent('');
+    setReplyContent({});
   };
 
   // Cancel replying
   const cancelReplying = () => {
     setReplyingTo(null);
-    setReplyContent('');
+    setReplyContent({});
   };
 
   // Format date
@@ -525,20 +633,28 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
 
   // Render a single comment
   const renderComment = (comment: CommentData, isReply = false) => {
-    const isAuthor = session?.user?.id === comment.user._id;
-    const userLiked = session?.user?.id && comment.likes.includes(session.user.id);
+    // Handle both MongoDB and PostgreSQL data structures
+    const commentId = comment._id || `${comment.id}`;
+    const userId = comment.user?._id || comment.userId;
+    const username = comment.username || comment.user?.username || 'User';
+    const avatar = comment.userAvatar || comment.user?.avatar;
+    
+    const isAuthor = session?.user?.id === userId;
+    const userLiked = session?.user?.id && Array.isArray(comment.likes) && comment.likes.some(id => 
+      id.toString() === session.user.id.toString()
+    );
     
     return (
       <div 
-        key={comment._id} 
+        key={commentId} 
         className={`${isReply ? 'ml-12 mt-4' : 'mb-8 border-b border-gray-100 dark:border-gray-700 pb-6'}`}
       >
         <div className="flex items-start">
           <div className="flex-shrink-0 mr-4">
-            {comment.userAvatar || comment.user.avatar ? (
+            {avatar ? (
               <Image
-                src={comment.userAvatar || comment.user.avatar || '/images/default-avatar.png'}
-                alt={comment.username || comment.user.username}
+                src={avatar}
+                alt={username}
                 width={40}
                 height={40}
                 className="rounded-full"
@@ -546,7 +662,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
             ) : (
               <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                 <span className="text-blue-600 dark:text-blue-300 font-medium">
-                  {(comment.username || comment.user.username || 'User').charAt(0).toUpperCase()}
+                  {username.charAt(0).toUpperCase()}
                 </span>
               </div>
             )}
@@ -555,7 +671,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
           <div className="flex-1">
             <div className="flex items-center mb-1">
               <span className="font-medium text-gray-900 dark:text-white">
-                {comment.username || comment.user.username}
+                {username}
               </span>
               <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
                 {formatDate(comment.createdAt)}
@@ -563,7 +679,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
               </span>
             </div>
             
-            {editingId === comment._id ? (
+            {editingId === commentId ? (
               <div className="mt-2">
                 <textarea
                   value={editContent}
@@ -574,7 +690,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
                 />
                 <div className="flex mt-2 space-x-2">
                   <button
-                    onClick={() => handleEditComment(comment._id)}
+                    onClick={() => handleEditComment(commentId)}
                     disabled={submitting}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
                   >
@@ -601,7 +717,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
             {!comment.isDeleted && (
               <div className="mt-2 flex items-center space-x-4">
                 <button
-                  onClick={() => handleLikeComment(comment._id)}
+                  onClick={() => handleLikeComment(commentId)}
                   className={`flex items-center text-sm ${
                     userLiked 
                       ? 'text-blue-600 dark:text-blue-400' 
@@ -609,12 +725,12 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
                   }`}
                 >
                   <ThumbsUp size={16} className="mr-1" />
-                  <span>{comment.likes.length > 0 ? comment.likes.length : ''}</span>
+                  <span>{Array.isArray(comment.likes) && comment.likes.length > 0 ? comment.likes.length : ''}</span>
                 </button>
                 
                 {!isReply && (
                   <button
-                    onClick={() => startReplying(comment._id)}
+                    onClick={() => startReplying(commentId)}
                     className="flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
                   >
                     <Reply size={16} className="mr-1" />
@@ -633,7 +749,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
                     </button>
                     
                     <button
-                      onClick={() => handleDeleteComment(comment._id)}
+                      onClick={() => handleDeleteComment(commentId)}
                       className="flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                     >
                       <Trash2 size={16} className="mr-1" />
@@ -645,18 +761,21 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
             )}
             
             {/* Reply form */}
-            {replyingTo === comment._id && (
+            {replyingTo === commentId && (
               <div className="mt-4">
                 <textarea
-                  value={replyContent}
-                  onChange={(e) => setReplyContent(e.target.value)}
+                  value={replyContent[commentId] || ''}
+                  onChange={(e) => setReplyContent(prev => ({
+                    ...prev,
+                    [commentId]: e.target.value
+                  }))}
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                   rows={3}
                   placeholder="Viết trả lời của bạn..."
-                />
+                ></textarea>
                 <div className="flex mt-2 space-x-2">
                   <button
-                    onClick={() => handleSubmitReply(comment._id)}
+                    onClick={() => handleSubmitReply(commentId)}
                     disabled={submitting}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
                   >

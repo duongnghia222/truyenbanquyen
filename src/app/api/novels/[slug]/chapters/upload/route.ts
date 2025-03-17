@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import Chapter from '@/models/Chapter';
-import Novel from '@/models/Novel';
-import { ensureDatabaseConnection } from '@/lib/db';
+import { ChapterModel } from '@/models/postgresql';
+import { NovelModel } from '@/models/postgresql';
 
 type RouteParams = {
   params: Promise<{ slug: string }>
@@ -9,11 +8,8 @@ type RouteParams = {
 
 export async function POST(request: Request, { params }: RouteParams) {
   try {
-    // Ensure database connection is established
-    await ensureDatabaseConnection();
-    
     const { slug } = await params;
-    const { title, contentUrl, chapterNumber, summary } = await request.json();
+    const { title, contentUrl, chapterNumber } = await request.json();
 
     // Validate required fields
     if (!title || !contentUrl || !chapterNumber) {
@@ -24,7 +20,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     // Find novel by slug
-    const novel = await Novel.findOne({ slug });
+    const novel = await NovelModel.findBySlug(slug);
     if (!novel) {
       return NextResponse.json(
         { error: 'Không tìm thấy truyện' },
@@ -33,10 +29,10 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     // Check if chapter number already exists
-    const existingChapter = await Chapter.findOne({
-      novelId: novel._id,
-      chapterNumber: chapterNumber
-    });
+    const existingChapter = await ChapterModel.findByNovelIdAndChapterNumber(
+      novel.id,
+      parseInt(chapterNumber)
+    );
 
     if (existingChapter) {
       return NextResponse.json(
@@ -46,23 +42,15 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     // Create the chapter
-    const chapter = await Chapter.create({
-      novelId: novel._id,
+    const chapter = await ChapterModel.create({
+      novelId: novel.id,
       title,
       contentUrl,
-      chapterNumber,
-      summary: summary || null,
-      views: 0,
+      chapterNumber: parseInt(chapterNumber)
     });
 
     // Update novel's chapter count
-    await Novel.findByIdAndUpdate(
-      novel._id,
-      { 
-        $inc: { chapterCount: 1 },
-        updatedAt: new Date()
-      }
-    );
+    await NovelModel.update(novel.id, { chapterCount: (novel.chapterCount || 0) + 1 });
 
     return NextResponse.json(chapter, { status: 201 });
   } catch (error) {

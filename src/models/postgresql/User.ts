@@ -65,6 +65,35 @@ class UserModel {
   }
 
   /**
+   * Create a new user (alternative method for auth)
+   * Maps from auth field names to database field names
+   */
+  async createUser(userData: {
+    display_name?: string;
+    username: string;
+    email?: string;
+    password_hash?: string;
+    google_id?: string;
+    avatar_url?: string;
+    role?: string;
+  }) {
+    return query(
+      `INSERT INTO users (name, username, email, password, google_id, image, role)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [
+        userData.display_name || userData.username,
+        userData.username,
+        userData.email || null,
+        userData.password_hash || null,
+        userData.google_id || null,
+        userData.avatar_url || null,
+        userData.role || 'user'
+      ]
+    );
+  }
+
+  /**
    * Find a user by ID
    */
   async findById(id: number): Promise<User | null> {
@@ -81,19 +110,15 @@ class UserModel {
   }
 
   /**
-   * Find a user by email
+   * Find a user by email (for auth)
    */
-  async findByEmail(email: string): Promise<User | null> {
-    const result = await query(
+  async findByEmail(email: string | undefined | null) {
+    if (!email) return { rows: [] };
+    
+    return query(
       'SELECT * FROM users WHERE email = $1',
       [email]
     );
-
-    if (result.rows.length === 0) {
-      return null;
-    }
-
-    return this.transformUserData(result.rows[0]);
   }
 
   /**
@@ -113,19 +138,27 @@ class UserModel {
   }
 
   /**
-   * Find a user by Google ID
+   * Find a user by Google ID (for auth)
    */
-  async findByGoogleId(googleId: string): Promise<User | null> {
-    const result = await query(
+  async findByGoogleId(googleId: string | undefined | null) {
+    if (!googleId) return { rows: [] };
+    
+    return query(
       'SELECT * FROM users WHERE google_id = $1',
       [googleId]
     );
+  }
 
-    if (result.rows.length === 0) {
-      return null;
-    }
-
-    return this.transformUserData(result.rows[0]);
+  /**
+   * Update Google ID for a user (for auth)
+   */
+  async updateGoogleId(userId: number, googleId: string | undefined | null) {
+    if (!googleId) return null;
+    
+    return query(
+      'UPDATE users SET google_id = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+      [googleId, userId]
+    );
   }
 
   /**
@@ -334,9 +367,7 @@ class UserModel {
    */
   async getReadingHistory(userId: number): Promise<ReadingHistory[]> {
     const result = await query(
-      `SELECT * FROM reading_history
-       WHERE user_id = $1
-       ORDER BY last_read_at DESC`,
+      `SELECT * FROM reading_history WHERE user_id = $1 ORDER BY last_read_at DESC`,
       [userId]
     );
 
@@ -347,6 +378,23 @@ class UserModel {
       lastChapterId: row.last_chapter_id,
       lastReadAt: row.last_read_at
     }));
+  }
+
+  /**
+   * Find multiple users by their IDs
+   */
+  async findByIds(ids: number[]): Promise<User[]> {
+    if (!ids.length) return [];
+    
+    // Create a parameterized query with the correct number of parameters
+    const params = ids.map((_, i) => `$${i + 1}`).join(',');
+    
+    const result = await query(
+      `SELECT * FROM users WHERE id IN (${params})`,
+      ids
+    );
+
+    return result.rows.map(this.transformUserData);
   }
 
   /**

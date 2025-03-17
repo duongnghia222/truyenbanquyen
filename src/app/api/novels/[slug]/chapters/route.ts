@@ -1,25 +1,20 @@
 import { NextResponse } from 'next/server';
-import Chapter from '@/models/Chapter';
-import Novel from '@/models/Novel';
-import { ensureDatabaseConnection } from '@/lib/db';
+import { ChapterModel, NovelModel } from '@/models/postgresql';
+import { createApiHandler } from '@/lib/api-utils';
 
 type RouteParams = {
-  params: Promise<{ slug: string }>
+  params: { slug: string }
 };
 
-export async function GET(request: Request, { params }: RouteParams) {
+export const GET = createApiHandler(async (request: Request, { params }: RouteParams) => {
   try {
-    // Ensure database connection is established
-    await ensureDatabaseConnection();
-    
-    const { slug } = await params;
+    const { slug } = params;
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
-    const skip = (page - 1) * limit;
 
     // First, find the novel by slug to get its ID
-    const novel = await Novel.findOne({ slug }).select('_id');
+    const novel = await NovelModel.findBySlug(slug);
     
     if (!novel) {
       return NextResponse.json(
@@ -29,15 +24,8 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     // Fetch chapters for the novel with pagination
-    const [chapters, total] = await Promise.all([
-      Chapter.find({ novelId: novel._id })
-        .sort({ chapterNumber: 1 })
-        .skip(skip)
-        .limit(limit)
-        .select('title chapterNumber views createdAt')
-        .lean(),
-      Chapter.countDocuments({ novelId: novel._id })
-    ]);
+    const result = await ChapterModel.findByNovelId(novel.id, page, limit);
+    const { chapters, total } = result;
 
     // Calculate pagination metadata
     const totalPages = Math.ceil(total / limit);
@@ -62,18 +50,15 @@ export async function GET(request: Request, { params }: RouteParams) {
       { status: 500 }
     );
   }
-}
+});
 
-// If there's a POST method
-export async function POST(request: Request, { params }: RouteParams) {
+// POST method
+export const POST = createApiHandler(async (request: Request, { params }: RouteParams) => {
   try {
-    // Ensure database connection is established
-    await ensureDatabaseConnection();
-    
-    const { slug } = await params;
+    const { slug } = params;
     
     // First, find the novel by slug to get its ID
-    const novel = await Novel.findOne({ slug });
+    const novel = await NovelModel.findBySlug(slug);
     
     if (!novel) {
       return NextResponse.json(
@@ -85,16 +70,13 @@ export async function POST(request: Request, { params }: RouteParams) {
     const data = await request.json();
     
     // Create a new chapter
-    const chapter = await Chapter.create({
+    const chapter = await ChapterModel.create({
       ...data,
-      novelId: novel._id
+      novelId: novel.id
     });
     
     // Update the novel's chapter count
-    await Novel.findByIdAndUpdate(
-      novel._id,
-      { $inc: { chapterCount: 1 } }
-    );
+    await NovelModel.updateChapterCount(novel.id);
     
     return NextResponse.json(chapter, { status: 201 });
   } catch (error) {
@@ -104,4 +86,4 @@ export async function POST(request: Request, { params }: RouteParams) {
       { status: 500 }
     );
   }
-} 
+}); 

@@ -4,8 +4,7 @@ import { isStaticPath } from './lib/edge-utils';
 import { 
   AUTH_ROUTES, 
   isProtectedRoute, 
-  isAuthRoute, 
-  MIDDLEWARE_MATCHER 
+  isAuthRoute 
 } from './lib/route-config';
 
 // Handle auth redirects and static asset optimization
@@ -68,7 +67,17 @@ export default withAuth(
 
 // Update matcher to include auth routes and exclude static assets
 export const config = {
-  matcher: MIDDLEWARE_MATCHER,
-  // Specify that this middleware should run in Node.js runtime, not Edge
-  runtime: 'nodejs'
+  matcher: [
+    // Match all request paths except for the ones starting with Next.js internals
+    '/((?!_next/static|_next/image|.+\\..+).*)',
+    // Include protected routes
+    '/profile/:path*',
+    '/bookmark/:path*',
+    '/reading-history/:path*',
+    '/notifications/:path*',
+    '/novels/upload/:path*',
+    // Include auth routes
+    '/auth/:path*',
+    '/api/auth/:path*'
+  ]
 } 

@@ -1,18 +1,14 @@
 import { NextResponse } from 'next/server';
-import Chapter from '@/models/Chapter';
-import Novel from '@/models/Novel';
-import { initDatabase } from '@/lib/db';
+import { ChapterModel, NovelModel } from '@/models/postgresql';
+import { createApiHandler } from '@/lib/api-utils';
 
 type RouteParams = {
-  params: Promise<{ slug: string; chapterNumber: string }>
+  params: { slug: string; chapterNumber: string }
 };
 
-export async function GET(request: Request, { params }: RouteParams) {
+export const GET = createApiHandler(async (request: Request, { params }: RouteParams) => {
   try {
-    // Ensure database connection is established
-    await initDatabase();
-    
-    const { slug, chapterNumber } = await params;
+    const { slug, chapterNumber } = params;
     
     // Make sure chapterNumber is a valid number
     const chapterNum = parseInt(chapterNumber);
@@ -24,7 +20,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
     
     // Find the novel by slug
-    const novel = await Novel.findOne({ slug }).select('_id chapterCount');
+    const novel = await NovelModel.findBySlug(slug);
     if (!novel) {
       return NextResponse.json(
         { error: 'Novel not found' },
@@ -41,10 +37,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
     
     // Find the chapter
-    const chapter = await Chapter.findOne({
-      novelId: novel._id,
-      chapterNumber: chapterNum
-    });
+    const chapter = await ChapterModel.findByNovelIdAndChapterNumber(novel.id, chapterNum);
     
     if (!chapter) {
       return NextResponse.json(
@@ -54,10 +47,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
     
     // Increment view count
-    await Chapter.findByIdAndUpdate(
-      chapter._id,
-      { $inc: { views: 1 } }
-    );
+    await ChapterModel.incrementViews(chapter.id);
     
     return NextResponse.json(chapter);
   } catch (error) {
@@ -67,4 +57,4 @@ export async function GET(request: Request, { params }: RouteParams) {
       { status: 500 }
     );
   }
-} 
+}); 
