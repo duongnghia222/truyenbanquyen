@@ -1,6 +1,12 @@
 import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
 import { isStaticPath } from './lib/edge-utils';
+import { 
+  AUTH_ROUTES, 
+  isProtectedRoute, 
+  isAuthRoute, 
+  MIDDLEWARE_MATCHER 
+} from './lib/route-config';
 
 // Handle auth redirects and static asset optimization
 export default withAuth(
@@ -12,10 +18,10 @@ export default withAuth(
       return NextResponse.next();
     }
     
-    // Legacy signin URL handling - redirect /api/auth/signin to /auth/signin
-    if (pathname === '/api/auth/signin') {
+    // Legacy signin URL handling - redirect from legacy to new signin
+    if (pathname === AUTH_ROUTES.LEGACY_SIGNIN) {
       const callbackUrl = req.nextUrl.searchParams.get('callbackUrl');
-      const redirectUrl = new URL('/auth/signin', req.url);
+      const redirectUrl = new URL(AUTH_ROUTES.SIGNIN, req.url);
       if (callbackUrl) {
         redirectUrl.searchParams.set('callbackUrl', callbackUrl);
       }
@@ -24,7 +30,7 @@ export default withAuth(
     
     // Get the token from the request
     const token = req.nextauth?.token;
-    const isAuthPage = pathname.startsWith('/auth');
+    const isAuthPage = isAuthRoute(pathname);
     
     // If user is signed in and tries to access auth pages, redirect to home
     if (isAuthPage && token) {
@@ -44,18 +50,12 @@ export default withAuth(
         }
         
         // Allow public access to auth pages
-        if (pathname.startsWith('/auth') || pathname.startsWith('/api/auth')) {
+        if (isAuthRoute(pathname)) {
           return true;
         }
         
         // Protected routes that require authentication
-        if (
-          pathname.startsWith('/profile') || 
-          pathname.startsWith('/bookmark') || 
-          pathname.startsWith('/reading-history') ||
-          pathname.startsWith('/notifications') ||
-          pathname.startsWith('/novels/upload')
-        ) {
+        if (isProtectedRoute(pathname)) {
           return !!token;
         }
         
@@ -68,22 +68,7 @@ export default withAuth(
 
 // Update matcher to include auth routes and exclude static assets
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next (Next.js internals)
-     * - public folder (static assets)
-     * - favicon.ico (legacy browser support)
-     */
-    '/((?!_next/static|_next/image|.+\\..+).*)',
-    '/profile/:path*',
-    '/bookmark/:path*',
-    '/auth/:path*',
-    '/api/auth/:path*',
-    '/reading-history/:path*',
-    '/notifications/:path*',
-    '/novels/upload/:path*'
-  ],
+  matcher: MIDDLEWARE_MATCHER,
   // Specify that this middleware should run in Node.js runtime, not Edge
   runtime: 'nodejs'
 } 
