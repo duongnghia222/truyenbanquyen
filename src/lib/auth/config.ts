@@ -2,8 +2,9 @@ import NextAuth from 'next-auth';
 import type { DefaultSession, NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
-import connectDB from '@/lib/mongodb';
-import UserModel from '@/models/User';
+import connectDB from '@/lib/postgresql';
+import { UserModel } from '@/models/postgresql';
+import bcrypt from 'bcryptjs';
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -47,30 +48,31 @@ export const authOptions: NextAuthOptions = {
 
         try {
           // Find the user by username
-          const user = await UserModel.findOne({ username: credentials.username }).select('+password');
-
+          const result = await UserModel.findByUsername(credentials.username);
+          const user = result?.rows[0];
+          
           if (!user) {
             return null;
           }
-
-          // Check if the password is correct
-          const isPasswordCorrect = await user.comparePassword(credentials.password);
-
-          if (!isPasswordCorrect) {
+          
+          // Verify password
+          const isValid = await bcrypt.compare(credentials.password, user.password_hash);
+          
+          if (!isValid) {
             return null;
           }
-
-          // Return the user without the password
+          
+          // Return user without password
           return {
-            id: user._id.toString(),
-            name: user.name,
-            email: user.email,
-            image: user.image,
+            id: user.id.toString(),
             username: user.username,
-            role: user.role,
+            email: user.email,
+            name: user.display_name || user.username,
+            image: user.avatar_url,
+            role: user.role
           };
         } catch (error) {
-          console.error('Error during authentication:', error);
+          console.error('Error authenticating user:', error);
           return null;
         }
       }
@@ -87,34 +89,46 @@ export const authOptions: NextAuthOptions = {
         
         try {
           // Check if user already exists with this Google ID
-          let dbUser = await UserModel.findOne({ googleId: profile?.sub });
+          const existingUser = await UserModel.findByGoogleId(profile?.sub);
           
-          if (!dbUser) {
+          if (existingUser?.rows.length > 0) {
+            // User exists, update the user object
+            const dbUser = existingUser.rows[0];
+            user.id = dbUser.id.toString();
+            user.username = dbUser.username;
+            user.role = dbUser.role;
+          } else {
             // Check if a user with this email already exists
-            dbUser = await UserModel.findOne({ email: profile?.email });
+            const emailUser = await UserModel.findByEmail(profile?.email);
             
-            if (dbUser) {
+            if (emailUser?.rows.length > 0) {
               // Update existing user with Google ID
-              dbUser.googleId = profile?.sub;
-              await dbUser.save();
+              const dbUser = emailUser.rows[0];
+              await UserModel.updateGoogleId(dbUser.id, profile?.sub);
+              
+              user.id = dbUser.id.toString();
+              user.username = dbUser.username;
+              user.role = dbUser.role;
             } else {
               // Create a new user
-              const username = profile?.email?.split('@')[0] + '-' + Math.floor(Math.random() * 1000);
+              const username = `${profile?.email?.split('@')[0]}-${Math.floor(Math.random() * 1000)}`;
               
-              dbUser = await UserModel.create({
-                name: profile?.name,
+              const newUser = await UserModel.createUser({
+                display_name: profile?.name,
                 email: profile?.email,
-                image: profile?.image,
-                googleId: profile?.sub,
+                avatar_url: profile?.image,
+                google_id: profile?.sub,
                 username: username,
+                role: 'user',
+                password_hash: await bcrypt.hash(Math.random().toString(36).substring(2), 10),
               });
+              
+              const dbUser = newUser.rows[0];
+              user.id = dbUser.id.toString();
+              user.username = dbUser.username;
+              user.role = dbUser.role;
             }
           }
-          
-          // Update the user object to include database ID and username
-          user.id = dbUser._id.toString();
-          user.username = dbUser.username;
-          user.role = dbUser.role;
         } catch (error) {
           console.error('Error during Google sign in:', error);
           return false;

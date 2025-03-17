@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/models/User';
+import connectDB from '@/lib/postgresql';
+import { UserModel } from '@/models/postgresql';
+import bcrypt from 'bcryptjs';
 
 export async function POST(req: Request) {
   try {
@@ -34,8 +35,8 @@ export async function POST(req: Request) {
     await connectDB();
 
     // Check if user with this email already exists
-    const emailExists = await User.findOne({ email: email.toLowerCase() });
-    if (emailExists) {
+    const emailCheck = await UserModel.findByEmail(email.toLowerCase());
+    if (emailCheck?.rows.length > 0) {
       return NextResponse.json(
         { message: 'Email này đã được sử dụng' },
         { status: 409 }
@@ -43,37 +44,35 @@ export async function POST(req: Request) {
     }
 
     // Check if user with this username already exists
-    const usernameExists = await User.findOne({ username });
-    if (usernameExists) {
+    const usernameCheck = await UserModel.findByUsername(username);
+    if (usernameCheck?.rows.length > 0) {
       return NextResponse.json(
         { message: 'Tên đăng nhập này đã được sử dụng' },
         { status: 409 }
       );
     }
 
-    // Create a new user with hashed password
-    // Password hashing is handled in the User model's pre-save hook
-    const newUser = await User.create({
-      name,
+    // Hash the password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Create a new user
+    const result = await UserModel.createUser({
+      display_name: name,
       username,
       email: email.toLowerCase(),
-      password,
-      budget: {
-        coins: 0,
-        transactions: []
-      },
+      password_hash: passwordHash,
       role: 'user',
-      readingHistory: [],
-      bookmarks: [],
-      comments: [],
+      coins: 0
     });
+
+    const newUser = result.rows[0];
 
     // Return the user without sensitive information
     return NextResponse.json({
       success: true,
       user: {
-        id: newUser._id,
-        name: newUser.name,
+        id: newUser.id,
+        name: newUser.display_name,
         username: newUser.username,
         email: newUser.email,
       }

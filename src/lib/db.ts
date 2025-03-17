@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
-import connectDB from './mongodb';
+import { Pool } from 'pg';
+import connectDB from './postgresql';
 
 // Helper function to check if a request is for a static asset
 export function isStaticAsset(path: string): boolean {
@@ -15,17 +15,12 @@ export function isStaticAsset(path: string): boolean {
  * Initialize database connection
  */
 export async function initDatabase() {
-  // If already connected, return the connection
-  if (mongoose.connection.readyState === 1) {
-    return mongoose;
-  }
-
   try {
-    await connectDB();
-    console.log('✅ MongoDB connected successfully');
-    return mongoose;
+    const pool = await connectDB();
+    console.log('✅ PostgreSQL connected successfully');
+    return pool;
   } catch (error) {
-    console.error('❌ MongoDB connection error:', error);
+    console.error('❌ PostgreSQL connection error:', error);
     throw error;
   }
 }
@@ -34,16 +29,9 @@ export async function initDatabase() {
  * Ensures database connection is active
  */
 export async function ensureDatabaseConnection() {
-  const connectionState = mongoose.connection.readyState;
-  
-  // If connected, return
-  if (connectionState === 1) {
-    return true;
-  }
-  
-  // In any other state, initialize the database
   try {
-    await initDatabase();
+    // This will get the existing pool or create a new one
+    await connectDB();
     return true;
   } catch (error) {
     console.error('Failed to connect to database:', error);

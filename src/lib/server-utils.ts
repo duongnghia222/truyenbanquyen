@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import { closeConnections } from './postgresql';
 import { cleanupS3Client } from './s3';
 
 // Prevent running in non-Node.js environments
@@ -34,12 +34,10 @@ export const setupGracefulShutdown = () => {
     }, 10000); // 10 seconds timeout
     
     try {
-      // Clean up MongoDB connections
-      if (mongoose.connection.readyState === 1) {
-        console.log('Closing MongoDB connection...');
-        await mongoose.connection.close(false); // false = don't force close
-        console.log('MongoDB connection closed gracefully');
-      }
+      // Clean up PostgreSQL connections
+      console.log('Closing PostgreSQL connections...');
+      await closeConnections();
+      console.log('PostgreSQL connections closed gracefully');
       
       // Clean up S3 resources
       cleanupS3Client();
