@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CommentModel, UserModel } from '@/models/postgresql';
+import { NovelCommentModel, UserModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
@@ -22,7 +22,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   
   try {
     // Find comment by ID
-    const comment = await CommentModel.getNovelCommentById(commentId);
+    const comment = await NovelCommentModel.getNovelCommentById(commentId);
     
     if (!comment) {
       return NextResponse.json(
@@ -38,16 +38,16 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     let replies = [];
     if (!comment.parentId) {
       // Get replies to this comment
-      const repliesResult = await CommentModel.getNovelCommentReplies(commentId);
-      replies = repliesResult.comments || [];
+      const repliesResult = await NovelCommentModel.getNovelCommentReplies(commentId);
+      replies = Array.isArray(repliesResult) ? repliesResult : [];
       
       // Get user data for replies
       if (replies.length > 0) {
-        const userIds = replies.map(reply => reply.userId);
+        const userIds = replies.map((reply: any) => reply.userId);
         const users = await UserModel.findByIds(userIds);
         
         // Add user data to replies
-        replies = replies.map(reply => {
+        replies = replies.map((reply: any) => {
           const replyUser = users.find(u => u.id === reply.userId);
           return {
             ...reply,
@@ -58,12 +58,12 @@ export const GET = createApiHandler(async (request: NextRequest) => {
       }
     }
     
-    // Format response
+    // Format the response
     const formattedComment = {
       ...comment,
       username: user ? user.username : null,
       userAvatar: user ? user.image : null,
-      replies: replies
+      replies
     };
     
     return NextResponse.json(formattedComment);
@@ -83,6 +83,15 @@ export const PATCH = createApiHandler(async (request: NextRequest) => {
   const pathParts = url.pathname.split('/');
   const id = pathParts[pathParts.length - 1]; // Get the ID from the URL path
   
+  // Validate ID format
+  const commentId = parseInt(id);
+  if (isNaN(commentId)) {
+    return NextResponse.json(
+      { error: 'Invalid comment ID format' },
+      { status: 400 }
+    );
+  }
+  
   // Get the authenticated user
   const session = await getServerSession(authOptions);
   
@@ -93,18 +102,9 @@ export const PATCH = createApiHandler(async (request: NextRequest) => {
     );
   }
   
-  // Validate ID format
-  const commentId = parseInt(id);
-  if (isNaN(commentId)) {
-    return NextResponse.json(
-      { error: 'Invalid comment ID format' },
-      { status: 400 }
-    );
-  }
-  
   try {
     // Find the comment
-    const comment = await CommentModel.getNovelCommentById(commentId);
+    const comment = await NovelCommentModel.getNovelCommentById(commentId);
     
     if (!comment) {
       return NextResponse.json(
@@ -133,7 +133,7 @@ export const PATCH = createApiHandler(async (request: NextRequest) => {
     }
     
     // Update the comment
-    const updatedComment = await CommentModel.updateNovelComment(commentId, content);
+    const updatedComment = await NovelCommentModel.updateNovelComment(commentId, content);
     
     if (!updatedComment) {
       return NextResponse.json(
@@ -190,7 +190,7 @@ export const DELETE = createApiHandler(async (request: NextRequest) => {
   
   try {
     // Find the comment
-    const comment = await CommentModel.getNovelCommentById(commentId);
+    const comment = await NovelCommentModel.getNovelCommentById(commentId);
     
     if (!comment) {
       return NextResponse.json(
@@ -211,7 +211,7 @@ export const DELETE = createApiHandler(async (request: NextRequest) => {
     }
     
     // Soft delete the comment
-    const success = await CommentModel.deleteNovelComment(commentId);
+    const success = await NovelCommentModel.deleteNovelComment(commentId);
     
     if (!success) {
       return NextResponse.json(

@@ -1,25 +1,28 @@
-import UserModel, { User, UserTransaction, ReadingHistory } from './User';
-import NovelModel, { Novel } from './Novel';
-import ChapterModel, { Chapter } from './Chapter';
-import CommentModel, { 
-  NovelComment, 
-  ChapterComment, 
-  CommentLike,
-  NovelCommentModel,
-  ChapterCommentModel
-} from './Comment';
+import UserModel from './User';
+import NovelModel from './Novel';
+import ChapterModel from './Chapter';
+import NovelCommentModel from './NovelComment';
+import ChapterCommentModel from './ChapterComment';
+import CommentModel from './Comment';
+
+// Import and re-export types
+import type { User, UserTransaction, ReadingHistory } from './User';
+import type { Novel } from './Novel';
+import type { Chapter } from './Chapter';
+import type { NovelComment, CommentLike } from './NovelComment';
+import type { ChapterComment } from './ChapterComment';
 
 export {
   // Models
   UserModel,
   NovelModel,
   ChapterModel,
-  CommentModel,
   NovelCommentModel,
   ChapterCommentModel,
+  CommentModel,
 };
 
-// Use 'export type' for type exports
+// Export types
 export type {
   User,
   UserTransaction,

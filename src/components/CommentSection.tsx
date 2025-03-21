@@ -25,7 +25,7 @@ interface CommentData {
   novel: string;
   chapter?: string;
   parent?: string;
-  likes: string[];
+  likes: (string | number)[];  // Support both string and number IDs for MongoDB/PostgreSQL
   isEdited: boolean;
   isDeleted: boolean;
   createdAt: string;
@@ -66,6 +66,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
   const [editContent, setEditContent] = useState('');
   const [page, setPage] = useState(1);
   const [chapterIdFromNumber, setChapterIdFromNumber] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   // Determine if we're dealing with chapter comments
   const isChapterComment = Boolean(chapterId || chapterIdFromNumber || chapterNumber);
@@ -93,7 +94,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
     }
   }, [chapterNumber, chapterId, chapterIdFromNumber]);
 
-  // Fetch comments
+  // Fetch comments - ensure we're getting likes data for each comment
   useEffect(() => {
     const fetchComments = async () => {
       setLoading(true);
@@ -101,8 +102,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         let url;
         const effectiveChapterId = chapterId || chapterIdFromNumber;
         
-        // Extract numeric ID from MongoDB-style ID if needed
-        // MongoDB IDs are strings, PostgreSQL IDs are numbers
+        // Extract numeric ID if needed
         let effectiveNovelId = novelId;
         
         // Handle the case where the novel object has both id and _id properties
@@ -138,7 +138,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
           }
         } else {
           // Use regular comments API for novel comments
-          url = `/api/comments?novel=${effectiveNovelId}&page=${page}&parent=null`;
+          url = `/api/comments?novel=${effectiveNovelId}&page=${page}&parent=null&order=DESC`;
         }
         
         if (!url) {
@@ -152,8 +152,119 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         }
         
         const data = await response.json();
-        setComments(data.comments);
+        
+        // Ensure each comment has likes data fetched separately if not included
+        const commentsWithLikes = await Promise.all(
+          data.comments.map(async (comment: CommentData) => {
+            // If likes data is missing or undefined, fetch it
+            if (!comment.likes) {
+              try {
+                const commentId = comment.id ? `${comment.id}` : comment._id;
+                const likeUrl = isChapterComment 
+                  ? `/api/chapter-comments/${commentId}/like` 
+                  : `/api/comments/${commentId}/like`;
+                
+                const likeResponse = await fetch(likeUrl);
+                if (likeResponse.ok) {
+                  const likeData = await likeResponse.json();
+                  // Create a dummy likes array with the appropriate length
+                  return {
+                    ...comment,
+                    likes: Array.from({ length: likeData.likes }, (_, i) => i)
+                  };
+                }
+              } catch (error) {
+                console.error(`Error fetching likes for comment ${comment.id || comment._id}:`, error);
+              }
+            }
+            
+            // If we don't have likes data (or can't fetch it), ensure it's at least an empty array
+            return {
+              ...comment,
+              likes: comment.likes || []
+            };
+          })
+        );
+        
+        setComments(commentsWithLikes);
         setPagination(data.pagination);
+        
+        // Fetch replies for each top-level comment
+        const commentsWithReplies = await Promise.all(
+          commentsWithLikes.map(async (comment: CommentData) => {
+            try {
+              const commentId = comment.id ? `${comment.id}` : comment._id;
+              
+              // Skip fetching replies if already present
+              if (comment.replies && comment.replies.length > 0) {
+                return comment;
+              }
+              
+              // Determine which API to use for replies
+              const repliesUrl = isChapterComment 
+                ? `/api/chapter-comments?novel=${effectiveNovelId}&chapter=${effectiveChapterId}&parent=${commentId}` 
+                : `/api/comments?novel=${effectiveNovelId}&parent=${commentId}`;
+              
+              const repliesResponse = await fetch(repliesUrl);
+              
+              if (!repliesResponse.ok) {
+                console.warn(`Failed to fetch replies for comment ${commentId}`);
+                return comment;
+              }
+              
+              const repliesData = await repliesResponse.json();
+              
+              // Ensure replies have likes data
+              const repliesWithLikes = await Promise.all(
+                repliesData.comments.map(async (reply: CommentData) => {
+                  // If likes data is missing or undefined, fetch it
+                  if (!reply.likes) {
+                    try {
+                      const replyId = reply.id ? `${reply.id}` : reply._id;
+                      const replyLikeUrl = isChapterComment 
+                        ? `/api/chapter-comments/${replyId}/like` 
+                        : `/api/comments/${replyId}/like`;
+                      
+                      const replyLikeResponse = await fetch(replyLikeUrl);
+                      if (replyLikeResponse.ok) {
+                        const replyLikeData = await replyLikeResponse.json();
+                        // Create a dummy likes array with the appropriate length
+                        return {
+                          ...reply,
+                          likes: Array.from({ length: replyLikeData.likes }, (_, i) => i)
+                        };
+                      }
+                    } catch (error) {
+                      console.error(`Error fetching likes for reply ${reply.id || reply._id}:`, error);
+                    }
+                  }
+                  
+                  // If we don't have likes data (or can't fetch it), ensure it's at least an empty array
+                  return {
+                    ...reply,
+                    likes: reply.likes || []
+                  };
+                })
+              );
+              
+              // Add replies to the comment
+              if (repliesData.comments && repliesData.comments.length > 0) {
+                return {
+                  ...comment,
+                  replies: repliesWithLikes
+                };
+              }
+              
+              return comment;
+            } catch (error) {
+              console.error(`Error fetching replies for comment ${comment.id || comment._id}:`, error);
+              return comment;
+            }
+          })
+        );
+        
+        // Update comments with replies
+        setComments(commentsWithReplies);
       } catch (error) {
         console.error('Error fetching comments:', error);
         setError('Không thể tải bình luận. Vui lòng thử lại sau.');
@@ -163,7 +274,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
     };
     
     fetchComments();
-  }, [novelId, chapterId, chapterNumber, chapterIdFromNumber, page, isChapterComment]);
+  }, [novelId, chapterId, chapterNumber, chapterIdFromNumber, page, isChapterComment, refreshTrigger]);
 
   // Submit a new comment
   const handleSubmitComment = async (e: React.FormEvent) => {
@@ -195,8 +306,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         chapterId?: string;
       }
       
-      // Extract numeric ID from MongoDB-style ID if needed
-      // MongoDB IDs are strings, PostgreSQL IDs are numbers
+      // Extract numeric ID if needed
       let effectiveNovelId = novelId;
       
       // Handle the case where the novel object has both id and _id properties
@@ -265,6 +375,9 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
           totalPages: Math.ceil((pagination.totalItems + 1) / pagination.limit),
         });
       }
+      
+      // Trigger a refresh to ensure all data is correctly loaded
+      setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Error posting comment:', error);
       setError(error instanceof Error ? error.message : 'Không thể đăng bình luận. Vui lòng thử lại sau.');
@@ -295,15 +408,23 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       // Determine which API to use
       const apiUrl = isChapterComment ? '/api/chapter-comments' : '/api/comments';
       
+      // Check if the parentId is numeric
+      const effectiveParentId = !isNaN(parseInt(parentId)) ? parseInt(parentId) : parentId;
+      
+      console.log('Replying to comment with ID:', parentId);
+      console.log('Using effective parent ID:', effectiveParentId);
+      console.log('ID Type:', typeof effectiveParentId);
+      console.log('API URL:', apiUrl);
+      console.log('Reply content:', replyText);
+      
       interface ReplyRequestBody {
         content: string;
         novelId: string | number;
-        parentId: string;
+        parentId: string | number;
         chapterId?: string;
       }
       
-      // Extract numeric ID from MongoDB-style ID if needed
-      // MongoDB IDs are strings, PostgreSQL IDs are numbers
+      // Extract numeric ID if needed
       let effectiveNovelId = novelId;
       
       // Handle the case where the novel object has both id and _id properties
@@ -336,7 +457,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       const requestBody: ReplyRequestBody = {
         content: replyText,
         novelId: effectiveNovelId,
-        parentId,
+        parentId: effectiveParentId,
       };
       
       // Add chapter ID if this is a chapter comment
@@ -352,17 +473,48 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         body: JSON.stringify(requestBody),
       });
       
-      const responseData = await response.json();
-      
       if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to post reply');
+        let errorMessage = 'Failed to post reply';
+        try {
+          const responseData = await response.json();
+          console.error('Error response:', responseData);
+          errorMessage = responseData.error || errorMessage;
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError);
+        }
+        throw new Error(errorMessage);
       }
       
-      const newReplyData = responseData as CommentData;
+      let newReplyData: CommentData;
+      try {
+        newReplyData = await response.json() as CommentData;
+        console.log('Successfully posted reply:', newReplyData);
+        
+        // Ensure the reply has the same structure as fetched replies
+        // Normalize user data
+        if (!newReplyData.user && session.user) {
+          newReplyData = {
+            ...newReplyData,
+            user: {
+              _id: session.user.id,
+              username: session.user.name || 'User',
+              avatar: session.user.image || undefined
+            }
+          };
+        }
+        
+        // Ensure likes array exists
+        if (!newReplyData.likes) {
+          newReplyData.likes = [];
+        }
+      } catch (parseError) {
+        console.error('Error parsing successful response:', parseError);
+        throw new Error('Failed to parse reply data');
+      }
       
       // Find the parent comment and add the reply
       const updatedComments = comments.map(comment => {
-        const commentId = comment._id || `${comment.id}`;
+        const commentId = comment.id ? `${comment.id}` : comment._id;
         if (commentId === parentId) {
           return {
             ...comment,
@@ -375,6 +527,8 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       setComments(updatedComments);
       setReplyingTo(null);
       setReplyContent({});
+      // Trigger a refresh to fetch all replies from the server
+      setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Error posting reply:', error);
       setError(error instanceof Error ? error.message : 'Không thể đăng trả lời. Vui lòng thử lại sau.');
@@ -399,10 +553,19 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
     setError(null);
     
     try {
+      // Check if the commentId is numeric
+      const effectiveCommentId = !isNaN(parseInt(commentId)) ? parseInt(commentId) : commentId;
+      
       // Determine which API to use
       const apiUrl = isChapterComment 
-        ? `/api/chapter-comments/${commentId}` 
-        : `/api/comments/${commentId}`;
+        ? `/api/chapter-comments/${effectiveCommentId}` 
+        : `/api/comments/${effectiveCommentId}`;
+      
+      console.log('Editing comment with ID:', commentId);
+      console.log('Using effective comment ID:', effectiveCommentId);
+      console.log('ID Type:', typeof effectiveCommentId);
+      console.log('API URL:', apiUrl);
+      console.log('Comment content:', editContent);
       
       const response = await fetch(apiUrl, {
         method: 'PATCH',
@@ -414,25 +577,44 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         }),
       });
       
-      const responseData = await response.json();
+      console.log('Response status:', response.status);
       
       if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to edit comment');
+        let errorMessage = 'Failed to edit comment';
+        try {
+          const responseData = await response.json();
+          console.error('Error response:', responseData);
+          errorMessage = responseData.error || errorMessage;
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError);
+        }
+        throw new Error(errorMessage);
       }
       
-      const updatedComment = responseData as CommentData;
+      let updatedComment: CommentData;
+      try {
+        updatedComment = await response.json() as CommentData;
+        console.log('Successfully updated comment:', updatedComment);
+      } catch (parseError) {
+        console.error('Error parsing successful response:', parseError);
+        throw new Error('Failed to parse updated comment data');
+      }
       
       // Update the comment in the list
       const updatedComments = comments.map(comment => {
-        const currentCommentId = comment._id || `${comment.id}`;
+        const currentCommentId = comment.id ? `${comment.id}` : comment._id;
         if (currentCommentId === commentId) {
+          // Preserve existing replies when updating a comment
+          if (comment.replies && !updatedComment.replies) {
+            return { ...updatedComment, replies: comment.replies };
+          }
           return updatedComment;
         }
         
         // Check if it's a reply
         if (comment.replies) {
           const updatedReplies = comment.replies.map(reply => {
-            const replyId = reply._id || `${reply.id}`;
+            const replyId = reply.id ? `${reply.id}` : reply._id;
             return replyId === commentId ? updatedComment : reply;
           });
           return { ...comment, replies: updatedReplies };
@@ -444,6 +626,9 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       setComments(updatedComments);
       setEditingId(null);
       setEditContent('');
+      
+      // Trigger a refresh to ensure all data is correctly loaded
+      setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Error editing comment:', error);
       setError(error instanceof Error ? error.message : 'Không thể chỉnh sửa bình luận. Vui lòng thử lại sau.');
@@ -467,33 +652,51 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
     setError(null);
     
     try {
+      // Check if the commentId is numeric
+      const effectiveCommentId = !isNaN(parseInt(commentId)) ? parseInt(commentId) : commentId;
+      
+      console.log('Deleting comment with ID:', commentId);
+      console.log('Using effective comment ID:', effectiveCommentId);
+      console.log('ID Type:', typeof effectiveCommentId);
+      
       // Determine which API to use
       const apiUrl = isChapterComment 
-        ? `/api/chapter-comments/${commentId}` 
-        : `/api/comments/${commentId}`;
+        ? `/api/chapter-comments/${effectiveCommentId}` 
+        : `/api/comments/${effectiveCommentId}`;
+      
+      console.log('API URL:', apiUrl);
       
       const response = await fetch(apiUrl, {
         method: 'DELETE',
       });
       
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
-        const errorData = await response.json() as ApiErrorResponse;
-        throw new Error(errorData.error || 'Failed to delete comment');
+        let errorMessage = 'Failed to delete comment';
+        try {
+          const responseData = await response.json();
+          console.error('Error response:', responseData);
+          errorMessage = responseData.error || errorMessage;
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError);
+        }
+        throw new Error(errorMessage);
       }
       
-      // Update the comment list
+      // Mark comment as deleted in UI
       const updatedComments = comments.map(comment => {
-        const currentCommentId = comment._id || `${comment.id}`;
+        const currentCommentId = comment.id ? `${comment.id}` : comment._id;
         if (currentCommentId === commentId) {
-          return { ...comment, isDeleted: true, content: 'This comment was deleted by the user.' };
+          return { ...comment, isDeleted: true, content: '[Deleted]' };
         }
         
         // Check if it's a reply
         if (comment.replies) {
           const updatedReplies = comment.replies.map(reply => {
-            const replyId = reply._id || `${reply.id}`;
+            const replyId = reply.id ? `${reply.id}` : reply._id;
             return replyId === commentId 
-              ? { ...reply, isDeleted: true, content: 'This comment was deleted by the user.' } 
+              ? { ...reply, isDeleted: true, content: '[Deleted]' } 
               : reply;
           });
           return { ...comment, replies: updatedReplies };
@@ -503,6 +706,9 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       });
       
       setComments(updatedComments);
+      
+      // Trigger a refresh to ensure all data is correctly loaded
+      setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Error deleting comment:', error);
       setError(error instanceof Error ? error.message : 'Không thể xóa bình luận. Vui lòng thử lại sau.');
@@ -534,50 +740,60 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         throw new Error(responseData.error || 'Failed to like comment');
       }
       
-      const likeData = responseData as { likes: number; userLiked: boolean };
+      // Get the updated like data from the response
+      const { likes: likesCount, userLiked } = responseData;
+      
+      // Log for debugging
+      console.log(`Like response for comment ${commentId}:`, { likesCount, userLiked });
       
       // Update the comment in the list
       const updatedComments = comments.map(comment => {
-        const currentCommentId = comment._id || `${comment.id}`;
+        const currentCommentId = comment.id ? `${comment.id}` : comment._id;
         if (currentCommentId === commentId) {
-          // Toggle like status
           const userId = session.user?.id;
-          const userLiked = likeData.userLiked;
           
-          // Ensure comment.likes is an array
-          let updatedLikes = Array.isArray(comment.likes) ? [...comment.likes] : [];
+          // Instead of trying to modify the likes array, just set the length based on the API response
+          // and add or remove the current user's ID as needed
+          let updatedLikes: (string | number)[] = [];
+          
           if (userLiked) {
-            // Add user to likes
-            if (!updatedLikes.some(id => id.toString() === userId?.toString())) {
-              updatedLikes.push(userId as string);
-            }
+            // If user liked the comment, create an array with their ID plus placeholders for other likes
+            updatedLikes = Array(likesCount-1).fill(0); // Placeholder likes
+            updatedLikes.push(userId); // Add current user's like
           } else {
-            // Remove user from likes
-            updatedLikes = updatedLikes.filter(id => id.toString() !== userId?.toString());
+            // If user unliked, create an array of placeholders without their ID
+            updatedLikes = Array(likesCount).fill(0); // Placeholder likes
           }
           
-          return { ...comment, likes: updatedLikes };
+          return { 
+            ...comment, 
+            likes: updatedLikes,
+            _userLiked: userLiked // Add a flag to explicitly track the user's like status
+          };
         }
         
         // Check if it's a reply
         if (comment.replies) {
           const updatedReplies = comment.replies.map(reply => {
-            const replyId = reply._id || `${reply.id}`;
+            const replyId = reply.id ? `${reply.id}` : reply._id;
             if (replyId === commentId) {
               const userId = session.user?.id;
-              const userLiked = likeData.userLiked;
               
-              // Ensure reply.likes is an array
-              let updatedReplyLikes = Array.isArray(reply.likes) ? [...reply.likes] : [];
+              // Same approach for replies
+              let updatedReplyLikes: (string | number)[] = [];
+              
               if (userLiked) {
-                if (!updatedReplyLikes.some(id => id.toString() === userId?.toString())) {
-                  updatedReplyLikes.push(userId as string);
-                }
+                updatedReplyLikes = Array(likesCount-1).fill(0);
+                updatedReplyLikes.push(userId);
               } else {
-                updatedReplyLikes = updatedReplyLikes.filter(id => id.toString() !== userId?.toString());
+                updatedReplyLikes = Array(likesCount).fill(0);
               }
               
-              return { ...reply, likes: updatedReplyLikes };
+              return { 
+                ...reply, 
+                likes: updatedReplyLikes,
+                _userLiked: userLiked 
+              };
             }
             return reply;
           });
@@ -589,6 +805,9 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       });
       
       setComments(updatedComments);
+      
+      // Trigger a refresh to ensure all data is correctly loaded
+      setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Error liking comment:', error);
       setError(error instanceof Error ? error.message : 'Không thể thích bình luận. Vui lòng thử lại sau.');
@@ -597,7 +816,12 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
 
   // Start editing a comment
   const startEditing = (comment: CommentData) => {
-    setEditingId(comment._id);
+    // Prioritize PostgreSQL ID format
+    const commentId = comment.id ? `${comment.id}` : comment._id;
+    console.log('Start editing comment:', comment);
+    console.log('Comment ID used for editing:', commentId);
+    console.log('Comment ID type:', typeof commentId);
+    setEditingId(commentId);
     setEditContent(comment.content);
   };
 
@@ -632,17 +856,31 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
   };
 
   // Render a single comment
-  const renderComment = (comment: CommentData, isReply = false) => {
-    // Handle both MongoDB and PostgreSQL data structures
-    const commentId = comment._id || `${comment.id}`;
-    const userId = comment.user?._id || comment.userId;
+  const renderComment = (comment: CommentData & { _userLiked?: boolean }, isReply = false) => {
+    // Handle both MongoDB and PostgreSQL data structures, prioritizing PostgreSQL
+    const commentId = comment.id ? `${comment.id}` : comment._id;
+    const userId = comment.userId || comment.user?._id;
     const username = comment.username || comment.user?.username || 'User';
     const avatar = comment.userAvatar || comment.user?.avatar;
     
-    const isAuthor = session?.user?.id === userId;
-    const userLiked = session?.user?.id && Array.isArray(comment.likes) && comment.likes.some(id => 
-      id.toString() === session.user.id.toString()
+    // Debug editingId comparison
+    if (commentId === editingId) {
+      console.log('Rendering edit form for comment:', commentId);
+      console.log('editingId:', editingId);
+      console.log('Types:', typeof commentId, typeof editingId);
+    }
+    
+    // Ensure user ID comparison works for both string and number types
+    const isAuthor = session?.user?.id && (
+      session.user.id.toString() === (userId?.toString() || '')
     );
+    
+    // Check if current user has liked this comment - use the explicit flag if available
+    const userLiked = typeof comment._userLiked !== 'undefined' 
+      ? comment._userLiked 
+      : (Array.isArray(comment.likes) && 
+         session?.user?.id && 
+         comment.likes.some(id => id.toString() === session.user.id.toString()));
     
     return (
       <div 

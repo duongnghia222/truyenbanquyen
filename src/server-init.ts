@@ -23,11 +23,6 @@ if (nodeEnv === 'production') {
     console.warn('⚠️ WARNING: Using localhost URL in production environment for NEXT_PUBLIC_API_URL');
     console.warn('Expected production URL from .env.production, got:', apiUrl);
   }
-  
-  // Check if MONGODB_URI is set
-  if (!process.env.MONGODB_URI) {
-    console.warn('⚠️ WARNING: MONGODB_URI is not set in production environment');
-  }
 }
 
 if (typeof process !== 'undefined' && 

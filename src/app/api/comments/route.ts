@@ -10,14 +10,11 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '10');
-  const sort = searchParams.get('sort') || '-createdAt'; // Default sort by newest
+  const sort = searchParams.get('sort') || 'createdAt'; // Default sort field
+  const order = searchParams.get('order') || 'DESC'; // Default order
   const novelId = searchParams.get('novel');
   const userId = searchParams.get('user');
   const parentId = searchParams.get('parent');
-  
-  // Convert MongoDB sort format to PostgreSQL
-  const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
-  const sortOrder = sort.startsWith('-') ? 'DESC' : 'ASC';
   
   // Build query options
   const options = {
@@ -25,8 +22,8 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     userId: userId ? (isNaN(parseInt(userId)) ? undefined : parseInt(userId)) : undefined,
     parentId: parentId === 'null' ? null : parentId ? (isNaN(parseInt(parentId)) ? undefined : parseInt(parentId)) : undefined,
     isDeleted: false,
-    sortBy: sortField,
-    order: sortOrder as 'ASC' | 'DESC'
+    sortBy: sort,
+    order: order as 'ASC' | 'DESC'
   };
 
   // Execute query with pagination
@@ -110,7 +107,7 @@ export const POST = createApiHandler(async (request: NextRequest) => {
     content,
     userId: parseInt(session.user.id),
     novelId: novelIdInt,
-    parentId: parentId ? (isNaN(parseInt(parentId)) ? null : parseInt(parentId)) : null
+    parentId: parentId ? (isNaN(parseInt(parentId)) ? undefined : parseInt(parentId)) : undefined
   };
   
   // Create new comment

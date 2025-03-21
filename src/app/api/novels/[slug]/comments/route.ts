@@ -13,12 +13,9 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '10');
-  const sort = searchParams.get('sort') || '-createdAt'; // Default sort by newest
+  const sort = searchParams.get('sort') || 'createdAt'; // Default sort field
+  const order = searchParams.get('order') || 'DESC'; // Default order
   const parentId = searchParams.get('parent');
-  
-  // Convert MongoDB sort format to PostgreSQL
-  const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
-  const sortOrder = sort.startsWith('-') ? 'DESC' : 'ASC';
   
   // Find the novel by slug
   const novel = await NovelModel.findBySlug(slug);
@@ -35,8 +32,8 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     novelId: novel.id,
     parentId: parentId === 'null' ? null : parentId ? parseInt(parentId) : undefined,
     isDeleted: false,
-    sortBy: sortField,
-    order: sortOrder as 'ASC' | 'DESC'
+    sortBy: sort,
+    order: order as 'ASC' | 'DESC'
   };
   
   // Execute query with pagination

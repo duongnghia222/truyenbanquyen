@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CommentModel } from '@/models/postgresql';
+import { ChapterCommentModel } from '@/models/postgresql';
 import { UserModel } from '@/models/postgresql';
 import { NovelModel } from '@/models/postgresql';
 import { ChapterModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
-import { ChapterComment } from '@/models/postgresql';
+import type { ChapterComment } from '@/models/postgresql';
 
 // Define interfaces for comment data
 interface CommentUser {
@@ -15,7 +15,18 @@ interface CommentUser {
   image?: string;
 }
 
-interface ExtendedChapterComment extends ChapterComment {
+// Extended interface with additional fields
+interface ExtendedChapterComment {
+  id: number;
+  content: string;
+  userId: number;
+  novelId: number;
+  chapterId: number;
+  parentId?: number;
+  isEdited: boolean;
+  isDeleted: boolean;
+  createdAt: Date;
+  updatedAt: Date;
   user?: CommentUser;
   replies?: ExtendedChapterComment[];
 }
@@ -49,7 +60,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   
   try {
     // Get comments for the chapter
-    const { comments: commentsData, total } = await CommentModel.getChapterComments(
+    const { comments: commentsData, total } = await ChapterCommentModel.getChapterComments(
       Number(chapterId),
       page,
       limit
@@ -65,7 +76,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
       // Process each comment to add replies
       for (const comment of extendedComments) {
         // Get replies for this comment
-        const replies = await CommentModel.getChapterCommentReplies(comment.id);
+        const replies = await ChapterCommentModel.getChapterCommentReplies(comment.id);
         
         // Create extended replies with user property
         const extendedReplies: ExtendedChapterComment[] = replies.map(reply => ({
@@ -207,7 +218,7 @@ export const POST = createApiHandler(async (request: NextRequest) => {
     
     // If this is a reply, verify that the parent comment exists
     if (parentId) {
-      const parentComment = await CommentModel.getChapterCommentById(Number(parentId));
+      const parentComment = await ChapterCommentModel.getChapterCommentById(Number(parentId));
       
       if (!parentComment) {
         return NextResponse.json(
@@ -234,7 +245,7 @@ export const POST = createApiHandler(async (request: NextRequest) => {
     }
     
     // Create the new comment
-    const newComment = await CommentModel.createChapterComment({
+    const newComment = await ChapterCommentModel.createChapterComment({
       content,
       userId: Number(session.user.id),
       novelId: Number(novelId),

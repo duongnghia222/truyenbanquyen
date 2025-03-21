@@ -8,14 +8,11 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '10');
-  const sort = searchParams.get('sort') || '-createdAt'; // Default sort by newest
+  const sort = searchParams.get('sort') || 'createdAt'; // Default sort field
+  const order = searchParams.get('order') || 'DESC'; // Default order
   const status = searchParams.get('status');
   const genre = searchParams.get('genre');
   const search = searchParams.get('search');
-  
-  // Convert MongoDB sort format to PostgreSQL
-  const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
-  const sortOrder = sort.startsWith('-') ? 'DESC' : 'ASC';
   
   let result;
   
@@ -28,8 +25,8 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     // Build query options for findAll
     const options = {
       status: status || undefined,
-      sortBy: sortField,
-      order: sortOrder as 'ASC' | 'DESC'
+      sortBy: sort,
+      order: order as 'ASC' | 'DESC'
     };
     
     result = await NovelModel.findAll(page, limit, options.sortBy, options.order);

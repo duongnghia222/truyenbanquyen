@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CommentModel } from '@/models/postgresql';
+import { ChapterCommentModel } from '@/models/postgresql';
 import { UserModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
 import { getServerSession } from 'next-auth';
@@ -21,7 +21,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   }
   
   // Find comment
-  const comment = await CommentModel.getChapterCommentById(Number(id));
+  const comment = await ChapterCommentModel.getChapterCommentById(Number(id));
   
   if (!comment) {
     return NextResponse.json(
@@ -34,7 +34,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   const user = await UserModel.findById(comment.userId);
   
   // Get replies if any
-  const replies = await CommentModel.getChapterCommentReplies(comment.id);
+  const replies = await ChapterCommentModel.getChapterCommentReplies(comment.id);
   
   // Format the response
   const formattedComment = {
@@ -76,7 +76,7 @@ export const PATCH = createApiHandler(async (request: NextRequest) => {
   }
   
   // Find the comment
-  const comment = await CommentModel.getChapterCommentById(Number(id));
+  const comment = await ChapterCommentModel.getChapterCommentById(Number(id));
   
   if (!comment) {
     return NextResponse.json(
@@ -105,7 +105,7 @@ export const PATCH = createApiHandler(async (request: NextRequest) => {
   }
   
   // Update the comment
-  const updatedComment = await CommentModel.updateChapterComment(Number(id), content);
+  const updatedComment = await ChapterCommentModel.updateChapterComment(Number(id), content);
   
   if (!updatedComment) {
     return NextResponse.json(
@@ -156,7 +156,7 @@ export const DELETE = createApiHandler(async (request: NextRequest) => {
   }
   
   // Find the comment
-  const comment = await CommentModel.getChapterCommentById(Number(id));
+  const comment = await ChapterCommentModel.getChapterCommentById(Number(id));
   
   if (!comment) {
     return NextResponse.json(
@@ -177,7 +177,7 @@ export const DELETE = createApiHandler(async (request: NextRequest) => {
   }
   
   // Soft delete the comment
-  const deleted = await CommentModel.deleteChapterComment(Number(id));
+  const deleted = await ChapterCommentModel.deleteChapterComment(Number(id));
   
   if (!deleted) {
     return NextResponse.json(

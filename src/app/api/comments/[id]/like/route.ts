@@ -35,7 +35,18 @@ export const POST = createApiHandler(async (request: NextRequest) => {
   
   try {
     // Check if user has already liked the comment
-    const hasLiked = await CommentModel.likeNovelComment(userId, commentId);
+    const alreadyLiked = await CommentModel.hasUserLikedNovelComment(userId, commentId);
+    
+    let userLiked;
+    if (alreadyLiked) {
+      // If already liked, unlike it
+      await CommentModel.unlikeNovelComment(userId, commentId);
+      userLiked = false;
+    } else {
+      // If not liked, like it
+      await CommentModel.likeNovelComment(userId, commentId);
+      userLiked = true;
+    }
     
     // Get updated likes count
     const likes = await CommentModel.getNovelCommentLikes(commentId);
@@ -43,7 +54,7 @@ export const POST = createApiHandler(async (request: NextRequest) => {
     // Return updated like count and user's like status
     return NextResponse.json({
       likes: likes.length,
-      userLiked: hasLiked
+      userLiked
     });
   } catch (error) {
     console.error('Error toggling comment like:', error);
@@ -82,7 +93,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     
     if (session?.user?.id) {
       const userId = parseInt(session.user.id);
-      userLiked = likes.includes(userId);
+      userLiked = await CommentModel.hasUserLikedNovelComment(userId, commentId);
     }
     
     // Return like count and user's like status

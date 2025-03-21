@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CommentModel } from '@/models/postgresql';
+import { ChapterCommentModel } from '@/models/postgresql';
 import { UserModel } from '@/models/postgresql';
 import { NovelModel } from '@/models/postgresql';
 import { ChapterModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
-import { ChapterComment } from '@/models/postgresql';
+import type { ChapterComment } from '@/models/postgresql';
 
 // Define interfaces for comment data
 interface CommentUser {
@@ -13,7 +13,18 @@ interface CommentUser {
   image?: string;
 }
 
-interface ExtendedChapterComment extends ChapterComment {
+// Extended interface with additional fields
+interface ExtendedChapterComment {
+  id: number;
+  content: string;
+  userId: number;
+  novelId: number;
+  chapterId: number;
+  parentId?: number;
+  isEdited: boolean;
+  isDeleted: boolean;
+  createdAt: Date;
+  updatedAt: Date;
   user?: CommentUser;
   replies?: ExtendedChapterComment[];
 }
@@ -63,7 +74,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   
   try {
     // Get comments for the chapter
-    const { comments: commentsData, total } = await CommentModel.getChapterComments(
+    const { comments: commentsData, total } = await ChapterCommentModel.getChapterComments(
       chapter.id,
       page,
       limit
@@ -71,7 +82,9 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     
     // Create extended comments with user and replies properties
     const extendedComments: ExtendedChapterComment[] = commentsData.map(comment => ({
-      ...comment
+      ...comment,
+      user: undefined,
+      replies: []
     }));
     
     // For top-level comments, fetch their replies
@@ -79,11 +92,13 @@ export const GET = createApiHandler(async (request: NextRequest) => {
       // Process each comment to add replies
       for (const comment of extendedComments) {
         // Get replies for this comment
-        const replies = await CommentModel.getChapterCommentReplies(comment.id);
+        const replies = await ChapterCommentModel.getChapterCommentReplies(comment.id);
         
         // Create extended replies with user property
         const extendedReplies: ExtendedChapterComment[] = replies.map(reply => ({
-          ...reply
+          ...reply,
+          user: undefined,
+          replies: []
         }));
         
         // Add replies to the comment
