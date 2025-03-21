@@ -45,10 +45,6 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
   const handleLike = async (commentId: string) => {
     try {
       const result = await likeComment(commentId);
-      if (result) {
-        // Optionally refetch to ensure data consistency
-        await refetch();
-      }
       return result;
     } catch (err) {
       console.error("Error liking comment:", err);
