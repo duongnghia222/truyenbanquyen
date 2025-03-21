@@ -4,7 +4,6 @@ import { UserModel } from '@/models/postgresql';
 import { NovelModel } from '@/models/postgresql';
 import { ChapterModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
-import type { ChapterComment } from '@/models/postgresql';
 
 // Define interfaces for comment data
 interface CommentUser {

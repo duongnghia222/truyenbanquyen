@@ -1,5 +1,3 @@
-import { query } from '../../config/database';
-
 // Re-export types from NovelComment and ChapterComment models
 import type { NovelComment, CommentLike } from './NovelComment';
 import type { ChapterComment } from './ChapterComment';
@@ -115,5 +113,8 @@ class CommentModel {
   }
 }
 
-// Export a singleton instance
-export default new CommentModel(); 
+// Create a singleton instance
+const commentModel = new CommentModel();
+
+// Export the instance
+export default commentModel; 

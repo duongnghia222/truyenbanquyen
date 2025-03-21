@@ -355,5 +355,8 @@ class NovelCommentModel {
   }
 }
 
-// Export a singleton instance
-export default new NovelCommentModel(); 
+// Create a singleton instance
+const novelCommentModel = new NovelCommentModel(); 
+
+// Export the instance
+export default novelCommentModel; 

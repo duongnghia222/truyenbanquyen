@@ -26,7 +26,6 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
     deleteComment,
     likeComment,
     setError,
-    refetch
   } = useComments(novelId, chapterId, chapterNumber);
 
   // Debugging output

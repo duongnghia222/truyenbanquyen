@@ -249,4 +249,8 @@ class ChapterCommentModel {
   }
 }
 
-export default new ChapterCommentModel(); 
+// Create a singleton instance
+const chapterCommentModel = new ChapterCommentModel(); 
+
+// Export the instance
+export default chapterCommentModel; 

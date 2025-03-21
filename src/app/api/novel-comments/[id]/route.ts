@@ -3,6 +3,7 @@ import { NovelCommentModel, UserModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
+import { NovelComment } from '@/models/postgresql/NovelComment';
 
 // Get a single comment by ID
 export const GET = createApiHandler(async (request: NextRequest) => {
@@ -34,28 +35,25 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     // Get user data
     const user = await UserModel.findById(comment.userId);
     
-    // Get replies if this is a parent comment
-    let replies = [];
-    if (!comment.parentId) {
-      // Get replies to this comment
-      const repliesResult = await NovelCommentModel.getNovelCommentReplies(commentId);
-      replies = Array.isArray(repliesResult) ? repliesResult : [];
+    // Add replies if needed
+    let replies: Array<NovelComment & { username?: string | null, userAvatar?: string | null }> = [];
+    
+    // Get replies to this comment
+    const repliesResult = await NovelCommentModel.getNovelCommentReplies(commentId);
+    if (Array.isArray(repliesResult) && repliesResult.length > 0) {
+      // Get all user IDs from replies
+      const userIds = repliesResult.map(reply => reply.userId);
+      const users = await UserModel.findByIds(userIds);
       
-      // Get user data for replies
-      if (replies.length > 0) {
-        const userIds = replies.map((reply: any) => reply.userId);
-        const users = await UserModel.findByIds(userIds);
-        
-        // Add user data to replies
-        replies = replies.map((reply: any) => {
-          const replyUser = users.find(u => u.id === reply.userId);
-          return {
-            ...reply,
-            username: replyUser ? replyUser.username : null,
-            userAvatar: replyUser ? replyUser.image : null
-          };
-        });
-      }
+      // Map replies with user data
+      replies = repliesResult.map(reply => {
+        const replyUser = users.find(u => u.id === reply.userId);
+        return {
+          ...reply,
+          username: replyUser ? replyUser.username : null,
+          userAvatar: replyUser ? replyUser.image : null
+        };
+      });
     }
     
     // Format the response

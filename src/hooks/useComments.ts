@@ -48,7 +48,7 @@ export function useComments(
       const rootComments: CommentData[] = [];
       
       // First pass: Index all comments
-      data.comments.forEach((comment: any) => {
+      data.comments.forEach((comment: CommentData) => {
         // Ensure comment has required properties
         const processedComment = {
           ...comment,
@@ -60,7 +60,7 @@ export function useComments(
           isDeleted: !!comment.isDeleted,
           // Check if the current user has liked this comment
           _userLiked: currentUserId 
-            ? Array.isArray(comment.likes) && comment.likes.some((id: any) => id.toString() === currentUserId.toString())
+            ? Array.isArray(comment.likes) && comment.likes.some((id: string | number) => id.toString() === currentUserId.toString())
             : false,
           replies: []
         };

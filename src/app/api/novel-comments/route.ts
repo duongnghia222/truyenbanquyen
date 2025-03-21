@@ -38,7 +38,6 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   const users = await UserModel.findByIds(userIds);
   
   // Collect all comment ids to fetch likes in bulk
-  const commentIds = comments.map(comment => comment.id);
   
   // Format comments for response with likes
   const formattedComments = await Promise.all(comments.map(async comment => {
