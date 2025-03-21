@@ -16,12 +16,15 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   const userId = searchParams.get('user');
   const parentId = searchParams.get('parent');
   
+  // Get the current authenticated user
+  const session = await getServerSession(authOptions);
+  const currentUserId = session?.user?.id ? parseInt(session.user.id) : null;
+  
   // Build query options
   const options = {
     novelId: novelId ? (isNaN(parseInt(novelId)) ? undefined : parseInt(novelId)) : undefined,
     userId: userId ? (isNaN(parseInt(userId)) ? undefined : parseInt(userId)) : undefined,
     parentId: parentId === 'null' ? null : parentId ? (isNaN(parseInt(parentId)) ? undefined : parseInt(parentId)) : undefined,
-    isDeleted: false,
     sortBy: sort,
     order: order as 'ASC' | 'DESC'
   };
@@ -33,16 +36,31 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   // Fetch user information for all comments
   const userIds = comments.map(comment => comment.userId);
   const users = await UserModel.findByIds(userIds);
-
-  // Format comments for response
-  const formattedComments = comments.map(comment => {
+  
+  // Collect all comment ids to fetch likes in bulk
+  const commentIds = comments.map(comment => comment.id);
+  
+  // Format comments for response with likes
+  const formattedComments = await Promise.all(comments.map(async comment => {
     const user = users.find(u => u.id === comment.userId);
+    
+    // Fetch likes for this comment
+    const likes = await NovelCommentModel.getNovelCommentLikes(comment.id);
+    
+    // Check if current user has liked this comment
+    let userLiked = false;
+    if (currentUserId) {
+      userLiked = await NovelCommentModel.hasUserLikedNovelComment(currentUserId, comment.id);
+    }
+    
     return {
       ...comment,
       username: user ? user.username : null,
-      userAvatar: user ? user.image : null
+      userAvatar: user ? user.image : null,
+      likes: likes,
+      _userLiked: userLiked
     };
-  });
+  }));
 
   // Calculate pagination metadata
   const totalPages = Math.ceil(total / limit);

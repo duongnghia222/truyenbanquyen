@@ -56,7 +56,7 @@ export default async function UploadChapterPage({
               Truyện: {novel.title} - Chương hiện tại: {novel.chapterCount}
             </p>
             
-            <UploadChapterForm novelId={novel._id} novelSlug={novel.slug} />
+            <UploadChapterForm novelId={novel.id} novelSlug={novel.slug} />
           </div>
         </div>
       </div>

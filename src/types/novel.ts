@@ -1,6 +1,5 @@
 export interface Novel {
-  _id: string                                   // MongoDB ID
-  id?: string                                   // Alternative ID field
+  id: string                                    // Primary key
   title: string                                 // Novel title
   slug: string                                  // URL-friendly identifier
   author: string                                // Author name
@@ -15,7 +14,7 @@ export interface Novel {
   createdAt: string                             // Creation timestamp
   updatedAt: string                             // Last update timestamp
   lastUpdated?: string                          // Alternative update field
-  uploadedBy?: string | object | { _id: string; username?: string }  // User ID or object reference
+  uploadedBy?: string | object | { id: string; username?: string }  // User ID or object reference
   uploaderUsername?: string                     // Username of uploader
   contentUrl?: string                           // URL to content (used in some interfaces)
   
@@ -28,7 +27,7 @@ export type NovelStatus = 'ongoing' | 'completed' | 'hiatus';
 
 // Simple novel info (used in chapter context)
 export interface NovelInfo {
-  _id: string;
+  id: string;
   title: string;
   slug: string;
   chapterCount: number;
@@ -36,9 +35,9 @@ export interface NovelInfo {
 
 // Chapter interface for novel chapters
 export interface Chapter {
-  _id: string;                                  // MongoDB ID
+  id: string;                                   // Primary key
   title: string;                                // Chapter title
-  novelId?: string;                             // Reference to novel
+  novelId: string;                              // Reference to novel
   chapterNumber: number;                        // Chapter number
   content?: string;                             // Chapter content
   contentUrl?: string;                          // URL to chapter content

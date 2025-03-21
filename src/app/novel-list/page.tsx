@@ -149,7 +149,7 @@ export default async function NovelListPage() {
         {novels.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 animate-fade-in animation-delay-400">
             {formattedNovels.map((novel, index) => (
-              <div key={novel._id} className="animate-fade-in" style={{animationDelay: `${(index * 50) + 400}ms`}}>
+              <div key={novel.id} className="animate-fade-in" style={{animationDelay: `${(index * 50) + 400}ms`}}>
                 <NovelCard novel={novel} />
               </div>
             ))}

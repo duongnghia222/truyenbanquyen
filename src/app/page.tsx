@@ -202,7 +202,7 @@ export default async function HomePage() {
         {novels.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
             {novels.map((novel, index) => (
-              <div key={novel._id} className="transform hover:-translate-y-1 transition-transform duration-300 animate-fadeIn" style={{ animationDelay: `${index * 50}ms` }}>
+              <div key={novel.id} className="transform hover:-translate-y-1 transition-transform duration-300 animate-fadeIn" style={{ animationDelay: `${index * 50}ms` }}>
                 <NovelCard novel={novel as Novel} showUpdateTime={true} />
               </div>
             ))}

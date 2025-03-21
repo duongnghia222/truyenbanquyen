@@ -29,6 +29,8 @@ interface ExtendedChapterComment {
   updatedAt: Date;
   user?: CommentUser;
   replies?: ExtendedChapterComment[];
+  likes?: number[];
+  _userLiked?: boolean;
 }
 
 // Get chapter comments with pagination and filtering
@@ -71,6 +73,9 @@ export const GET = createApiHandler(async (request: NextRequest) => {
       ...comment
     }));
     
+    // Get the authenticated user
+    const session = await getServerSession(authOptions);
+    
     // For top-level comments, fetch their replies
     if (parentId === 'null' || !parentId) {
       // Process each comment to add replies
@@ -96,6 +101,19 @@ export const GET = createApiHandler(async (request: NextRequest) => {
           };
         }
         
+        // Get likes for the comment
+        const commentLikes = await ChapterCommentModel.getChapterCommentLikes(comment.id);
+        comment.likes = commentLikes;
+        
+        // Check if the current user has liked this comment
+        if (session?.user?.id) {
+          const userLiked = await ChapterCommentModel.hasUserLikedChapterComment(
+            Number(session.user.id),
+            comment.id
+          );
+          comment._userLiked = userLiked;
+        }
+        
         // Get user data for each reply
         for (const reply of extendedReplies) {
           const replyUser = await UserModel.findById(reply.userId);
@@ -105,6 +123,19 @@ export const GET = createApiHandler(async (request: NextRequest) => {
               username: replyUser.username,
               image: replyUser.image
             };
+          }
+          
+          // Get likes for the reply
+          const replyLikes = await ChapterCommentModel.getChapterCommentLikes(reply.id);
+          reply.likes = replyLikes;
+          
+          // Check if the current user has liked this reply
+          if (session?.user?.id) {
+            const userLiked = await ChapterCommentModel.hasUserLikedChapterComment(
+              Number(session.user.id),
+              reply.id
+            );
+            reply._userLiked = userLiked;
           }
         }
       }

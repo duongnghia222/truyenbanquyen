@@ -53,7 +53,7 @@ export const POST = createApiHandler(async (request: NextRequest) => {
     
     // Return updated like count and user's like status
     return NextResponse.json({
-      likes: likes.length,
+      likes: likes,
       userLiked
     });
   } catch (error) {
@@ -98,7 +98,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     
     // Return like count and user's like status
     return NextResponse.json({
-      likes: likes.length,
+      likes: likes,
       userLiked
     });
   } catch (error) {

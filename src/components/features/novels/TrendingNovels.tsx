@@ -110,7 +110,7 @@ export function TrendingNovels({ novels }: TrendingNovelsProps) {
       >
         {novels.map((novel, index) => (
           <div 
-            key={novel._id} 
+            key={novel.id} 
             className="w-[180px] flex-shrink-0 animate-fadeIn" 
             style={{ animationDelay: `${index * 50}ms` }}
           >

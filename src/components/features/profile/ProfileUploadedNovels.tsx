@@ -102,7 +102,7 @@ export function ProfileUploadedNovels({ session }: ProfileUploadedNovelsProps) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {uploadedNovels.map((novel) => (
-            <NovelCard key={novel._id} novel={novel} />
+            <NovelCard key={novel.id} novel={novel} />
           ))}
         </div>
       )}

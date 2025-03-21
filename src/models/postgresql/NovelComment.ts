@@ -307,8 +307,6 @@ class NovelCommentModel {
     if (options.isDeleted !== undefined) {
       conditions.push(`is_deleted = $${paramIndex++}`);
       params.push(options.isDeleted);
-    } else {
-      conditions.push(`is_deleted = false`);
     }
     
     const whereClause = conditions.length > 0 

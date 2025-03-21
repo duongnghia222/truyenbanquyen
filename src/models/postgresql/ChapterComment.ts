@@ -52,7 +52,7 @@ class ChapterCommentModel {
     const countResult = await query(
       `SELECT COUNT(*) as total
        FROM chapter_comments
-       WHERE chapter_id = $1 AND parent_id IS NULL AND is_deleted = false`,
+       WHERE chapter_id = $1 AND parent_id IS NULL`,
       [chapterId]
     );
     
@@ -62,7 +62,7 @@ class ChapterCommentModel {
     const commentsResult = await query(
       `SELECT *
        FROM chapter_comments
-       WHERE chapter_id = $1 AND parent_id IS NULL AND is_deleted = false
+       WHERE chapter_id = $1 AND parent_id IS NULL
        ORDER BY created_at DESC
        LIMIT $2 OFFSET $3`,
       [chapterId, limit, offset]
@@ -96,7 +96,7 @@ class ChapterCommentModel {
     const result = await query(
       `SELECT *
        FROM chapter_comments
-       WHERE parent_id = $1 AND is_deleted = false
+       WHERE parent_id = $1
        ORDER BY created_at ASC`,
       [parentId]
     );
@@ -129,7 +129,7 @@ class ChapterCommentModel {
   async deleteChapterComment(id: number): Promise<boolean> {
     const result = await query(
       `UPDATE chapter_comments
-       SET is_deleted = true, updated_at = NOW(), content = '[Deleted]'
+       SET is_deleted = true, updated_at = NOW(), content = '[Bình luận đã bị xóa]'
        WHERE id = $1
        RETURNING id`,
       [id]

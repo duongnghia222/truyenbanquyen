@@ -73,10 +73,10 @@ export default function EditNovelPage() {
         // Handle the case where uploadedBy is a number (convert to string)
         uploaderId = data.uploadedBy.toString();
       } else if (typeof data.uploadedBy === 'object') {
-        if (data.uploadedBy._id) {
-          uploaderId = typeof data.uploadedBy._id === 'string' 
-            ? data.uploadedBy._id 
-            : data.uploadedBy._id.toString();
+        if (data.uploadedBy.id) {
+          uploaderId = typeof data.uploadedBy.id === 'string' 
+            ? data.uploadedBy.id 
+            : data.uploadedBy.id.toString();
         } else if (data.uploadedBy.id) {
           uploaderId = typeof data.uploadedBy.id === 'string'
             ? data.uploadedBy.id

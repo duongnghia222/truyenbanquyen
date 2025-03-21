@@ -141,7 +141,7 @@ export default function MyNovelsPage() {
           <div className="grid grid-cols-1 gap-6">
             {novels && novels.length > 0 && novels.map((novel) => (
               <div 
-                key={novel._id} 
+                key={novel.id} 
                 className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow duration-300"
               >
                 <div className="flex flex-col md:flex-row">

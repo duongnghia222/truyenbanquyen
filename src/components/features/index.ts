@@ -17,4 +17,7 @@ export * from './profile/settings'
 export * from './auth/LoginForm'
 export * from './auth/RegisterForm'
 export * from './auth/AuthContent'
-export * from './auth/LoginCTA' 
+export * from './auth/LoginCTA'
+
+// Comments
+export * from './comments' 

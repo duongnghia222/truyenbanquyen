@@ -89,7 +89,7 @@ export default async function ChaptersPage({
               ) : (
                 <div className="divide-y divide-gray-100 dark:divide-gray-700">
                   {chapters.map((chapter) => (
-                    <div key={chapter._id} className="py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-lg px-4">
+                    <div key={chapter.id} className="py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-lg px-4">
                       <Link 
                         href={`/novels/${novel.slug}/chapters/${chapter.chapterNumber}`}
                         className="flex items-center justify-between"

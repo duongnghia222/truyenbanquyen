@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import CommentSection from '@/components/CommentSection';
+import CommentSection from '@/components/features/comments/CommentSection';
 import { Chapter, NovelInfo } from '@/types/novel';
 
 async function getChapter(slug: string, chapterNumber: string): Promise<Chapter> {
@@ -210,7 +210,7 @@ export default async function ChapterPage({
           <div id="comments" className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700 p-6 mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Bình luận</h2>
             <CommentSection 
-              novelId={novelInfo._id} 
+              novelId={novelInfo.id} 
               chapterNumber={chapter.chapterNumber} 
             />
           </div>
