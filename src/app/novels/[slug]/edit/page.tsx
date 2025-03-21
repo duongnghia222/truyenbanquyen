@@ -63,15 +63,29 @@ export default function EditNovelPage() {
       
       // Check if user is the uploader - handle potential format differences or complex object
       const userId = session?.user?.id?.toString();
-      let uploaderId;
+      let uploaderId = null;
       
-      if (typeof data.uploadedBy === 'string') {
+      if (!data.uploadedBy) {
+        console.error('Missing uploadedBy field:', data);
+      } else if (typeof data.uploadedBy === 'string') {
         uploaderId = data.uploadedBy;
-      } else if (typeof data.uploadedBy === 'object' && data.uploadedBy?._id) {
-        uploaderId = data.uploadedBy._id.toString();
+      } else if (typeof data.uploadedBy === 'number') {
+        // Handle the case where uploadedBy is a number (convert to string)
+        uploaderId = data.uploadedBy.toString();
+      } else if (typeof data.uploadedBy === 'object') {
+        if (data.uploadedBy._id) {
+          uploaderId = typeof data.uploadedBy._id === 'string' 
+            ? data.uploadedBy._id 
+            : data.uploadedBy._id.toString();
+        } else if (data.uploadedBy.id) {
+          uploaderId = typeof data.uploadedBy.id === 'string'
+            ? data.uploadedBy.id
+            : data.uploadedBy.id.toString();
+        } else {
+          console.error('Unknown format for uploadedBy object:', data.uploadedBy);
+        }
       } else {
-        console.error('Unknown format for uploadedBy:', data.uploadedBy);
-        uploaderId = null;
+        console.error('Unknown format for uploadedBy:', typeof data.uploadedBy, data.uploadedBy);
       }
       
       if (!userId || !uploaderId || userId !== uploaderId) {

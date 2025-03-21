@@ -38,10 +38,11 @@ export default function MyNovelsPage() {
       }
       
       const data = await response.json()
-      setNovels(data.user.uploadedNovels || [])
+      setNovels(data.user?.uploadedNovels || [])
     } catch (err) {
       console.error('Error fetching uploaded novels:', err)
       setError('Đã xảy ra lỗi khi tải danh sách truyện đã đăng')
+      setNovels([]) // Ensure novels is always an array even on error
     } finally {
       setIsLoading(false)
     }
@@ -138,7 +139,7 @@ export default function MyNovelsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6">
-            {novels.map((novel) => (
+            {novels && novels.length > 0 && novels.map((novel) => (
               <div 
                 key={novel._id} 
                 className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow duration-300"
