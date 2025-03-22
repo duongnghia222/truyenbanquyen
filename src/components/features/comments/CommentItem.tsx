@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useSession } from 'next-auth/react';
-import { CommentData } from './types';
+import { CommentData } from '@/types/comments';
 import { EditForm } from './EditForm';
 import { ReplyForm } from './ReplyForm';
 

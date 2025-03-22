@@ -41,4 +41,4 @@ export interface CommentSectionProps {
 
 export interface ApiErrorResponse {
   error: string;
-}
+} 

@@ -4,7 +4,7 @@ import { MessageSquare } from 'lucide-react';
 import { useComments } from '@/hooks/useComments';
 import { CommentForm } from './CommentForm';
 import { CommentItem } from './CommentItem';
-import { CommentSectionProps, CommentData } from './types';
+import { CommentSectionProps, CommentData } from '@/types/comments';
 import { useEffect } from 'react';
 
 export default function CommentSection({ novelId, chapterId, chapterNumber }: CommentSectionProps) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { CommentData, PaginationData, ApiErrorResponse } from '@/components/features/comments/types';
+import { CommentData, PaginationData, ApiErrorResponse } from '@/types/comments';
 
 export function useComments(
   novelId: string | number,
