@@ -40,6 +40,7 @@ export default function EditNovelPage() {
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [newCoverFile, setNewCoverFile] = useState<File | null>(null)
   const [isDraggingOver, setIsDraggingOver] = useState(false)
+  const [titleError, setTitleError] = useState<string | null>(null)
   
   const [formData, setFormData] = useState({
     title: '',
@@ -48,6 +49,44 @@ export default function EditNovelPage() {
     status: 'ongoing',
     genres: [] as string[],
   })
+  
+  const validateTitle = (title: string): boolean => {
+    // Reset error
+    setTitleError(null);
+    
+    // Check minimum length
+    if (title.length < 5) {
+      setTitleError('Tên truyện phải có ít nhất 5 ký tự');
+      return false;
+    }
+    
+    // Check maximum length
+    if (title.length > 120) {
+      setTitleError('Tên truyện không được vượt quá 120 ký tự');
+      return false;
+    }
+    
+    // Check if title starts with a number
+    if (/^\d/.test(title)) {
+      setTitleError('Tên truyện không được bắt đầu bằng số');
+      return false;
+    }
+    
+    // Check if title contains only numbers
+    if (/^\d+$/.test(title)) {
+      setTitleError('Tên truyện không được chỉ chứa số');
+      return false;
+    }
+    
+    // Check for special characters that might not be suitable
+    const specialCharsRegex = /[^\p{L}\p{N}\p{P}\p{Z}]/u;
+    if (specialCharsRegex.test(title)) {
+      setTitleError('Tên truyện chỉ được chứa chữ cái, số, dấu câu và khoảng trắng');
+      return false;
+    }
+    
+    return true;
+  };
   
   const fetchNovel = useCallback(async () => {
     try {
@@ -127,7 +166,18 @@ export default function EditNovelPage() {
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    
+    if (name === 'title') {
+      setFormData(prev => ({ ...prev, [name]: value }))
+      
+      if (value.length > 0) {
+        validateTitle(value)
+      } else {
+        setTitleError(null)
+      }
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }))
+    }
     
     // Clear any error when user starts editing
     if (error) setError(null)
@@ -202,6 +252,11 @@ export default function EditNovelPage() {
   
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    
+    // Validate title before submission
+    if (!validateTitle(formData.title)) {
+      return;
+    }
     
     if (formData.genres.length === 0) {
       setError('Vui lòng chọn ít nhất một thể loại')
@@ -489,9 +544,20 @@ export default function EditNovelPage() {
                     value={formData.title}
                     onChange={handleInputChange}
                     required
-                    className="block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-base px-4 py-3 transition-colors duration-200"
+                    maxLength={120}
+                    className={`block w-full rounded-lg ${
+                      titleError ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                    } shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-base px-4 py-3 transition-colors duration-200`}
                     placeholder="Nhập tên truyện"
                   />
+                  {titleError && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {titleError}
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Tên truyện phải có từ 5-120 ký tự, không bắt đầu bằng số và không chỉ chứa số
+                  </p>
                 </div>
                 
                 <div className="mb-6">

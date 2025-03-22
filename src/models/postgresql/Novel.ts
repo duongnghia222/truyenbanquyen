@@ -27,7 +27,20 @@ class NovelModel {
   async create(novelData: Omit<Novel, 'id' | 'slug' | 'rating' | 'views' | 'chapterCount' | 'createdAt' | 'updatedAt'>): Promise<Novel> {
     return transaction<Novel>(async (client) => {
       // Generate slug from title
-      const slug = this.generateSlug(novelData.title);
+      let slug = this.generateSlug(novelData.title);
+      
+      // Check if slug already exists, and make it unique if it does
+      const slugCheckResult = await client.query(
+        'SELECT COUNT(*) FROM novels WHERE slug = $1',
+        [slug]
+      );
+      
+      if (parseInt(slugCheckResult.rows[0].count) > 0) {
+        // Append timestamp and random characters to make slug unique
+        const timestamp = Date.now();
+        const randomString = Math.random().toString(36).substring(2, 5);
+        slug = `${slug}-${timestamp}-${randomString}`;
+      }
 
       // Insert novel
       const novelResult = await client.query(
@@ -167,8 +180,22 @@ class NovelModel {
         updateFields.push(`title = $${paramIndex++}`);
         queryParams.push(novelData.title);
         
-        // Update slug if title changes
-        const slug = this.generateSlug(novelData.title);
+        // Generate new slug if title changes
+        let slug = this.generateSlug(novelData.title);
+        
+        // Check if slug already exists for another novel
+        const slugCheckResult = await client.query(
+          'SELECT COUNT(*) FROM novels WHERE slug = $1 AND id != $2',
+          [slug, id]
+        );
+        
+        if (parseInt(slugCheckResult.rows[0].count) > 0) {
+          // Append timestamp and random characters to make slug unique
+          const timestamp = Date.now();
+          const randomString = Math.random().toString(36).substring(2, 5);
+          slug = `${slug}-${timestamp}-${randomString}`;
+        }
+        
         updateFields.push(`slug = $${paramIndex++}`);
         queryParams.push(slug);
       }
@@ -492,12 +519,20 @@ class NovelModel {
     // First transliterate Vietnamese characters to Latin equivalents
     const transliterated = transliterateVietnamese(title);
     
-    return transliterated
+    let slug = transliterated
       .toLowerCase()
       .replace(/[^\w\s-]/g, '') // Remove special characters
       .replace(/\s+/g, '-') // Replace spaces with hyphens
       .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
       .trim();
+    
+    // If slug is very short or just a number, append random string to ensure uniqueness
+    if (slug.length < 3 || /^\d+$/.test(slug)) {
+      const randomString = Math.random().toString(36).substring(2, 8);
+      slug = `${slug}-${randomString}`;
+    }
+    
+    return slug;
   }
 
   /**

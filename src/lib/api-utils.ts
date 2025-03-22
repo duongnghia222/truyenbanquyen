@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { isStaticAsset } from './edge-utils';
 
 // Import database functions dynamically to avoid Edge Runtime errors
@@ -22,7 +22,7 @@ if (typeof window === 'undefined') {
  * This is Edge-compatible and avoids Node.js specific APIs.
  */
 export async function withDatabase<T>(
-  req: NextRequest,
+  req: Request,
   handler: () => Promise<T>
 ): Promise<T> {
   // Skip database connection for static assets
@@ -64,11 +64,11 @@ export async function withDatabase<T>(
  * that is Edge-compatible.
  */
 export function createApiHandler(
-  handler: (req: NextRequest) => Promise<NextResponse>
+  handler: (req: Request, context?: any) => Promise<NextResponse>
 ) {
-  return async function(req: NextRequest): Promise<NextResponse> {
+  return async function(req: Request, context?: any): Promise<NextResponse> {
     try {
-      return await withDatabase(req, () => handler(req));
+      return await withDatabase(req, () => handler(req, context));
     } catch (error) {
       console.error('API error:', error);
       return NextResponse.json(

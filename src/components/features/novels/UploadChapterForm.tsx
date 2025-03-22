@@ -22,6 +22,56 @@ export default function UploadChapterForm({ novelSlug }: UploadChapterFormProps)
   const [fileName, setFileName] = useState<string>('');
   const [fileContent, setFileContent] = useState<string>('');
   const [previewVisible, setPreviewVisible] = useState(false);
+  const [titleError, setTitleError] = useState<string | null>(null);
+
+  const validateTitle = (title: string): boolean => {
+    // Reset error
+    setTitleError(null);
+    
+    // Check minimum length
+    if (title.length < 3) {
+      setTitleError('Tiêu đề chương phải có ít nhất 3 ký tự');
+      return false;
+    }
+    
+    // Check maximum length
+    if (title.length > 100) {
+      setTitleError('Tiêu đề chương không được vượt quá 100 ký tự');
+      return false;
+    }
+    
+    // Check if title starts with a number
+    if (/^\d/.test(title)) {
+      setTitleError('Tiêu đề chương không được bắt đầu bằng số');
+      return false;
+    }
+    
+    // Check if title contains only numbers
+    if (/^\d+$/.test(title)) {
+      setTitleError('Tiêu đề chương không được chỉ chứa số');
+      return false;
+    }
+    
+    // Check for special characters that might not be suitable
+    const specialCharsRegex = /[^\p{L}\p{N}\p{P}\p{Z}]/u;
+    if (specialCharsRegex.test(title)) {
+      setTitleError('Tiêu đề chỉ được chứa chữ cái, số, dấu câu và khoảng trắng');
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleTitleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const newTitle = e.target.value;
+    setFormData({ ...formData, title: newTitle });
+    // Validate while typing but don't show errors immediately for better UX
+    if (newTitle.length > 0) {
+      validateTitle(newTitle);
+    } else {
+      setTitleError(null);
+    }
+  };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,6 +110,12 @@ export default function UploadChapterForm({ novelSlug }: UploadChapterFormProps)
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    
+    // Validate title before submission
+    if (!validateTitle(formData.title)) {
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
@@ -186,17 +242,28 @@ export default function UploadChapterForm({ novelSlug }: UploadChapterFormProps)
               type="text"
               id="title"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="block w-full rounded-lg border border-gray-200 dark:border-gray-700 
+              onChange={handleTitleChange}
+              className={`block w-full rounded-lg border ${titleError ? 'border-red-300 dark:border-red-500' : 'border-gray-200 dark:border-gray-700'} 
                 !bg-white !dark:bg-gray-900 !text-gray-900 !dark:text-white
                 px-4 py-3 shadow-sm
                 focus:border-blue-500 dark:focus:border-blue-400 
                 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20
-                placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                placeholder:text-gray-400 dark:placeholder:text-gray-500`}
               required
+              maxLength={100}
+              placeholder="Nhập tiêu đề chương"
             />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-300">
-              Nhập tiêu đề của chương, ví dụ: &ldquo;Khởi Đầu&rdquo;, &ldquo;Gặp Gỡ&rdquo;,...
+            {titleError ? (
+              <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+                {titleError}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-300">
+                Nhập tiêu đề của chương (3-100 ký tự), không bắt đầu bằng số và không chỉ chứa số
+              </p>
+            )}
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Còn lại: {100 - formData.title.length} ký tự
             </p>
           </div>
         </div>

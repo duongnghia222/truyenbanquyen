@@ -15,6 +15,7 @@ export default function UploadNovelForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [titleError, setTitleError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -26,12 +27,64 @@ export default function UploadNovelForm() {
 
   const [coverImage, setCoverImage] = useState<File | null>(null);
 
+  const validateTitle = (title: string): boolean => {
+    // Reset error
+    setTitleError(null);
+    
+    // Check minimum length
+    if (title.length < 5) {
+      setTitleError('Tên truyện phải có ít nhất 5 ký tự');
+      return false;
+    }
+    
+    // Check maximum length
+    if (title.length > 120) {
+      setTitleError('Tên truyện không được vượt quá 120 ký tự');
+      return false;
+    }
+    
+    // Check if title starts with a number
+    if (/^\d/.test(title)) {
+      setTitleError('Tên truyện không được bắt đầu bằng số');
+      return false;
+    }
+    
+    // Check if title contains only numbers
+    if (/^\d+$/.test(title)) {
+      setTitleError('Tên truyện không được chỉ chứa số');
+      return false;
+    }
+    
+    // Check for special characters that might not be suitable
+    const specialCharsRegex = /[^\p{L}\p{N}\p{P}\p{Z}]/u;
+    if (specialCharsRegex.test(title)) {
+      setTitleError('Tên truyện chỉ được chứa chữ cái, số, dấu câu và khoảng trắng');
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === 'title') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+      
+      if (value.length > 0) {
+        validateTitle(value);
+      } else {
+        setTitleError(null);
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleGenreToggle = (genre: string) => {
@@ -73,6 +126,12 @@ export default function UploadNovelForm() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    
+    // Validate title before submission
+    if (!validateTitle(formData.title)) {
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
@@ -179,13 +238,28 @@ export default function UploadNovelForm() {
               placeholder="VD: Võ Luyện Đỉnh Phong"
               value={formData.title}
               onChange={handleInputChange}
-              className="mt-2 block w-full rounded-lg border border-gray-200 dark:border-gray-700 
+              maxLength={120}
+              className={`mt-2 block w-full rounded-lg border ${
+                titleError ? 'border-red-300 dark:border-red-500' : 'border-gray-200 dark:border-gray-700'
+              } 
                 !bg-white !dark:bg-gray-900 !text-gray-900 !dark:text-white
                 px-4 py-3 shadow-sm
                 focus:border-blue-500 dark:focus:border-blue-400 
                 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20
-                placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                placeholder:text-gray-400 dark:placeholder:text-gray-500`}
             />
+            {titleError ? (
+              <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+                {titleError}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-300">
+                Tên truyện phải có từ 5-120 ký tự, không bắt đầu bằng số và không chỉ chứa số
+              </p>
+            )}
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Còn lại: {120 - formData.title.length} ký tự
+            </p>
           </div>
 
           {/* Author Input */}
