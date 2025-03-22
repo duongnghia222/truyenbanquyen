@@ -64,9 +64,9 @@ export async function withDatabase<T>(
  * that is Edge-compatible.
  */
 export function createApiHandler(
-  handler: (req: Request, context?: any) => Promise<NextResponse>
+  handler: (req: Request, context?: unknown) => Promise<NextResponse>
 ) {
-  return async function(req: Request, context?: any): Promise<NextResponse> {
+  return async function(req: Request, context?: unknown): Promise<NextResponse> {
     try {
       return await withDatabase(req, () => handler(req, context));
     } catch (error) {
