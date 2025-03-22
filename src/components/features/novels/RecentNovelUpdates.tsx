@@ -43,7 +43,7 @@ export function RecentNovelUpdates({ updates }: RecentNovelUpdatesProps) {
                   )}
                   <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mt-2">
                     <span>⭐ {novel.rating.toFixed(1)}</span>
-                    <span>👁 {formatNumber(novel.viewCount)}</span>
+                    <span>👁 {formatNumber(novel.viewCount || 0)}</span>
                   </div>
                   {novel.lastUpdated && (
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
