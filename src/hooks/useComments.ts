@@ -28,7 +28,7 @@ export function useComments(
       // Set up the API endpoint based on whether we're fetching chapter or novel comments
       const endpoint = isChapterComment
         ? `/api/chapter-comments?novel=${novelId}&chapter=${chapterId}&page=${page}&limit=10`
-        : `/api/novel-comments?novel=${novelId}&page=${page}&limit=10`;
+        : `/api/novel-comments?novel=${novelId}&page=${page}&limit=10&includeChapterComments=true`;
       
       const response = await fetch(endpoint);
       
@@ -58,6 +58,10 @@ export function useComments(
           likes: Array.isArray(comment.likes) ? comment.likes : [],
           // Make sure isDeleted is correctly set
           isDeleted: !!comment.isDeleted,
+          // Make sure chapter data is preserved
+          chapterNumber: comment.chapterNumber || chapterNumber,
+          // Preserve isChapterComment flag
+          isChapterComment: !!comment.isChapterComment,
           // Check if the current user has liked this comment
           _userLiked: currentUserId 
             ? Array.isArray(comment.likes) && comment.likes.some((id: string | number) => id.toString() === currentUserId.toString())

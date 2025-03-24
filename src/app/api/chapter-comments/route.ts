@@ -30,6 +30,7 @@ interface ExtendedChapterComment {
   replies?: ExtendedChapterComment[];
   likes?: number[];
   _userLiked?: boolean;
+  chapterNumber?: number;
 }
 
 // Get chapter comments with pagination and filtering
@@ -67,9 +68,14 @@ export const GET = createApiHandler(async (request: NextRequest) => {
       limit
     );
     
+    // Get the chapter information to include chapter number
+    const chapter = await ChapterModel.findById(Number(chapterId));
+    const chapterNumber = chapter ? chapter.chapterNumber : undefined;
+    
     // Create extended comments with user and replies properties
     const extendedComments: ExtendedChapterComment[] = commentsData.map(comment => ({
-      ...comment
+      ...comment,
+      chapterNumber: chapterNumber
     }));
     
     // Get the authenticated user
@@ -84,7 +90,8 @@ export const GET = createApiHandler(async (request: NextRequest) => {
         
         // Create extended replies with user property
         const extendedReplies: ExtendedChapterComment[] = replies.map(reply => ({
-          ...reply
+          ...reply,
+          chapterNumber: chapterNumber
         }));
         
         // Add replies to the comment
@@ -280,6 +287,7 @@ export const POST = createApiHandler(async (request: NextRequest) => {
       userId: Number(session.user.id),
       novelId: Number(novelId),
       chapterId: Number(chapterId),
+      chapterNumber: chapter.chapterNumber,
       parentId: parentId ? Number(parentId) : undefined
     });
     

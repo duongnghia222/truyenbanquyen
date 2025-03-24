@@ -28,6 +28,9 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
     setError,
   } = useComments(novelId, chapterId, chapterNumber);
 
+  // Determine if we're showing novel comments or chapter comments
+  const isChapterComment = !!chapterId;
+
   // Debugging output
   useEffect(() => {
     if (comments.length > 0) {
@@ -105,7 +108,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         <div className="flex items-center mb-6">
           <MessageSquare className="text-blue-600 dark:text-blue-400 mr-2" />
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {pagination?.totalItems || 0} Bình luận
+            {pagination?.totalItems || 0} Bình luận {isChapterComment ? 'trong chương' : 'về truyện'}
           </h3>
         </div>
 
@@ -123,6 +126,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onReply={handleReply}
+                showChapter={!isChapterComment} // Only show chapter info in novel comment section
               />
             ))}
             

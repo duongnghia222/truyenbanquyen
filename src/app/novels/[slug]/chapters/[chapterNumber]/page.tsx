@@ -216,6 +216,7 @@ export default async function ChapterPage({
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Bình luận</h2>
               <CommentSection 
                 novelId={novelInfo.id} 
+                chapterId={chapter.id.toString()}
                 chapterNumber={chapter.chapterNumber} 
               />
             </div>

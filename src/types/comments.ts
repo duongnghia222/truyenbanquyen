@@ -13,6 +13,7 @@ export interface CommentData {
   userAvatar?: string;
   novel: string;
   chapter?: string;
+  chapterNumber?: number;  // Add chapterNumber field
   parent?: string;
   parentId?: number;  // PostgreSQL parent_id field from the database
   likes: (string | number)[];  // Support both string and number IDs for MongoDB/PostgreSQL
@@ -22,6 +23,7 @@ export interface CommentData {
   updatedAt: string;
   replies?: CommentData[];
   _userLiked?: boolean; // Additional flag to track user's like status
+  isChapterComment?: boolean; // Flag to identify if this is a chapter comment
 }
 
 export interface PaginationData {

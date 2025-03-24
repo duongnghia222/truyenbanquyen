@@ -7,6 +7,7 @@ export interface ChapterComment {
   userId: number;
   novelId: number;
   chapterId: number;
+  chapterNumber: number;
   parentId?: number;
   isEdited: boolean;
   isDeleted: boolean;
@@ -27,14 +28,15 @@ class ChapterCommentModel {
    */
   async createChapterComment(commentData: Omit<ChapterComment, 'id' | 'isEdited' | 'isDeleted' | 'createdAt' | 'updatedAt'>): Promise<ChapterComment> {
     const result = await query(
-      `INSERT INTO chapter_comments (content, user_id, novel_id, chapter_id, parent_id)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO chapter_comments (content, user_id, novel_id, chapter_id, chapter_number, parent_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
       [
         commentData.content,
         commentData.userId,
         commentData.novelId,
         commentData.chapterId,
+        commentData.chapterNumber,
         commentData.parentId || null
       ]
     );
@@ -181,11 +183,11 @@ class ChapterCommentModel {
       [commentId]
     );
     
-    return result.rows.map(row => row.user_id);
+    return result.rows.map(row => Number(row.user_id));
   }
 
   /**
-   * Check if user has liked a chapter comment
+   * Check if a user has liked a chapter comment
    */
   async hasUserLikedChapterComment(userId: number, commentId: number): Promise<boolean> {
     const result = await query(
@@ -240,6 +242,7 @@ class ChapterCommentModel {
       userId: Number(row.user_id),
       novelId: Number(row.novel_id),
       chapterId: Number(row.chapter_id),
+      chapterNumber: Number(row.chapter_number),
       parentId: row.parent_id ? Number(row.parent_id) : undefined,
       isEdited: Boolean(row.is_edited),
       isDeleted: Boolean(row.is_deleted),

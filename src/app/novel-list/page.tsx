@@ -29,7 +29,7 @@ export default async function NovelListPage() {
   const formattedNovels: NovelType[] = novels.map(novel => {
     // Convert PostgreSQL model to NovelType
     return {
-      _id: novel.id.toString(),
+      id: novel.id.toString(),
       title: novel.title,
       slug: novel.slug,
       author: novel.author,

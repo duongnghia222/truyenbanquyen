@@ -11,12 +11,16 @@ import { EditForm } from './EditForm';
 import { ReplyForm } from './ReplyForm';
 
 interface CommentItemProps {
-  comment: CommentData & { _userLiked?: boolean };
+  comment: CommentData & { 
+    _userLiked?: boolean;
+    isChapterComment?: boolean;
+  };
   isReply?: boolean;
   onLike: (commentId: string) => Promise<boolean>;
   onEdit: (commentId: string, content: string) => Promise<boolean>;
   onDelete: (commentId: string) => Promise<boolean>;
   onReply: (parentId: string, content: string) => Promise<boolean>;
+  showChapter?: boolean;
 }
 
 export function CommentItem({
@@ -25,7 +29,8 @@ export function CommentItem({
   onLike,
   onEdit,
   onDelete,
-  onReply
+  onReply,
+  showChapter = false
 }: CommentItemProps) {
   const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false);
@@ -96,6 +101,7 @@ export function CommentItem({
             onEdit={onEdit}
             onDelete={onDelete}
             onReply={onReply}
+            showChapter={showChapter}
           />
         ))}
       </div>
@@ -136,6 +142,11 @@ export function CommentItem({
             <span className="font-medium text-gray-900 dark:text-white">
               {username}
             </span>
+            {(showChapter || comment.isChapterComment) && comment.chapterNumber && (
+              <span className="ml-2 text-xs font-medium text-gray-600 dark:text-gray-400">
+                &gt; Chương {comment.chapterNumber}
+              </span>
+            )}
             <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
               {formatDate(comment.createdAt)}
               {comment.isEdited && !comment.isDeleted && ' (đã chỉnh sửa)'}
@@ -154,7 +165,7 @@ export function CommentItem({
               {comment.isDeleted ? (
                 <p className="italic text-gray-500 dark:text-gray-400">[Bình luận đã bị xóa]</p>
               ) : (
-                <p>{comment.content}</p>
+                <p>{(showChapter || comment.isChapterComment) && comment.chapterNumber ? ': ' : ''}{comment.content}</p>
               )}
             </div>
           )}

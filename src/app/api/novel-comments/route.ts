@@ -1,8 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { NovelCommentModel, UserModel, NovelModel } from '@/models/postgresql';
+import { NovelCommentModel, UserModel, NovelModel, ChapterCommentModel, ChapterModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
+
+// Define extended interfaces to handle combined comment types
+interface ExtendedNovelComment {
+  id: number;
+  content: string;
+  userId: number;
+  novelId: number;
+  parentId?: number;
+  isEdited: boolean;
+  isDeleted: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  chapterNumber?: number;
+  chapterId?: number;
+  isChapterComment?: boolean;
+}
 
 // Get comments with pagination and filtering
 export const GET = createApiHandler(async (request: NextRequest) => {
@@ -15,6 +31,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   const novelId = searchParams.get('novel');
   const userId = searchParams.get('user');
   const parentId = searchParams.get('parent');
+  const includeChapterComments = searchParams.get('includeChapterComments') === 'true';
   
   // Get the current authenticated user
   const session = await getServerSession(authOptions);
@@ -29,27 +46,83 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     order: order as 'ASC' | 'DESC'
   };
 
-  // Execute query with pagination
+  // Execute query with pagination for novel comments
   const result = await NovelCommentModel.findAll(page, limit, options);
-  const { comments, total } = result;
+  let { comments, total } = result;
+
+  // Initialize arrays to hold all comments and user IDs
+  let allComments: ExtendedNovelComment[] = [...comments];
+  let allUserIds = comments.map(comment => comment.userId);
+  let totalItems = total;
+
+  // If we need to include chapter comments
+  if (includeChapterComments && options.novelId) {
+    // Get all chapters for this novel
+    const chapters = await ChapterModel.findByNovelId(options.novelId);
+    
+    // If there are chapters, get comments for each chapter
+    if (chapters && chapters.length > 0) {
+      // For simplicity in this implementation, we'll just get the first page of comments from each chapter
+      // A more complete solution would need pagination across all comments
+      for (const chapter of chapters) {
+        const chapterCommentsResult = await ChapterCommentModel.getChapterComments(chapter.id, 1, 10);
+        const chapterComments = chapterCommentsResult.comments;
+        
+        // Add chapter number to each comment
+        const enhancedChapterComments = chapterComments.map(comment => ({
+          ...comment,
+          chapterNumber: chapter.chapterNumber,
+          chapterId: chapter.id, 
+          // Add a flag to identify this as a chapter comment
+          isChapterComment: true
+        })) as ExtendedNovelComment[];
+        
+        // Add to our arrays
+        allComments = [...allComments, ...enhancedChapterComments];
+        allUserIds = [...allUserIds, ...enhancedChapterComments.map(comment => comment.userId)];
+        totalItems += chapterCommentsResult.total;
+      }
+
+      // Sort all comments by creation date
+      allComments.sort((a, b) => {
+        if (options.order === 'DESC') {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        } else {
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        }
+      });
+
+      // Apply pagination to the combined results
+      const startIndex = (page - 1) * limit;
+      allComments = allComments.slice(startIndex, startIndex + limit);
+    }
+  }
 
   // Fetch user information for all comments
-  const userIds = comments.map(comment => comment.userId);
-  const users = await UserModel.findByIds(userIds);
+  const users = await UserModel.findByIds(allUserIds);
   
   // Collect all comment ids to fetch likes in bulk
   
   // Format comments for response with likes
-  const formattedComments = await Promise.all(comments.map(async comment => {
+  const formattedComments = await Promise.all(allComments.map(async comment => {
     const user = users.find(u => u.id === comment.userId);
     
-    // Fetch likes for this comment
-    const likes = await NovelCommentModel.getNovelCommentLikes(comment.id);
-    
-    // Check if current user has liked this comment
+    // Fetch likes based on comment type
+    let likes = [];
     let userLiked = false;
-    if (currentUserId) {
-      userLiked = await NovelCommentModel.hasUserLikedNovelComment(currentUserId, comment.id);
+
+    if (comment.isChapterComment) {
+      // This is a chapter comment
+      likes = await ChapterCommentModel.getChapterCommentLikes(comment.id);
+      if (currentUserId) {
+        userLiked = await ChapterCommentModel.hasUserLikedChapterComment(currentUserId, comment.id);
+      }
+    } else {
+      // This is a novel comment
+      likes = await NovelCommentModel.getNovelCommentLikes(comment.id);
+      if (currentUserId) {
+        userLiked = await NovelCommentModel.hasUserLikedNovelComment(currentUserId, comment.id);
+      }
     }
     
     return {
@@ -62,7 +135,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   }));
 
   // Calculate pagination metadata
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.ceil(totalItems / limit);
   const hasNextPage = page < totalPages;
   const hasPrevPage = page > 1;
 
@@ -71,7 +144,7 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     pagination: {
       currentPage: page,
       totalPages,
-      totalItems: total,
+      totalItems: totalItems,
       hasNextPage,
       hasPrevPage,
       limit
