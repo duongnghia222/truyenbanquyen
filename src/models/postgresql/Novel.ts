@@ -353,6 +353,20 @@ class NovelModel {
   }
 
   /**
+   * Update novel view count to be the sum of all its chapter views
+   */
+  async updateViewCount(id: number): Promise<void> {
+    await query(
+      `UPDATE novels 
+       SET views = (
+         SELECT COALESCE(SUM(views), 0) FROM chapters WHERE novel_id = $1
+       )
+       WHERE id = $1`,
+      [id]
+    );
+  }
+
+  /**
    * Update chapter count
    */
   async updateChapterCount(id: number): Promise<void> {

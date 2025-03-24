@@ -282,7 +282,7 @@ class ChapterModel {
       [id]
     );
     
-    // Also increment novel views
+    // Update novel views to be the sum of all chapter views
     const chapterResult = await query(
       'SELECT novel_id FROM chapters WHERE id = $1',
       [id]
@@ -290,7 +290,7 @@ class ChapterModel {
     
     if (chapterResult.rows.length > 0) {
       const novelId = chapterResult.rows[0].novel_id;
-      await NovelModel.incrementViews(novelId);
+      await NovelModel.updateViewCount(novelId);
     }
   }
 
