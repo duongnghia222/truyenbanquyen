@@ -17,7 +17,6 @@ const CSV_DIR = path.resolve(__dirname, '../../mongodb-csv-export');
 const USER_CSV = path.join(CSV_DIR, 'users.csv');
 const NOVEL_CSV = path.join(CSV_DIR, 'novels.csv');
 const CHAPTER_CSV = path.join(CSV_DIR, 'chapters.csv');
-const COMMENT_CSV = path.join(CSV_DIR, 'comments.csv');
 const CHAPTER_COMMENT_CSV = path.join(CSV_DIR, 'chaptercomments.csv');
 
 // MongoDB ObjectId to PostgreSQL ID mapping
@@ -25,13 +24,11 @@ const idMap: {
   users: Record<string, number>;
   novels: Record<string, number>;
   chapters: Record<string, number>;
-  novelComments: Record<string, number>;
   chapterComments: Record<string, number>;
 } = {
   users: {},
   novels: {},
   chapters: {},
-  novelComments: {},
   chapterComments: {},
 };
 
@@ -63,7 +60,7 @@ function extractMongoId(objectId: string): string {
 // Helper function to parse JSON arrays stored as strings
 function parseStringArray(arrayString: string): string[] {
   try {
-    return JSON.parse(arrayString);
+    return JSON.parse(arrayString as string);
   } catch {
     return [];
   }
@@ -81,8 +78,14 @@ async function seed() {
     const users = await parseCSV<Record<string, unknown>>(USER_CSV);
     
     for (const user of users) {
-      const mongoId = extractMongoId(user._id);
-      const { name, username, email, googleId, role, createdAt, updatedAt } = user;
+      const mongoId = extractMongoId(user._id as string);
+      const name = user.name as string;
+      const username = user.username as string;
+      const email = user.email as string;
+      const googleId = user.googleId as string | null;
+      const role = user.role as string;
+      const createdAt = user.createdAt as string;
+      const updatedAt = user.updatedAt as string;
       
       const result = await client.query(
         `INSERT INTO users(name, username, email, google_id, role, created_at, updated_at)
@@ -101,7 +104,7 @@ async function seed() {
     // Create a set of unique genres
     const uniqueGenres = new Set<string>();
     novels.forEach(novel => {
-      const genres = parseStringArray(novel.genres);
+      const genres = parseStringArray(novel.genres as string);
       genres.forEach(genre => uniqueGenres.add(genre));
     });
     
@@ -117,12 +120,19 @@ async function seed() {
     
     // Insert novels
     for (const novel of novels) {
-      const mongoId = extractMongoId(novel._id);
-      const { 
-        title, slug, author, description, coverImage, status, 
-        rating, views, chapterCount, createdAt, updatedAt 
-      } = novel;
-      const uploadedBy = idMap.users[extractMongoId(novel.uploadedBy)];
+      const mongoId = extractMongoId(novel._id as string);
+      const title = novel.title as string;
+      const slug = novel.slug as string;
+      const author = novel.author as string;
+      const description = novel.description as string;
+      const coverImage = novel.coverImage as string;
+      const status = novel.status as string;
+      const rating = novel.rating as string;
+      const views = novel.views as string;
+      const chapterCount = novel.chapterCount as string;
+      const createdAt = novel.createdAt as string;
+      const updatedAt = novel.updatedAt as string;
+      const uploadedBy = idMap.users[extractMongoId(novel.uploadedBy as string)];
       
       const result = await client.query(
         `INSERT INTO novels(
@@ -132,15 +142,15 @@ async function seed() {
         RETURNING id`,
         [
           title, slug, author, description, coverImage, status, 
-          uploadedBy, parseFloat(rating || 0), parseInt(views || 0), 
-          parseInt(chapterCount || 0), createdAt, updatedAt
+          uploadedBy, parseFloat(rating || '0'), parseInt(views || '0'), 
+          parseInt(chapterCount || '0'), createdAt, updatedAt
         ]
       );
       
       idMap.novels[mongoId] = result.rows[0].id;
       
       // Add novel genres
-      const genres = parseStringArray(novel.genres);
+      const genres = parseStringArray(novel.genres as string);
       for (const genre of genres) {
         if (genresMap[genre]) {
           await client.query(
@@ -156,11 +166,14 @@ async function seed() {
     const chapters = await parseCSV<Record<string, unknown>>(CHAPTER_CSV);
     
     for (const chapter of chapters) {
-      const mongoId = extractMongoId(chapter._id);
-      const { 
-        chapterNumber, title, contentUrl, views, createdAt, updatedAt 
-      } = chapter;
-      const novelId = idMap.novels[extractMongoId(chapter.novelId)];
+      const mongoId = extractMongoId(chapter._id as string);
+      const chapterNumber = chapter.chapterNumber as string;
+      const title = chapter.title as string;
+      const contentUrl = chapter.contentUrl as string;
+      const views = chapter.views as string;
+      const createdAt = chapter.createdAt as string;
+      const updatedAt = chapter.updatedAt as string;
+      const novelId = idMap.novels[extractMongoId(chapter.novelId as string)];
       
       if (!novelId) {
         console.warn(`Novel ID not found for chapter: ${mongoId}`);
@@ -174,87 +187,49 @@ async function seed() {
         RETURNING id`,
         [
           novelId, parseInt(chapterNumber), title, contentUrl, 
-          parseInt(views || 0), createdAt, updatedAt
+          parseInt(views || '0'), createdAt, updatedAt
         ]
       );
       
       idMap.chapters[mongoId] = result.rows[0].id;
     }
     
-    // 4. Seed novel comments
-    console.log('Seeding novel comments...');
-    const comments = await parseCSV<Record<string, unknown>>(COMMENT_CSV);
-    
-    // First pass: Insert comments without parent relationship
-    for (const comment of comments) {
-      const mongoId = extractMongoId(comment._id);
-      const { 
-        content, isEdited, isDeleted, createdAt, updatedAt 
-      } = comment;
-      const userId = idMap.users[extractMongoId(comment.user)];
-      const novelId = idMap.novels[extractMongoId(comment.novel)];
-      
-      if (!userId || !novelId) {
-        console.warn(`User or Novel ID not found for comment: ${mongoId}`);
-        continue;
-      }
-      
-      const result = await client.query(
-        `INSERT INTO novel_comments(
-          content, user_id, novel_id, is_edited, is_deleted, created_at, updated_at
-        ) VALUES($1, $2, $3, $4, $5, $6, $7)
-        RETURNING id`,
-        [
-          content, userId, novelId, 
-          isEdited === 'true', isDeleted === 'true', 
-          createdAt, updatedAt
-        ]
-      );
-      
-      idMap.novelComments[mongoId] = result.rows[0].id;
-    }
-    
-    // Second pass: Update parent references
-    for (const comment of comments) {
-      if (comment.parent) {
-        const commentId = idMap.novelComments[extractMongoId(comment._id)];
-        const parentId = idMap.novelComments[extractMongoId(comment.parent)];
-        
-        if (commentId && parentId) {
-          await client.query(
-            'UPDATE novel_comments SET parent_id = $1 WHERE id = $2',
-            [parentId, commentId]
-          );
-        }
-      }
-    }
-    
-    // 5. Seed chapter comments
+    // 4. Seed chapter comments
     console.log('Seeding chapter comments...');
     const chapterComments = await parseCSV<Record<string, unknown>>(CHAPTER_COMMENT_CSV);
     
     // First pass: Insert comments without parent relationship
     for (const comment of chapterComments) {
-      const mongoId = extractMongoId(comment._id);
-      const { 
-        content, isEdited, isDeleted, createdAt, updatedAt 
-      } = comment;
-      const userId = idMap.users[extractMongoId(comment.user)];
-      const novelId = idMap.novels[extractMongoId(comment.novel)];
-      const chapterId = idMap.chapters[extractMongoId(comment.chapter)];
+      const mongoId = extractMongoId(comment._id as string);
+      const content = comment.content as string;
+      const isEdited = comment.isEdited as string;
+      const isDeleted = comment.isDeleted as string;
+      const createdAt = comment.createdAt as string;
+      const updatedAt = comment.updatedAt as string;
+      const userId = idMap.users[extractMongoId(comment.user as string)];
+      const novelId = idMap.novels[extractMongoId(comment.novel as string)];
+      const chapterId = idMap.chapters[extractMongoId(comment.chapter as string)];
       
       if (!userId || !novelId || !chapterId) {
         console.warn(`User, Novel or Chapter ID not found for comment: ${mongoId}`);
         continue;
       }
       
+      // Get chapter number
+      const chapterResult = await client.query(
+        'SELECT chapter_number FROM chapters WHERE id = $1',
+        [chapterId]
+      );
+      
+      const chapterNumber = chapterResult.rows[0].chapter_number;
+      
       const result = await client.query(
         `INSERT INTO chapter_comments(
-          content, user_id, novel_id, chapter_id, is_edited, is_deleted, created_at, updated_at
-        ) VALUES($1, $2, $3, $4, $5, $6, $7, $8)
+          content, user_id, novel_id, chapter_id, chapter_number, is_edited, is_deleted, created_at, updated_at
+        ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id`,
         [
-          content, userId, novelId, chapterId,
+          content, userId, novelId, chapterId, chapterNumber,
           isEdited === 'true', isDeleted === 'true', 
           createdAt, updatedAt
         ]
@@ -266,8 +241,8 @@ async function seed() {
     // Second pass: Update parent references
     for (const comment of chapterComments) {
       if (comment.parent) {
-        const commentId = idMap.chapterComments[extractMongoId(comment._id)];
-        const parentId = idMap.chapterComments[extractMongoId(comment.parent)];
+        const commentId = idMap.chapterComments[extractMongoId(comment._id as string)];
+        const parentId = idMap.chapterComments[extractMongoId(comment.parent as string)];
         
         if (commentId && parentId) {
           await client.query(
@@ -279,15 +254,14 @@ async function seed() {
     }
     
     await client.query('COMMIT');
-    console.log('Seeding completed successfully!');
-    
+    console.log('Database seeding completed successfully');
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Error seeding database:', error);
     throw error;
   } finally {
     client.release();
-    await pool.end();
+    pool.end();
   }
 }
 

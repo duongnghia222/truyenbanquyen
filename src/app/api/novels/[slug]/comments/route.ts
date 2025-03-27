@@ -3,7 +3,8 @@ import { NovelCommentModel, UserModel, NovelModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
 
 // Get comments for a specific novel
-export const GET = createApiHandler(async (request: NextRequest) => {
+export const GET = createApiHandler(async (req: Request) => {
+  const request = req as NextRequest;
   // Extract slug from URL
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
@@ -36,7 +37,8 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     order: order as 'ASC' | 'DESC'
   };
   
-  // Execute query with pagination
+  // Execute query with pagination - Uses the adapter in NovelCommentModel
+  // which now pulls from chapter_comments
   const result = await NovelCommentModel.findAll(page, limit, options);
   const { comments, total } = result;
   
@@ -50,7 +52,9 @@ export const GET = createApiHandler(async (request: NextRequest) => {
     return {
       ...comment,
       username: user ? user.username : null,
-      userAvatar: user ? user.image : null
+      userAvatar: user ? user.image : null,
+      chapterTitle: comment.chapterNumber ? `Chapter ${comment.chapterNumber}` : null,
+      chapterId: comment.chapterId
     };
   });
   

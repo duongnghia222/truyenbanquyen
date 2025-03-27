@@ -6,7 +6,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 
 // Get a single chapter comment by ID
-export const GET = createApiHandler(async (request: NextRequest) => {
+export const GET = createApiHandler(async (req: Request) => {
+  const request = req as NextRequest;
   // Extract the comment ID from the URL
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
@@ -51,7 +52,8 @@ export const GET = createApiHandler(async (request: NextRequest) => {
 });
 
 // Update a chapter comment
-export const PATCH = createApiHandler(async (request: NextRequest) => {
+export const PATCH = createApiHandler(async (req: Request) => {
+  const request = req as NextRequest;
   // Extract the comment ID from the URL
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
@@ -131,7 +133,8 @@ export const PATCH = createApiHandler(async (request: NextRequest) => {
 });
 
 // Delete a chapter comment (soft delete)
-export const DELETE = createApiHandler(async (request: NextRequest) => {
+export const DELETE = createApiHandler(async (req: Request) => {
+  const request = req as NextRequest;
   // Extract the comment ID from the URL
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
