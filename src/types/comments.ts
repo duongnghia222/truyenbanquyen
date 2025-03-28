@@ -23,7 +23,6 @@ export interface CommentData {
   updatedAt: string;
   replies?: CommentData[];
   _userLiked?: boolean; // Additional flag to track user's like status
-  isChapterComment?: boolean; // Flag to identify if this is a chapter comment
 }
 
 export interface PaginationData {
@@ -37,8 +36,8 @@ export interface PaginationData {
 
 export interface CommentSectionProps {
   novelId: string | number;
-  chapterId?: string;
-  chapterNumber?: number;
+  chapterId: string;
+  chapterNumber: number;
 }
 
 export interface ApiErrorResponse {

@@ -13,7 +13,6 @@ import { ReplyForm } from './ReplyForm';
 interface CommentItemProps {
   comment: CommentData & { 
     _userLiked?: boolean;
-    isChapterComment?: boolean;
   };
   isReply?: boolean;
   onLike: (commentId: string) => Promise<boolean>;
@@ -142,7 +141,7 @@ export function CommentItem({
             <span className="font-medium text-gray-900 dark:text-white">
               {username}
             </span>
-            {(showChapter || comment.isChapterComment) && comment.chapterNumber && (
+            {showChapter && comment.chapterNumber && (
               <span className="ml-2 text-xs font-medium text-gray-600 dark:text-gray-400">
                 &gt; Chương {comment.chapterNumber}
               </span>
@@ -165,7 +164,7 @@ export function CommentItem({
               {comment.isDeleted ? (
                 <p className="italic text-gray-500 dark:text-gray-400">[Bình luận đã bị xóa]</p>
               ) : (
-                <p>{(showChapter || comment.isChapterComment) && comment.chapterNumber ? ': ' : ''}{comment.content}</p>
+                <p>{showChapter && comment.chapterNumber ? ': ' : ''}{comment.content}</p>
               )}
             </div>
           )}
