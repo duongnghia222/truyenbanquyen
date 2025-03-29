@@ -21,6 +21,7 @@ interface CommentItemProps {
   onDelete: (commentId: string) => Promise<boolean>;
   onReply: (parentId: string, content: string) => Promise<boolean>;
   showChapter?: boolean;
+  novelSlug?: string;
 }
 
 export function CommentItem({
@@ -30,7 +31,8 @@ export function CommentItem({
   onEdit,
   onDelete,
   onReply,
-  showChapter = false
+  showChapter = false,
+  novelSlug = ''
 }: CommentItemProps) {
   const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false);
@@ -86,9 +88,12 @@ export function CommentItem({
   
   // Recursively render replies
   const renderReplies = (replyList: CommentData[]) => {
-    if (!replyList || replyList.length === 0) return null;
+    if (!replyList || replyList.length === 0) {
+      console.log('No replies to render');
+      return null;
+    }
     
-    console.log('Rendering replies:', replyList);
+    console.log(`Rendering ${replyList.length} replies:`, replyList);
     
     return (
       <div className="mt-4 pl-4 border-l-2 border-gray-200 dark:border-gray-700">
@@ -102,6 +107,7 @@ export function CommentItem({
             onDelete={onDelete}
             onReply={onReply}
             showChapter={showChapter}
+            novelSlug={novelSlug}
           />
         ))}
       </div>
@@ -144,7 +150,7 @@ export function CommentItem({
             </span>
             {showChapter && comment.chapterNumber && (
               <Link 
-                href={`/novels/${comment.novelId}/chapters/${comment.chapterNumber}`}
+                href={`/novels/${novelSlug || comment.novelId}/chapters/${comment.chapterNumber}`}
                 className="ml-2 text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
               >
                 &gt; Chương {comment.chapterNumber}

@@ -6,7 +6,7 @@ import { CommentData, PaginationData, ApiErrorResponse } from '@/types/comments'
 
 export function useComments(
   novelId: string | number,
-  chapterId: string,
+  chapterId: string | number,
   chapterNumber: number
 ) {
   const { data: session } = useSession();
@@ -75,7 +75,7 @@ export function useComments(
     const commentMap: Record<string, CommentData> = {};
     const rootComments: CommentData[] = [];
     
-    // Index all comments
+    // First pass: Index all comments and initialize basic properties
     commentsData.forEach(comment => {
       const processedComment: CommentData = {
         ...comment,
@@ -90,19 +90,39 @@ export function useComments(
         replies: []
       };
       
+      // Store processed comment in our map
       commentMap[processedComment.id] = processedComment;
     });
     
-    // Build tree structure
+    // Second pass: Build tree structure - attach child comments to their parents
     Object.values(commentMap).forEach(comment => {
+      // If this comment has a parent and we have that parent in our map
       if (comment.parent && commentMap[comment.parent]) {
+        // Ensure parent has a replies array
         if (!commentMap[comment.parent].replies) {
           commentMap[comment.parent].replies = [];
         }
+        
+        // Push this comment to its parent's replies
         commentMap[comment.parent].replies!.push(comment);
+        
+        // Debug output
+        console.log(`Attached comment ${comment.id} as reply to ${comment.parent}`);
       } else if (!comment.parent) {
+        // This is a root comment (no parent)
+        rootComments.push(comment);
+      } else {
+        // This comment has a parent reference but we don't have the parent in our data
+        // Add it as a root comment since we can't find its parent
+        console.warn(`Comment ${comment.id} references parent ${comment.parent} which was not found in the data`);
         rootComments.push(comment);
       }
+    });
+    
+    console.log('Processed comments:', {
+      total: commentsData.length,
+      rootCount: rootComments.length,
+      withReplies: rootComments.filter(c => c.replies && c.replies.length > 0).length
     });
     
     return rootComments;
@@ -194,6 +214,9 @@ export function useComments(
       const endpoint = getApiEndpoint('create');
       const payload = { content, novelId, chapterId, parentId, chapterNumber };
       
+      // Debug
+      console.log('Submitting reply with payload:', payload);
+      
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -206,9 +229,11 @@ export function useComments(
       }
       
       const newReply = await response.json();
+      console.log('Reply submitted successfully:', newReply);
       
       // Optimistic update first
       setComments(prevComments => {
+        // Find the parent comment and add the reply to it
         return prevComments.map(comment => {
           if (comment.id.toString() === parentId.toString()) {
             const replyWithUser = {
@@ -223,7 +248,11 @@ export function useComments(
               replies: []
             };
             
-            const updatedReplies = comment.replies ? [...comment.replies, replyWithUser] : [replyWithUser];
+            // Ensure comment has a replies array
+            const existingReplies = Array.isArray(comment.replies) ? comment.replies : [];
+            const updatedReplies = [...existingReplies, replyWithUser];
+            
+            console.log(`Adding reply ${replyWithUser.id} to comment ${comment.id}. Total replies: ${updatedReplies.length}`);
             
             return { ...comment, replies: updatedReplies };
           }

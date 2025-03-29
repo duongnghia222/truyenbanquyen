@@ -60,10 +60,10 @@ async function getChapterContent(contentUrl: string): Promise<string> {
 export default async function ChapterPage({ 
   params 
 }: { 
-  params: Promise<{ slug: string; chapterNumber: string }>
+  params: { slug: string; chapterNumber: string }
 }) {
   try {
-    const { slug, chapterNumber } = await params;
+    const { slug, chapterNumber } = params;
     
     // Fetch the chapter and novel info in parallel
     const [chapter, novelInfo] = await Promise.all([
@@ -215,7 +215,7 @@ export default async function ChapterPage({
             <div id="comments" className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700 p-6 mb-8">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Bình luận</h2>
               <CommentSection 
-                novelId={novelInfo.id} 
+                novelId={Number(novelInfo.id)} 
                 chapterId={chapter.id.toString()}
                 chapterNumber={chapter.chapterNumber} 
               />
@@ -243,7 +243,7 @@ export default async function ChapterPage({
               </p>
               <div className="flex justify-center space-x-4">
                 <Link
-                  href={`/novels/${params.then(p => p.slug).catch(() => '')}`}
+                  href={`/novels/${params.slug}`}
                   className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-white shadow-sm hover:bg-blue-700 transition-colors"
                 >
                   <span>Quay lại trang truyện</span>

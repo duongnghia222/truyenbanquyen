@@ -36,7 +36,11 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
     likeComment,
     setError,
   } = isChapterComment 
-      ? useComments(novelId, chapterId, chapterNumber) 
+      ? useComments(
+          String(novelId), 
+          chapterId ? String(chapterId) : '', 
+          chapterNumber || 0
+        ) 
       : {
           comments: [],
           pagination: null,
@@ -60,6 +64,10 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
       const commentsWithReplies = comments.filter(c => c.replies && c.replies.length > 0);
       if (commentsWithReplies.length > 0) {
         console.log('Comments with replies:', commentsWithReplies);
+        // Debug the structure of each reply
+        commentsWithReplies.forEach(comment => {
+          console.log(`Comment ${comment.id} has ${comment.replies?.length || 0} replies:`, comment.replies);
+        });
       }
     }
   }, [comments]);
@@ -145,17 +153,30 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
             </div>
           ) : comments.length > 0 ? (
             <div>
-              {comments.map((comment: CommentData) => (
-                <CommentItem 
-                  key={comment.id}
-                  comment={comment}
-                  onLike={handleLike}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onReply={handleReply}
-                  showChapter={false}
-                />
-              ))}
+              {comments.map((comment: CommentData) => {
+                // Debug each comment's replies before rendering
+                if (comment.replies && comment.replies.length > 0) {
+                  console.log(`Rendering comment ${comment.id} with ${comment.replies.length} replies`);
+                }
+                
+                // Ensure replies is an array
+                const commentWithReplies = {
+                  ...comment,
+                  replies: Array.isArray(comment.replies) ? comment.replies : []
+                };
+                
+                return (
+                  <CommentItem 
+                    key={comment.id}
+                    comment={commentWithReplies}
+                    onLike={handleLike}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onReply={handleReply}
+                    showChapter={false}
+                  />
+                );
+              })}
               
               {/* Pagination */}
               {pagination && pagination.totalPages > 1 && (

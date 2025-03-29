@@ -3,13 +3,12 @@ import { ChapterModel, NovelModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
 
 type RouteParams = {
-  params: Promise<{ slug: string; chapterNumber: string }>
+  params: { slug: string; chapterNumber: string }
 };
 
 export const GET = createApiHandler(async (request: Request, { params }: RouteParams) => {
   try {
-    const paramsData = await params;
-    const { slug, chapterNumber } = paramsData;
+    const { slug, chapterNumber } = params;
     
     // Make sure chapterNumber is a valid number
     const chapterNum = parseInt(chapterNumber);
@@ -62,8 +61,7 @@ export const GET = createApiHandler(async (request: Request, { params }: RoutePa
 
 export const POST = createApiHandler(async (request: Request, { params }: RouteParams) => {
   try {
-    const paramsData = await params;
-    const { slug, chapterNumber } = paramsData;
+    const { slug, chapterNumber } = params;
     
     // Validate request body to ensure it contains required data
     let requestData;

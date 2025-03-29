@@ -4,16 +4,33 @@ import { MessageSquare } from 'lucide-react';
 import { useNovelComments } from '@/hooks/useNovelComments';
 import { CommentItem } from './CommentItem';
 import { CommentData } from '@/types/comments';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface NovelCommentsListProps {
   novelId: number;
 }
 
 export default function NovelCommentsList({ novelId }: NovelCommentsListProps) {
+  const [novelSlug, setNovelSlug] = useState<string | null>(null);
+  
   // Debug log the props
   useEffect(() => {
     console.log('NovelCommentsList props:', { novelId });
+    
+    // Fetch the novel slug
+    const fetchNovelSlug = async () => {
+      try {
+        const response = await fetch(`/api/novels/slug-by-id?id=${novelId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setNovelSlug(data.slug);
+        }
+      } catch (error) {
+        console.error('Error fetching novel slug:', error);
+      }
+    };
+    
+    fetchNovelSlug();
   }, [novelId]);
 
   const { 
@@ -53,11 +70,12 @@ export default function NovelCommentsList({ novelId }: NovelCommentsListProps) {
               <CommentItem 
                 key={comment.id}
                 comment={comment}
-                onLike={() => false}
-                onEdit={() => false}
-                onDelete={() => false}
-                onReply={() => false}
+                onLike={() => Promise.resolve(false)}
+                onEdit={() => Promise.resolve(false)}
+                onDelete={() => Promise.resolve(false)}
+                onReply={() => Promise.resolve(false)}
                 showChapter={true}
+                novelSlug={novelSlug || ''}
               />
             ))}
             

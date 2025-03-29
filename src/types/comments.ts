@@ -5,7 +5,7 @@ export interface CommentUser {
 }
 
 export interface CommentData {
-  id: number;
+  id: number | string;
   content: string;
   user?: CommentUser;
   userId: number;
@@ -13,6 +13,7 @@ export interface CommentData {
   chapterId: number;
   chapterNumber: number;
   parentId?: number;
+  parent?: string;  // String representation of parent ID
   likes: number[];
   isEdited: boolean;
   isDeleted: boolean;
@@ -32,8 +33,8 @@ export interface PaginationData {
 }
 
 export interface CommentSectionProps {
-  novelId: number;
-  chapterId?: number;
+  novelId: number | string;
+  chapterId?: number | string;
   chapterNumber?: number;
 }
 
