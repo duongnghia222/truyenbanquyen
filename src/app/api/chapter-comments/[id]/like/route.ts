@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CommentModel } from '@/models/postgresql';
+import { ChapterCommentModel } from '@/models/postgresql';
 import { createApiHandler } from '@/lib/api-utils';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 
 // Toggle like status for a chapter comment
-export const POST = createApiHandler(async (request: NextRequest) => {
+export const POST = createApiHandler(async (request: Request) => {
   // Extract the comment ID from the URL
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
@@ -35,21 +35,21 @@ export const POST = createApiHandler(async (request: NextRequest) => {
   
   try {
     // Check if user has already liked the comment
-    const alreadyLiked = await CommentModel.hasUserLikedChapterComment(userId, commentId);
+    const alreadyLiked = await ChapterCommentModel.hasUserLikedChapterComment(userId, commentId);
     
     let userLiked;
     if (alreadyLiked) {
       // If already liked, unlike it
-      await CommentModel.unlikeChapterComment(userId, commentId);
+      await ChapterCommentModel.unlikeChapterComment(userId, commentId);
       userLiked = false;
     } else {
       // If not liked, like it
-      await CommentModel.likeChapterComment(userId, commentId);
+      await ChapterCommentModel.likeChapterComment(userId, commentId);
       userLiked = true;
     }
     
     // Get updated likes count
-    const likes = await CommentModel.getChapterCommentLikes(commentId);
+    const likes = await ChapterCommentModel.getChapterCommentLikes(commentId);
     
     // Return updated like count and user's like status
     return NextResponse.json({
@@ -66,7 +66,7 @@ export const POST = createApiHandler(async (request: NextRequest) => {
 });
 
 // Get like status and count for a chapter comment
-export const GET = createApiHandler(async (request: NextRequest) => {
+export const GET = createApiHandler(async (request: Request) => {
   // Extract the comment ID from the URL
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
@@ -86,14 +86,14 @@ export const GET = createApiHandler(async (request: NextRequest) => {
   
   try {
     // Get likes for the comment
-    const likes = await CommentModel.getChapterCommentLikes(commentId);
+    const likes = await ChapterCommentModel.getChapterCommentLikes(commentId);
     
     // Check if the authenticated user has liked the comment
     let userLiked = false;
     
     if (session?.user?.id) {
       const userId = parseInt(session.user.id);
-      userLiked = await CommentModel.hasUserLikedChapterComment(userId, commentId);
+      userLiked = await ChapterCommentModel.hasUserLikedChapterComment(userId, commentId);
     }
     
     // Return like count and user's like status

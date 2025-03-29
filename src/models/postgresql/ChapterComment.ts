@@ -233,6 +233,37 @@ class ChapterCommentModel {
   }
 
   /**
+   * Get all comments for a novel across all chapters
+   */
+  async getNovelComments(novelId: number, page: number = 1, limit: number = 20): Promise<{ comments: ChapterComment[], total: number }> {
+    const offset = (page - 1) * limit;
+    
+    // Get total count of comments for this novel
+    const countResult = await query(
+      `SELECT COUNT(*) as total
+       FROM chapter_comments
+       WHERE novel_id = $1`,
+      [novelId]
+    );
+    
+    const total = parseInt(countResult.rows[0].total);
+    
+    // Get comments with chapter information
+    const commentsResult = await query(
+      `SELECT c.*
+       FROM chapter_comments c
+       WHERE c.novel_id = $1
+       ORDER BY c.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [novelId, limit, offset]
+    );
+    
+    const comments = commentsResult.rows.map(row => this.transformChapterCommentData(row));
+    
+    return { comments, total };
+  }
+
+  /**
    * Transform database row to ChapterComment object
    */
   transformChapterCommentData(row: Record<string, unknown>): ChapterComment {

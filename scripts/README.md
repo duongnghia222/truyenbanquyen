@@ -2,35 +2,34 @@
 
 This directory contains scripts for database migrations and maintenance.
 
-## Generate Slugs Script
+## Database Setup and Migration
 
-The `generate-slugs.js` script is used to generate slugs for all existing novels in the database. This script should be run once after adding the slug field to the Novel model.
+This directory contains scripts for initializing the PostgreSQL database and running migrations.
 
 ### How to Run
 
 1. Make sure you have Node.js installed
-2. Make sure your `.env` file contains the correct `MONGODB_URI` value
-3. Run the script with the following command:
+2. Make sure your `.env` file contains the correct PostgreSQL connection details
+3. Run the setup and migration scripts with the following command:
 
 ```bash
-node scripts/generate-slugs.js
+npm run db:setup
+npm run db:migrate
 ```
 
-### What the Script Does
+### What the Scripts Do
 
-1. Connects to your MongoDB database
-2. Finds all novels that don't have a slug field
-3. Generates a slug for each novel based on its title
-4. Checks if the slug already exists, and if so, appends a random string to make it unique
-5. Saves the novel with the new slug
+These scripts handle:
+1. Creating the database if it doesn't exist
+2. Running schema migrations to create or update tables
+3. Importing data if needed
 
 ### Expected Output
 
-The script will output information about each novel it updates, including:
+The scripts will output information about the database operations, including:
 
-- The number of novels found without slugs
-- The title and generated slug for each novel
-- Any conflicts that were resolved by generating unique slugs
-- A success message when all novels have been updated
+- Database creation status
+- Migration operations performed
+- Data import status
 
 If there are any errors, the script will output the error message and exit with a non-zero status code. 

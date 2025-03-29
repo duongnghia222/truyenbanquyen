@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { User } from 'lucide-react';
-import CommentSection from '@/components/features/comments/CommentSection';
+import NovelCommentsList from '@/components/features/comments/NovelCommentsList';
 import { Novel } from '@/types/novel';
 
 async function getNovel(slug: string): Promise<Novel> {
@@ -222,7 +222,10 @@ export default async function NovelDetailPage({
           {/* Comment Section */}
           <div id="comments" className="mt-12 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700 p-6">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Bình luận</h2>
-            <CommentSection novelId={novel.id} />
+            <div className="mb-4 text-center text-gray-600 dark:text-gray-300">
+              <p>Các bình luận từ tất cả các chương truyện.</p>
+            </div>
+            <NovelCommentsList novelId={Number(novel.id)} />
           </div>
         </div>
       </div>

@@ -5,7 +5,7 @@ import { useComments } from '@/hooks/useComments';
 import { CommentForm } from './CommentForm';
 import { CommentItem } from './CommentItem';
 import { CommentSectionProps, CommentData } from '@/types/comments';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function CommentSection({ novelId, chapterId, chapterNumber }: CommentSectionProps) {
   // Debug log the props
@@ -13,6 +13,15 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
     console.log('CommentSection props:', { novelId, chapterId, chapterNumber });
   }, [novelId, chapterId, chapterNumber]);
 
+  // Check if this is a chapter comment section
+  const isChapterComment = !!chapterId && !!chapterNumber;
+
+  // State for novel comments display (when not on a chapter)
+  const [noCommentsMessage, setNoCommentsMessage] = useState<string>(
+    isChapterComment ? 'Chưa có bình luận nào. Hãy là người đầu tiên bình luận!' : 'Bình luận chỉ khả dụng trong trang chương truyện.'
+  );
+
+  // Only call useComments if chapterId and chapterNumber are provided
   const { 
     comments,
     pagination,
@@ -26,7 +35,22 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
     deleteComment,
     likeComment,
     setError,
-  } = useComments(novelId, chapterId, chapterNumber);
+  } = isChapterComment 
+      ? useComments(novelId, chapterId, chapterNumber) 
+      : {
+          comments: [],
+          pagination: null,
+          loading: false,
+          error: null,
+          page: 1,
+          setPage: () => {},
+          submitComment: async () => false,
+          submitReply: async () => false,
+          editComment: async () => false,
+          deleteComment: async () => false,
+          likeComment: async () => false,
+          setError: () => {},
+        };
 
   // Debugging output
   useEffect(() => {
@@ -93,71 +117,84 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
 
   return (
     <div>
-      {/* New comment form */}
-      <CommentForm 
-        onSubmit={handleSubmitComment}
-        error={error}
-        setError={setError}
-      />
+      {/* Only show comment form for chapter comments */}
+      {isChapterComment && (
+        <CommentForm 
+          onSubmit={handleSubmitComment}
+          error={error}
+          setError={setError}
+        />
+      )}
 
       {/* Comments list */}
       <div>
         <div className="flex items-center mb-6">
           <MessageSquare className="text-blue-600 dark:text-blue-400 mr-2" />
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {pagination?.totalItems || 0} Bình luận trong chương
+            {isChapterComment 
+              ? `${pagination?.totalItems || 0} Bình luận trong chương`
+              : 'Bình luận'
+            }
           </h3>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        ) : comments.length > 0 ? (
-          <div>
-            {comments.map((comment: CommentData) => (
-              <CommentItem 
-                key={comment.id}
-                comment={comment}
-                onLike={handleLike}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onReply={handleReply}
-                showChapter={false}
-              />
-            ))}
-            
-            {/* Pagination */}
-            {pagination && pagination.totalPages > 1 && (
-              <div className="flex justify-center mt-6">
-                <nav className="flex items-center space-x-2">
-                  <button
-                    onClick={() => setPage(page - 1)}
-                    disabled={!pagination.hasPrevPage}
-                    className="px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50"
-                  >
-                    Trước
-                  </button>
-                  
-                  <span className="text-gray-700 dark:text-gray-300">
-                    Trang {pagination.currentPage} / {pagination.totalPages}
-                  </span>
-                  
-                  <button
-                    onClick={() => setPage(page + 1)}
-                    disabled={!pagination.hasNextPage}
-                    className="px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50"
-                  >
-                    Sau
-                  </button>
-                </nav>
-              </div>
-            )}
-          </div>
+        {isChapterComment ? (
+          loading ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : comments.length > 0 ? (
+            <div>
+              {comments.map((comment: CommentData) => (
+                <CommentItem 
+                  key={comment.id}
+                  comment={comment}
+                  onLike={handleLike}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onReply={handleReply}
+                  showChapter={false}
+                />
+              ))}
+              
+              {/* Pagination */}
+              {pagination && pagination.totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <nav className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setPage(page - 1)}
+                      disabled={!pagination.hasPrevPage}
+                      className="px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50"
+                    >
+                      Trước
+                    </button>
+                    
+                    <span className="text-gray-700 dark:text-gray-300">
+                      Trang {pagination.currentPage} / {pagination.totalPages}
+                    </span>
+                    
+                    <button
+                      onClick={() => setPage(page + 1)}
+                      disabled={!pagination.hasNextPage}
+                      className="px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50"
+                    >
+                      Sau
+                    </button>
+                  </nav>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <MessageSquare size={32} className="mx-auto mb-2 opacity-50" />
+              <p>{noCommentsMessage}</p>
+            </div>
+          )
         ) : (
+          // Display message for novel page (no comments available)
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             <MessageSquare size={32} className="mx-auto mb-2 opacity-50" />
-            <p>Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</p>
+            <p>{noCommentsMessage}</p>
           </div>
         )}
       </div>

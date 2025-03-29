@@ -35,7 +35,6 @@ function loadProductionEnv() {
     'NEXT_PUBLIC_APP_URL',
     'NEXT_PUBLIC_API_URL',
     'NEXTAUTH_URL',
-    'MONGODB_URI',
     'AWS_ACCESS_KEY_ID',
     'AWS_SECRET_ACCESS_KEY'
   ];
@@ -56,7 +55,6 @@ function loadProductionEnv() {
   console.log(`NEXT_PUBLIC_APP_URL: ${process.env.NEXT_PUBLIC_APP_URL}`);
   console.log(`NEXT_PUBLIC_API_URL: ${process.env.NEXT_PUBLIC_API_URL}`);
   console.log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL}`);
-  console.log(`MONGODB_URI: ${process.env.MONGODB_URI ? '******** (set)' : 'not set'}`);
   console.log(`AWS_ACCESS_KEY_ID: ${process.env.AWS_ACCESS_KEY_ID ? '******** (set)' : 'not set'}`);
   console.log(`AWS_SECRET_ACCESS_KEY: ${process.env.AWS_SECRET_ACCESS_KEY ? '******** (set)' : 'not set'}`);
   console.log(`AWS_REGION: ${process.env.AWS_REGION}`);

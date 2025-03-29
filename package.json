@@ -27,8 +27,6 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "lucide-react": "^0.475.0",
-    "mongodb": "^6.13.0",
-    "mongoose": "^8.10.1",
     "next": "15.1.7",
     "next-auth": "^4.24.5",
     "pg": "^8.11.3",

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ThumbsUp, Edit, Trash2, Reply } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useSession } from 'next-auth/react';
@@ -142,9 +143,12 @@ export function CommentItem({
               {username}
             </span>
             {showChapter && comment.chapterNumber && (
-              <span className="ml-2 text-xs font-medium text-gray-600 dark:text-gray-400">
+              <Link 
+                href={`/novels/${comment.novelId}/chapters/${comment.chapterNumber}`}
+                className="ml-2 text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+              >
                 &gt; Chương {comment.chapterNumber}
-              </span>
+              </Link>
             )}
             <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
               {formatDate(comment.createdAt)}

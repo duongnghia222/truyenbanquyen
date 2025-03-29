@@ -40,7 +40,6 @@ function loadEnv() {
       'NEXT_PUBLIC_APP_URL',
       'NEXT_PUBLIC_API_URL',
       'NEXTAUTH_URL',
-      'MONGODB_URI',
       'AWS_ACCESS_KEY_ID',
       'AWS_SECRET_ACCESS_KEY'
     ];

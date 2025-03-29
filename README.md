@@ -13,7 +13,7 @@ This project follows the Next.js App Router architecture. Below is a detailed br
 ├── public/              # Static assets
 ├── scripts/             # Build and deployment scripts
 ├── src/                 # Source code
-├── mongodb-csv-export/  # Database export files
+├── postgres-data/       # Database export files
 ├── .env                 # Environment variables
 ├── .env.production      # Production environment variables
 ├── .gitignore           # Git ignore file
