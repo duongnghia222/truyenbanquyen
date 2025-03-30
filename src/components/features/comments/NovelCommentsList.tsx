@@ -4,7 +4,7 @@ import { MessageSquare } from 'lucide-react';
 import { useNovelComments } from '@/hooks/useNovelComments';
 import { CommentItem } from './CommentItem';
 import { CommentData } from '@/types/comments';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 interface NovelCommentsListProps {
   novelId: number;
@@ -42,12 +42,91 @@ export default function NovelCommentsList({ novelId }: NovelCommentsListProps) {
     setPage,
   } = useNovelComments(novelId);
 
+  // Process comments into a tree structure
+  const processedComments = useCallback((rawComments: CommentData[]) => {
+    // Create a map of comments by id
+    const commentMap: Record<string, CommentData> = {};
+    const rootComments: CommentData[] = [];
+    
+    // First pass: Index all comments
+    rawComments.forEach(comment => {
+      const commentId = String(comment.id);
+      const parentId = comment.parentId ? String(comment.parentId) : comment.parent;
+      
+      // Store in map
+      commentMap[commentId] = {
+        ...comment,
+        replies: []
+      };
+    });
+    
+    // Second pass: Build tree structure
+    Object.values(commentMap).forEach(comment => {
+      const commentId = String(comment.id);
+      const parentId = comment.parentId ? String(comment.parentId) : comment.parent;
+      
+      // If this comment has a parent and we have that parent in our map
+      if (parentId && commentMap[parentId]) {
+        // Add this comment to its parent's replies
+        if (!commentMap[parentId].replies) {
+          commentMap[parentId].replies = [];
+        }
+        commentMap[parentId].replies!.push(comment);
+      } else {
+        // This is a root comment (no parent)
+        rootComments.push(comment);
+      }
+    });
+    
+    return rootComments;
+  }, []);
+
   // Debugging output
   useEffect(() => {
     if (comments.length > 0) {
       console.log('Novel comment section received comments:', comments);
     }
   }, [comments]);
+  
+  // Helper function to render a comment with its replies
+  const renderComment = (comment: CommentData) => {
+    // Ensure replies is an array
+    const replies = Array.isArray(comment.replies) ? comment.replies : [];
+    
+    return (
+      <div key={comment.id} className="comment-thread">
+        <CommentItem 
+          key={comment.id}
+          comment={{...comment, replies: []}} // Pass empty replies as they'll be rendered separately
+          onLike={() => Promise.resolve(false)}
+          onEdit={() => Promise.resolve(false)}
+          onDelete={() => Promise.resolve(false)}
+          onReply={() => Promise.resolve(false)}
+          showChapter={true}
+          novelSlug={novelSlug || ''}
+        />
+        
+        {/* Render nested replies if they exist */}
+        {replies.length > 0 && (
+          <div className="ml-8 pl-4 border-l-2 border-gray-200 dark:border-gray-700">
+            {replies.map(reply => (
+              <CommentItem 
+                key={reply.id}
+                comment={reply}
+                isReply={true}
+                onLike={() => Promise.resolve(false)}
+                onEdit={() => Promise.resolve(false)}
+                onDelete={() => Promise.resolve(false)}
+                onReply={() => Promise.resolve(false)}
+                showChapter={true}
+                novelSlug={novelSlug || ''}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -66,18 +145,7 @@ export default function NovelCommentsList({ novelId }: NovelCommentsListProps) {
           </div>
         ) : comments.length > 0 ? (
           <div>
-            {comments.map((comment: CommentData) => (
-              <CommentItem 
-                key={comment.id}
-                comment={comment}
-                onLike={() => Promise.resolve(false)}
-                onEdit={() => Promise.resolve(false)}
-                onDelete={() => Promise.resolve(false)}
-                onReply={() => Promise.resolve(false)}
-                showChapter={true}
-                novelSlug={novelSlug || ''}
-              />
-            ))}
+            {processedComments(comments).map(comment => renderComment(comment))}
             
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (

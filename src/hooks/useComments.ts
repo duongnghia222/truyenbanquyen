@@ -22,7 +22,10 @@ export function useComments(
   const getApiEndpoint = useCallback((action: string, id?: string | number) => {
     const base = '/api/chapter-comments';
     if (action === 'fetch') {
-      return `${base}?novel=${novelId}&chapter=${chapterId}&page=${page}&limit=10`;
+      // Make sure we're using consistent ID handling
+      const novelIdParam = typeof novelId === 'number' ? novelId : novelId;
+      const chapterIdParam = typeof chapterId === 'number' ? chapterId : chapterId;
+      return `${base}?novel=${novelIdParam}&chapter=${chapterIdParam}&page=${page}&limit=10`;
     }
     if (action === 'create') return base;
     return `${base}/${id}${action === 'like' ? '/like' : ''}`;
@@ -75,13 +78,26 @@ export function useComments(
     const commentMap: Record<string, CommentData> = {};
     const rootComments: CommentData[] = [];
     
+    console.log('Raw comment data received:', commentsData);
+    
     // First pass: Index all comments and initialize basic properties
     commentsData.forEach(comment => {
+      // Ensure ID is a string to use as a map key
+      const commentId = String(comment.id);
+      // Check both parentId and parent fields
+      const parentId = comment.parentId ? String(comment.parentId) : comment.parent ? String(comment.parent) : undefined;
+      
+      // Convert likes to number array
+      const likes: number[] = Array.isArray(comment.likes) 
+        ? comment.likes.map(id => typeof id === 'string' ? parseInt(id, 10) : Number(id)) 
+        : [];
+      
       const processedComment: CommentData = {
         ...comment,
-        id: comment.id.toString(),
-        parent: comment.parentId ? comment.parentId.toString() : (comment.parent ? comment.parent.toString() : undefined),
-        likes: Array.isArray(comment.likes) ? comment.likes : [],
+        id: commentId,
+        parent: parentId,
+        parentId: parentId ? Number(parentId) : undefined,
+        likes,
         isDeleted: !!comment.isDeleted,
         chapterNumber: comment.chapterNumber || chapterNumber,
         _userLiked: currentUserId 
@@ -91,30 +107,37 @@ export function useComments(
       };
       
       // Store processed comment in our map
-      commentMap[processedComment.id] = processedComment;
+      commentMap[commentId] = processedComment;
+      
+      // Debug log
+      console.log(`Processed comment: ID=${commentId}, parentId=${parentId || 'none'}`);
     });
     
     // Second pass: Build tree structure - attach child comments to their parents
     Object.values(commentMap).forEach(comment => {
+      const commentId = String(comment.id);
+      // Check both parentId and parent fields consistently
+      const parentId = comment.parentId ? String(comment.parentId) : comment.parent;
+      
       // If this comment has a parent and we have that parent in our map
-      if (comment.parent && commentMap[comment.parent]) {
-        // Ensure parent has a replies array
-        if (!commentMap[comment.parent].replies) {
-          commentMap[comment.parent].replies = [];
+      if (parentId && commentMap[parentId]) {
+        // Make sure the parent has a replies array
+        if (!commentMap[parentId].replies) {
+          commentMap[parentId].replies = [];
         }
         
-        // Push this comment to its parent's replies
-        commentMap[comment.parent].replies!.push(comment);
+        // Add this comment to its parent's replies
+        commentMap[parentId].replies!.push(comment);
         
         // Debug output
-        console.log(`Attached comment ${comment.id} as reply to ${comment.parent}`);
-      } else if (!comment.parent) {
+        console.log(`Attached comment ${commentId} as reply to ${parentId}`);
+      } else if (!parentId) {
         // This is a root comment (no parent)
         rootComments.push(comment);
       } else {
         // This comment has a parent reference but we don't have the parent in our data
         // Add it as a root comment since we can't find its parent
-        console.warn(`Comment ${comment.id} references parent ${comment.parent} which was not found in the data`);
+        console.warn(`Comment ${commentId} references parent ${parentId} which was not found in the data`);
         rootComments.push(comment);
       }
     });
@@ -158,7 +181,15 @@ export function useComments(
     
     try {
       const endpoint = getApiEndpoint('create');
-      const payload = { content, novelId, chapterId, chapterNumber };
+      // Normalize IDs for consistent handling
+      const normalizedNovelId = String(novelId);
+      const normalizedChapterId = String(chapterId);
+      const payload = { 
+        content, 
+        novelId: normalizedNovelId, 
+        chapterId: normalizedChapterId, 
+        chapterNumber 
+      };
       
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -212,7 +243,15 @@ export function useComments(
     
     try {
       const endpoint = getApiEndpoint('create');
-      const payload = { content, novelId, chapterId, parentId, chapterNumber };
+      // Make sure parentId is consistent with how the API expects it
+      const normalizedParentId = String(parentId);
+      const payload = { 
+        content, 
+        novelId, 
+        chapterId, 
+        parentId: normalizedParentId, 
+        chapterNumber 
+      };
       
       // Debug
       console.log('Submitting reply with payload:', payload);
@@ -235,7 +274,7 @@ export function useComments(
       setComments(prevComments => {
         // Find the parent comment and add the reply to it
         return prevComments.map(comment => {
-          if (comment.id.toString() === parentId.toString()) {
+          if (comment.id.toString() === normalizedParentId) {
             const replyWithUser = {
               ...newReply,
               user: {
@@ -243,8 +282,9 @@ export function useComments(
                 username: session!.user!.name || '',
                 avatar: session!.user!.image || ''
               },
-              parent: parentId.toString(),
-              parentId: Number(parentId),
+              parent: normalizedParentId,
+              parentId: Number(normalizedParentId),
+              likes: [],
               replies: []
             };
             
@@ -345,7 +385,7 @@ export function useComments(
         
         const newLikes = isCurrentlyLiked
           ? comment.likes.filter(likeId => likeId.toString() !== userId)
-          : [...comment.likes, session!.user!.id];
+          : [...comment.likes, Number(session!.user!.id)];
         
         return {
           ...comment,

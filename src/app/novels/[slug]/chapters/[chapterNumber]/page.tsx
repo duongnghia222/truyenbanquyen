@@ -63,7 +63,10 @@ export default async function ChapterPage({
   params: { slug: string; chapterNumber: string }
 }) {
   try {
-    const { slug, chapterNumber } = params;
+    // Await params before destructuring
+    const paramsData = await params;
+    const slug = paramsData.slug;
+    const chapterNumber = paramsData.chapterNumber;
     
     // Fetch the chapter and novel info in parallel
     const [chapter, novelInfo] = await Promise.all([
@@ -216,7 +219,7 @@ export default async function ChapterPage({
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Bình luận</h2>
               <CommentSection 
                 novelId={Number(novelInfo.id)} 
-                chapterId={chapter.id.toString()}
+                chapterId={chapter.id}
                 chapterNumber={chapter.chapterNumber} 
               />
             </div>

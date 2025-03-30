@@ -6,9 +6,12 @@ type RouteParams = {
   params: { slug: string; chapterNumber: string }
 };
 
-export const GET = createApiHandler(async (request: Request, { params }: RouteParams) => {
+export const GET = createApiHandler(async (request: Request, context: any) => {
   try {
-    const { slug, chapterNumber } = params;
+    // Await params before destructuring
+    const params = await context.params;
+    const slug = params.slug;
+    const chapterNumber = params.chapterNumber;
     
     // Make sure chapterNumber is a valid number
     const chapterNum = parseInt(chapterNumber);
@@ -59,9 +62,12 @@ export const GET = createApiHandler(async (request: Request, { params }: RoutePa
   }
 });
 
-export const POST = createApiHandler(async (request: Request, { params }: RouteParams) => {
+export const POST = createApiHandler(async (request: Request, context: any) => {
   try {
-    const { slug, chapterNumber } = params;
+    // Await params before destructuring
+    const params = await context.params;
+    const slug = params.slug;
+    const chapterNumber = params.chapterNumber;
     
     // Validate request body to ensure it contains required data
     let requestData;

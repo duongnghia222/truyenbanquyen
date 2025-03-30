@@ -12,7 +12,7 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
   useEffect(() => {
     console.log('CommentSection props:', { novelId, chapterId, chapterNumber });
   }, [novelId, chapterId, chapterNumber]);
-
+  console.log('CommentSection props:', { novelId, chapterId, chapterNumber });
   // Check if this is a chapter comment section
   const isChapterComment = !!chapterId && !!chapterNumber;
 
@@ -68,6 +68,13 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
         commentsWithReplies.forEach(comment => {
           console.log(`Comment ${comment.id} has ${comment.replies?.length || 0} replies:`, comment.replies);
         });
+      } else {
+        console.log('No comments with replies found!');
+        // Check if any comments have parentId
+        const repliesWithParentId = comments.filter(c => c.parentId || c.parent);
+        if (repliesWithParentId.length > 0) {
+          console.log('Found comments with parentId but not in replies:', repliesWithParentId);
+        }
       }
     }
   }, [comments]);
@@ -123,6 +130,50 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
     }
   };
 
+  // Helper function to render a comment with its replies in nested structure
+  const renderComment = (comment: CommentData) => {
+    // Ensure replies is an array
+    const replies = Array.isArray(comment.replies) ? comment.replies : [];
+    
+    // Debug log
+    console.log(`Rendering comment ${comment.id} with ${replies.length} replies:`, 
+      replies.map(r => `Reply ID: ${r.id}, Content: ${r.content.substring(0, 20)}...`)
+    );
+    
+    return (
+      <div key={comment.id} className="comment-thread">
+        <CommentItem 
+          key={comment.id}
+          comment={{...comment, replies: []}} // Pass empty replies as they'll be rendered separately
+          onLike={handleLike}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onReply={handleReply}
+          showChapter={false}
+          isReply={false}
+        />
+        
+        {/* Render nested replies if they exist */}
+        {replies.length > 0 && (
+          <div className="ml-8 pl-4 border-l-2 border-gray-200 dark:border-gray-700">
+            {replies.map(reply => (
+              <CommentItem 
+                key={reply.id}
+                comment={reply}
+                isReply={true}
+                onLike={handleLike}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onReply={handleReply}
+                showChapter={false}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
       {/* Only show comment form for chapter comments */}
@@ -153,30 +204,8 @@ export default function CommentSection({ novelId, chapterId, chapterNumber }: Co
             </div>
           ) : comments.length > 0 ? (
             <div>
-              {comments.map((comment: CommentData) => {
-                // Debug each comment's replies before rendering
-                if (comment.replies && comment.replies.length > 0) {
-                  console.log(`Rendering comment ${comment.id} with ${comment.replies.length} replies`);
-                }
-                
-                // Ensure replies is an array
-                const commentWithReplies = {
-                  ...comment,
-                  replies: Array.isArray(comment.replies) ? comment.replies : []
-                };
-                
-                return (
-                  <CommentItem 
-                    key={comment.id}
-                    comment={commentWithReplies}
-                    onLike={handleLike}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onReply={handleReply}
-                    showChapter={false}
-                  />
-                );
-              })}
+              {/* Render each comment with its replies in a nested structure */}
+              {comments.map(comment => renderComment(comment))}
               
               {/* Pagination */}
               {pagination && pagination.totalPages > 1 && (

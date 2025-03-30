@@ -39,7 +39,7 @@ export function CommentItem({
   const [isReplying, setIsReplying] = useState(false);
   
   // Handle PostgreSQL data structure
-  const commentId = comment.id ? `${comment.id}` : '';
+  const commentId = comment.id ? String(comment.id) : '';
   const userId = comment.userId || comment.user?.id;
   const username = comment.username || comment.user?.username || 'User';
   const avatar = comment.userAvatar || comment.user?.avatar;
@@ -86,44 +86,21 @@ export function CommentItem({
     return success;
   };
   
-  // Recursively render replies
-  const renderReplies = (replyList: CommentData[]) => {
-    if (!replyList || replyList.length === 0) {
-      console.log('No replies to render');
-      return null;
-    }
-    
-    console.log(`Rendering ${replyList.length} replies:`, replyList);
-    
-    return (
-      <div className="mt-4 pl-4 border-l-2 border-gray-200 dark:border-gray-700">
-        {replyList.map(reply => (
-          <CommentItem
-            key={reply.id}
-            comment={reply}
-            isReply={true}
-            onLike={onLike}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onReply={onReply}
-            showChapter={showChapter}
-            novelSlug={novelSlug}
-          />
-        ))}
-      </div>
-    );
-  };
-  
   // Debugging comment data
   console.log(`Rendering comment ${commentId}:`, { 
     id: comment.id,
     parent: comment.parent,
     parentId: comment.parentId,
-    replies: comment.replies?.length || 0
+    isReply: isReply,
+    hasReplies: comment.replies?.length || 0
   });
   
+  // Determine if this is actually a reply based on parentId or parent field
+  const hasParent = !!comment.parentId || !!comment.parent;
+  const effectiveIsReply = isReply || hasParent;
+  
   return (
-    <div className={`${isReply ? 'mt-4 mb-4' : 'mb-8 border-b border-gray-100 dark:border-gray-700 pb-6'}`}>
+    <div className={`${effectiveIsReply ? 'mt-4 mb-4' : 'mb-8 border-b border-gray-100 dark:border-gray-700 pb-6'}`}>
       <div className="flex items-start">
         <div className="flex-shrink-0 mr-4">
           {avatar ? (
@@ -198,7 +175,7 @@ export function CommentItem({
                 <span>{comment.likes && comment.likes.length > 0 ? comment.likes.length : ''}</span>
               </button>
               
-              {!isReply && (
+              {!effectiveIsReply && (
                 <button
                   onClick={() => setIsReplying(true)}
                   className="flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
@@ -237,9 +214,6 @@ export function CommentItem({
               onCancel={() => setIsReplying(false)}
             />
           )}
-          
-          {/* Render replies using the recursive function */}
-          {renderReplies(comment.replies || [])}
         </div>
       </div>
     </div>
